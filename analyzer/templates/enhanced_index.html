@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helix V1 to V2 Analyzer - CSV Export</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-top: 30px;
+        }
+        
+        .header-icon {
+            font-size: 3rem;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+        
+        .csv-badge {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .form-control:focus {
+            border-color: #27ae60;
+            box-shadow: 0 0 0 0.2rem rgba(39, 174, 96, 0.25);
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.3);
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            color: #27ae60;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .csv-highlight {
+            border-left-color: #e74c3c !important;
+        }
+        
+        .csv-highlight .feature-icon {
+            color: #e74c3c;
+        }
+        
+        .loading-spinner {
+            display: none;
+        }
+        
+        .loading .loading-spinner {
+            display: inline-block;
+        }
+        
+        .loading .btn-text {
+            display: none;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 16px;
+        }
+        
+        .csv-features {
+            background: linear-gradient(135deg, #e8f5e8 0%, #d5edda 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        
+        .csv-badge-small {
+            background: #27ae60;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        .data-type-badge {
+            background: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-right: 5px;
+        }
+        
+        .quick-analysis {
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .component-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+        }
+        
+        .version-badge {
+            background: #6c757d;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            margin-right: 5px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .tabs {
+            margin-top: 30px;
+        }
+        
+        .tab-content {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="main-container">
+                    <!-- Header -->
+                    <div class="text-center mb-4">
+                        <i class="fas fa-file-csv header-icon"></i>
+                        <h1 class="fw-bold text-dark">Helix V1 to V2 Analyzer
+                            <span class="csv-badge">Sitemap + CSV Export</span>
+                        </h1>
+                        <p class="text-muted">Automatically discover sitemap URLs and export all website data to CSV</p>
+                    </div>
+                    
+                    <!-- CSV Export Info -->
+                    <div class="alert alert-success">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-sitemap me-2"></i>Sitemap-Powered Analysis
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <span class="data-type-badge">Sitemap Discovery</span>
+                                <small>Automatically finds and processes all site URLs</small>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="data-type-badge">Custom Elements</span>
+                                <small>Enhanced analysis across all pages</small>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="data-type-badge">Helix Elements</span>
+                                <small>Component analysis across entire site</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Analysis Summary -->
+                    <div id="quickAnalysis" class="quick-analysis" >
+                        <div class="alert alert-success">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Quick Page Analysis
+                            </h5>
+                            <div id="analysisContent">
+                                <!-- Analysis content will be loaded here -->
+                            </div>
+                            <div class="mt-3">
+                                <button id="showDetailedBtn" class="btn btn-sm btn-outline-primary me-2" style="display: none;">
+                                    <i class="fas fa-list-alt me-1"></i>Show Detailed Findings
+                                </button>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    This is a quick analysis of the homepage. For complete site analysis, click "Discover Sitemap & Download CSV" above.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else 'info' }} alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' }} me-2"></i>
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Page-wise Results Display -->
+                    <div id="resultsContainer" class="csv-features" style="display: none;">
+                        <h4 class="fw-bold mb-3">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Page-wise Analysis Results
+                        </h4>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title mb-1">URLs Found</h5>
+                                        <h3 id="urlsFound">0</h3>
+                                        <small>In sitemap</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title mb-1">Processed</h5>
+                                        <h3 id="urlsProcessed">0</h3>
+                                        <small>Successfully</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title mb-1">Failed</h5>
+                                        <h3 id="urlsFailed">0</h3>
+                                        <small>With errors</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title mb-1">Elements</h5>
+                                        <h3 id="totalElements">0</h3>
+                                        <small>Found</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                                 role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                <span id="progressText">Starting...</span>
+                            </div>
+                            
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-list me-2"></i>Page Processing Log
+                                        </h6>
+                                    </div>
+                                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                        <div id="processingLog">
+                                            <p class="text-muted text-center">Processing will begin shortly...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-chart-pie me-2"></i>Element Breakdown
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="small">Custom Elements:</span>
+                                            <span class="badge bg-primary" id="customElementsCount">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="small">Helix Elements:</span>
+                                            <span class="badge bg-info" id="helixElementsCount">0</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">Total:</span>
+                                            <span class="badge bg-success" id="totalElementsBreakdown">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mt-3">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-clock me-2"></i>Processing Info
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="small">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>Current URL:</span>
+                                            </div>
+                                            <div id="currentUrl" class="text-truncate text-muted mb-2" style="font-size: 0.8em;">
+                                                Not started
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <span>Est. Time Remaining:</span>
+                                                <span id="timeRemaining">--</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Processing Speed:</span>
+                                                <span id="processingSpeed">-- pages/min</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3 download-btn-container" style="display: none;">
+                           
+                        </div>
+                    </div>
+                    
+                    <!-- Main Form -->
+                    <form method="POST" action="/scrape" id="scrapeForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="url" class="form-label fw-semibold">
+                                    <i class="fas fa-globe me-2"></i>Website URL
+                                </label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="url" 
+                                    name="url" 
+                                    placeholder="https://16375504.livepreview.pfizer/" 
+                                    required
+                                >
+                                <div class="form-text">Enter any URL - sitemap will be automatically discovered</div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="class_filter" class="form-label fw-semibold">
+                                    <i class="fas fa-filter me-2"></i>Class Filter
+                                </label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="class_filter" 
+                                    name="class_filter" 
+                                    value="custom-block-element"
+                                    placeholder="custom-block-element"
+                                >
+                                <div class="form-text">Target CSS class to analyze</div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="max_pages" class="form-label fw-semibold">
+                                    <i class="fas fa-hashtag me-2"></i>Max Pages
+                                </label>
+                                <input 
+                                    type="number" 
+                                    class="form-control" 
+                                    id="max_pages" 
+                                    name="max_pages" 
+                                    placeholder="All pages"
+                                    min="1"
+                                >
+                                <div class="form-text">Leave empty to process all pages</div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                                <span class="btn-text">
+                                    <i class="fas fa-sitemap me-2"></i>
+                                    Discover Sitemap & Download CSV
+                                </span>
+                                <span class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    Processing sitemap...
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Space for additional content or features -->
+                    <div class="mt-4">
+                       
+                    </div>
+                    <!-- Tabs Navigation -->
+                    <ul class="nav nav-tabs" id="myTab" role="tablist">
+                      <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="sitemap-analysis-tab" data-bs-toggle="tab" data-bs-target="#sitemap-analysis" type="button" role="tab" aria-controls="sitemap-analysis" aria-selected="true">Sitemap-Powered Analysis</button>
+                      </li>
+                      <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="csv-export-tab" data-bs-toggle="tab" data-bs-target="#csv-export" type="button" role="tab" aria-controls="csv-export" aria-selected="false">Sitemap CSV Export Package</button>
+                      </li>
+                      <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="sample-columns-tab" data-bs-toggle="tab" data-bs-target="#sample-columns" type="button" role="tab" aria-controls="sample-columns" aria-selected="false">Sample CSV Columns</button>
+                      </li>
+                      <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="api-access-tab" data-bs-toggle="tab" data-bs-target="#api-access" type="button" role="tab" aria-controls="api-access" aria-selected="false">API Access for Sitemap Data</button>
+                      </li>
+                    </ul>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content" id="myTabContent">
+                      <div class="tab-pane fade show active" id="sitemap-analysis" role="tabpanel" aria-labelledby="sitemap-analysis-tab">
+                        <h4 class="fw-bold mb-3">Sitemap-Powered Analysis</h4>
+                        <p class="text-muted">Automatically discovers and processes entire websites via sitemap analysis.</p>
+                        
+                        <div class="alert alert-info mb-3">
+                            <h6 class="fw-bold">
+                                <i class="fas fa-magic me-2"></i>Automatic Sitemap Discovery
+                            </h6>
+                            <p class="mb-2">Simply enter any URL from a website and the scraper will:</p>
+                            <ul class="small mb-0">
+                                <li>🔍 Check multiple sitemap locations (sitemap.xml, robots.txt references)</li>
+                                <li>📋 Parse sitemap index files and sub-sitemaps</li>
+                                <li>🌐 Extract all valid URLs from the website</li>
+                                <li>📊 Process each page for comprehensive analysis</li>
+                                <li>📁 Export combined data from entire site</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="feature-card csv-highlight">
+                                    <i class="fas fa-cubes feature-icon"></i>
+                                    <h6>Site-wide Custom Elements <span class="csv-badge-small">CSV</span></h6>
+                                    <ul class="small text-muted">
+                                        <li>Detailed analysis of custom elements</li>
+                                        <li>Cross-page relationships</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-card csv-highlight">
+                                    <i class="fas fa-dna feature-icon"></i>
+                                    <h6>Site-wide Helix Elements <span class="csv-badge-small">CSV</span></h6>
+                                    <ul class="small text-muted">
+                                        <li>Comprehensive Helix element data</li>
+                                        <li>Enhanced insights</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                      </div>
+                      <div class="tab-pane fade" id="csv-export" role="tabpanel" aria-labelledby="csv-export-tab">
+                        <h4 class="fw-bold mb-3">Sitemap CSV Export Package</h4>
+                        <p class="text-muted">CSV files include source URLs and cross-page insights.</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-semibold">📦 ZIP Archive Contains:</h6>
+                                <ul class="small text-muted">
+                                    <li><strong>custom_class_elements_[domain]_[timestamp].csv</strong></li>
+                                    <li><strong>helix_elements_[domain]_[timestamp].csv</strong></li>
+                                    <li><strong>analysis_summary_[domain]_[timestamp].csv</strong></li>
+                                    <li><strong>url_processing_report_[domain]_[timestamp].csv</strong></li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-semibold">📊 Enhanced CSV Features:</h6>
+                                <ul class="small text-muted">
+                                    <li>Source URL and page title for each element</li>
+                                    <li>Site-wide analysis and pattern detection</li>
+                                    <li>URL processing success/failure report</li>
+                                    <li>Cross-page relationship mapping</li>
+                                    <li>Complete sitemap coverage analysis</li>
+                                </ul>
+                            </div>
+                        </div>
+                      </div>
+                      <div class="tab-pane fade" id="sample-columns" role="tabpanel" aria-labelledby="sample-columns-tab">
+                        <h4 class="fw-bold mb-3">Sample CSV Columns</h4>
+                        <pre class="code-block">element_id, tag, classes, enhanced_label, block_category, has_helix_children, helix_children_count, helix_child_types, text_content, text_length, word_count, image_count, link_count, form_elements, nesting_depth, total_child_elements, semantic_elements, interactive_elements, attributes_json, source_url, page_title</pre>
+                      </div>
+                      <div class="tab-pane fade" id="api-access" role="tabpanel" aria-labelledby="api-access-tab">
+                        <h4 class="fw-bold mb-3">API Access for Sitemap Data</h4>
+                        <p class="text-muted">Access sitemap-powered analysis programmatically via JSON API:</p>
+                        <h6 class="fw-semibold">POST /api/scrape</h6>
+                        <pre class="code-block mb-3">curl -X POST http://localhost:5002/api/scrape \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://16375504.livepreview.pfizer/",
+    "class_filter": "custom-block-element",
+    "max_pages": 50
+  }'</pre>
+                      </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="text-center mt-4 pt-4 border-top">
+                        <p class="text-muted small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Automatically discovers and processes entire websites via sitemap analysis. CSV files include source URLs and cross-page insights.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detailed Findings Modal -->
+        <div class="modal fade" id="detailedFindingsModal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Detailed Analysis Findings
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <pre id="detailedFindingsContent" class="code-block"></pre>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        
+        // Global variables for tracking
+        let eventSource = null;
+        let isProcessing = false;
+        let currentSessionId = null;
+        
+        // Handle form submission with loading state and progress tracking
+        document.getElementById('scrapeForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+            
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+            
+             
+            
+            
+            // Show results container
+            document.getElementById('resultsContainer').style.display = 'block';
+            
+            // Initialize progress display
+            initializeProgress();
+
+            
+            const progressContainer = document.querySelector('.download-btn-container');
+            progressContainer.innerHTML = '';
+            progressContainer.style.display = 'none';
+            
+            // Get form data
+            const formData = {
+                url: document.getElementById('url').value.trim(),
+                class_filter: document.getElementById('class_filter').value.trim(),
+                max_pages: document.getElementById('max_pages').value.trim()
+            };
+
+            performQuickAnalysis(formData.url);
+
+            // Start processing via AJAX
+            fetch('/start_processing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Start progress tracking with the session ID
+                startProgressTracking(data.session_id);
+            })
+            .catch(error => {
+                console.error('Error starting processing:', error);
+                addLogEntry('error', 'Error starting processing: ' + error.message);
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                isProcessing = false;
+            });
+        });
+        
+        function initializeProgress() {
+            isProcessing = true;
+            
+            // Reset counters
+            updateCounter('urlsFound', 0);
+            updateCounter('urlsProcessed', 0);
+            updateCounter('urlsFailed', 0);
+            updateCounter('totalElements', 0);
+            updateCounter('customElementsCount', 0);
+            updateCounter('helixElementsCount', 0);
+            updateCounter('totalElementsBreakdown', 0);
+            
+            // Clear log
+            document.getElementById('processingLog').innerHTML = 
+                '<p class="text-info"><i class="fas fa-spinner fa-spin me-2"></i>Discovering sitemap URLs...</p>';
+            
+            // Update progress
+            updateProgress(5, 'Discovering sitemap...');
+            document.getElementById('currentUrl').textContent = 'Starting analysis...';
+            document.getElementById('timeRemaining').textContent = 'Calculating...';
+            document.getElementById('processingSpeed').textContent = 'Starting...';
+        }
+        
+        // Function to start SSE connection (this would be called after form submission)
+        function startProgressTracking(sessionId) {
+            currentSessionId = sessionId;
+            
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            let reconnectAttempts = 0;
+            const maxReconnectAttempts = 3;
+            
+            function connectSSE() {
+                eventSource = new EventSource(`/progress/${sessionId}`);
+                
+                eventSource.onopen = function(event) {
+                    document.querySelector('#quickAnalysis #analysisContent').innerHTML = '';
+                    reconnectAttempts = 0; // Reset on successful connection
+                };
+                
+                eventSource.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        // Handle different message types
+                        if (data.status === 'connected') {
+                            addLogEntry('info', 'Connected to progress stream');
+                            return;
+                        }
+                        
+                        if (data.status === 'error') {
+                            addLogEntry('error', data.message || 'Server error occurred');
+                            eventSource.close();
+                            isProcessing = false;
+                            
+                            const submitBtn = document.getElementById('submitBtn');
+                            submitBtn.classList.remove('loading');
+                            submitBtn.disabled = false;
+                            return;
+                        }
+                        
+                        if (data.status === 'stream_complete') {
+                            addLogEntry('success', 'Progress tracking complete');
+                            eventSource.close();
+                            return;
+                        }
+                        
+                        // Normal progress update
+                        updateProgressFromServer(data);
+                        
+                    } catch (e) {
+                        console.error('Error parsing SSE data:', e);
+                        addLogEntry('error', 'Error parsing server response');
+                    }
+                };
+                
+                eventSource.onerror = function(event) {
+                    console.error('SSE connection error:', event);
+                    eventSource.close();
+                    
+                    // Try to reconnect with exponential backoff
+                    if (reconnectAttempts < maxReconnectAttempts && isProcessing) {
+                        reconnectAttempts++;
+                        const delay = Math.pow(2, reconnectAttempts) * 1000; // 2s, 4s, 8s
+                        
+                        addLogEntry('warning', `Connection lost. Retrying in ${delay/1000} seconds... (${reconnectAttempts}/${maxReconnectAttempts})`);
+                        setTimeout(() => {
+                            if (isProcessing) {
+                                connectSSE();
+                            }
+                        }, delay);
+                    } else {
+                        isProcessing = false;
+                        
+                        const submitBtn = document.getElementById('submitBtn');
+                        submitBtn.classList.remove('loading');
+                        submitBtn.disabled = false;
+                        
+                        if (reconnectAttempts >= maxReconnectAttempts) {
+                            addLogEntry('error', 'Connection to server lost after multiple attempts. Please refresh the page and try again.');
+                        } else {
+                            addLogEntry('error', 'Connection to server lost. Processing may have completed - check for download link.');
+                        }
+                    }
+                };
+            }
+            
+            // Start the initial connection
+            connectSSE();
+        }
+        
+        function updateProgressFromServer(data) {
+            // Update all counters from server data
+            updateCounter('urlsFound', data.urls_found || 0);
+            updateCounter('urlsProcessed', data.urls_processed || 0);
+            updateCounter('urlsFailed', data.urls_failed || 0);
+            updateCounter('customElementsCount', data.custom_elements || 0);
+            updateCounter('helixElementsCount', data.helix_elements || 0);
+            updateCounter('totalElements', data.total_elements || 0);
+            updateCounter('totalElementsBreakdown', data.total_elements || 0);
+            
+            // Update progress bar
+            updateProgress(data.progress_percentage || 0, data.message || 'Processing...');
+            
+            // Update current URL
+            document.getElementById('currentUrl').textContent = data.current_url || 'Processing...';
+            
+            // Update processing log
+            if (data.processing_log && data.processing_log.length > 0) {
+                const log = document.getElementById('processingLog');
+                log.innerHTML = '';
+                data.processing_log.forEach(entry => {
+                    addLogEntry('info', entry);
+                });
+            }
+            
+            // Calculate time estimates
+            if (data.urls_processed > 0 && data.urls_found > 0) {
+                updateTimeEstimates(data.urls_processed, data.urls_found);
+            }
+            
+            // Check if processing is complete
+            if (data.status === 'completed' || data.status === 'error') {
+                isProcessing = false;
+                const submitBtn = document.getElementById('submitBtn');
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                
+                if (eventSource) {
+                    eventSource.close();
+                }
+                
+                if (data.status === 'completed') {
+                    addLogEntry('success', 'Analysis completed successfully! CSV files are ready for download.');
+                    
+                    // Add download button
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.className = 'btn btn-success btn-lg mt-3';
+                    downloadBtn.innerHTML = '<i class="fas fa-download me-2"></i>Download CSV Results';
+                    downloadBtn.onclick = function() {
+                        window.location.href = `/download/${currentSessionId}`;
+                    };
+                    
+                    const progressContainer = document.querySelector('.download-btn-container');
+                    document.querySelector('.download-btn-container').innerHTML = '';
+                    document.querySelector('.download-btn-container').appendChild(downloadBtn);
+                    document.querySelector('.download-btn-container').style.display = 'block';
+                    
+                } else {
+                    addLogEntry('error', data.message || 'An error occurred during processing.');
+                }
+            }
+        }
+        
+        function updateCounter(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+        
+        function updateProgress(percentage, text) {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            if (progressBar && progressText) {
+                progressBar.style.width = Math.min(percentage, 100) + '%';
+                progressBar.setAttribute('aria-valuenow', percentage);
+                progressText.textContent = text;
+            }
+        }
+        
+        function addLogEntry(type, message) {
+            const log = document.getElementById('processingLog');
+            if (!log) return;
+            
+            const icon = type === 'success' ? 'check-circle' : 
+                        type === 'warning' ? 'exclamation-triangle' : 
+                        type === 'error' ? 'times-circle' : 'info-circle';
+            const colorClass = type === 'success' ? 'text-success' : 
+                              type === 'warning' ? 'text-warning' : 
+                              type === 'error' ? 'text-danger' : 'text-info';
+            
+            const entry = document.createElement('div');
+            entry.className = 'small mb-1 ' + colorClass;
+            entry.innerHTML = `<i class="fas fa-${icon} me-2"></i>${message}`;
+            
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function updateTimeEstimates(processed, total) {
+            const remaining = total - processed;
+            if (remaining > 0 && processed > 0) {
+                // Estimate based on 1-2 seconds per page
+                const estimatedSecondsPerPage = 1.5;
+                const estimatedRemainingSeconds = remaining * estimatedSecondsPerPage;
+                const speed = 60 / estimatedSecondsPerPage; // pages per minute
+                
+                document.getElementById('processingSpeed').textContent = 
+                    Math.round(speed * 10) / 10 + ' pages/min';
+                
+                if (estimatedRemainingSeconds > 60) {
+                    document.getElementById('timeRemaining').textContent = 
+                        Math.round(estimatedRemainingSeconds / 60) + ' min';
+                } else {
+                    document.getElementById('timeRemaining').textContent = 
+                        Math.round(estimatedRemainingSeconds) + ' sec';
+                }
+            } else {
+                document.getElementById('timeRemaining').textContent = 'Almost done';
+                document.getElementById('processingSpeed').textContent = 'Completing...';
+            }
+        }
+        
+        
+        let analysisTimeout;
+        
+        function performQuickAnalysis(url) {
+            
+            fetch('/analyze_page', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const contentElement = document.getElementById('analysisContent') || 
+                                     document.querySelector('#quickAnalysis #analysisContent');
+                
+                if (!contentElement) {
+                    console.error('analysisContent element not found in success handler');
+                    return;
+                }
+                
+                if (data.success) {
+                    displayAnalysisSummary(data.summary);
+                } else {
+                    contentElement.innerHTML = `
+                        <div class="text-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            ${data.error || 'Unable to analyze page'}
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                const contentElement = document.getElementById('analysisContent') || 
+                                     document.querySelector('#quickAnalysis #analysisContent');
+                
+                if (!contentElement) {
+                    console.error('analysisContent element not found in error handler');
+                    return;
+                }
+                
+                contentElement.innerHTML = `
+                    <div class="text-danger">
+                        <i class="fas fa-times me-2"></i>
+                        Error analyzing page: ${error.message}
+                    </div>
+                `;
+            });
+        }
+        
+        function displayAnalysisSummary(summary) {
+            
+            // Use multiple methods to find the elements
+            const analysisContent = document.getElementById('analysisContent') || 
+                                   document.querySelector('#quickAnalysis #analysisContent');
+            const showDetailedBtn = document.getElementById('showDetailedBtn') || 
+                                   document.querySelector('#quickAnalysis #showDetailedBtn');
+            
+            // Check if elements exist
+            if (!analysisContent) {
+                console.error('analysisContent element not found in displayAnalysisSummary');
+                return;
+            }
+            
+            let componentsList = '';
+            for (const [component, data] of Object.entries(summary.helix_components)) {
+                const versions = data.versions.map(v => `<span class="version-badge">${v}</span>`).join('');
+                componentsList += `
+                    <div class="mb-2">
+                        <strong>${component}</strong> (${data.count}) ${versions}
+                    </div>
+                `;
+            }
+            
+            let analyticsInfo = '';
+            if (Object.keys(summary.page_analytics).length > 0) {
+                const topAnalytics = Object.entries(summary.page_analytics).slice(0, 3);
+                analyticsInfo = topAnalytics.map(([key, value]) => `<div><strong>${key}:</strong> ${value}</div>`).join('');
+            }
+            
+            analysisContent.innerHTML = `
+                <div class="analysis-grid">
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-info-circle me-2"></i>Page Info</h6>
+                        <div><strong>Title:</strong> ${summary.page_title || 'N/A'}</div>
+                        <div><strong>Helix Version:</strong> ${summary.architecture_type.includes('(4.x series)') ? 'V2' : summary.architecture_type.includes('(3.x series)') ? 'V1' : 'Unknown'}</div>
+                        <div><strong>Architecture:</strong> ${summary.architecture_type}</div>
+                        ${summary.theme_info.theme_system ? `<div><strong>Theme:</strong> ${summary.theme_info.theme_system}</div>` : ''}
+                    </div>
+                    
+                    ${componentsList ? `
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-dna me-2"></i>Helix Components</h6>
+                        <div class="component-list">
+                            ${componentsList}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${analyticsInfo ? `
+                    <div class="analysis-card">
+                        <h6><i class="fas fa-analytics me-2"></i>Page Analytics</h6>
+                        <div class="small">
+                            ${analyticsInfo}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // Show detailed findings button
+            if (showDetailedBtn) {
+                showDetailedBtn.style.display = 'inline-block';
+                
+                // Store URL for detailed analysis
+                showDetailedBtn.setAttribute('data-url', summary.url);
+            } else {
+                console.error('showDetailedBtn element not found!');
+            }
+        }
+        
+        // Handle detailed findings button click
+        document.getElementById('showDetailedBtn').addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            loadDetailedFindings(url);
+        });
+        
+        function loadDetailedFindings(url) {
+            const modal = new bootstrap.Modal(document.getElementById('detailedFindingsModal'));
+            const content = document.getElementById('detailedFindingsContent');
+            
+            content.innerHTML = 'Loading detailed findings...';
+            modal.show();
+            
+            fetch('/analyze_detailed', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    content.innerHTML = data.detailed_output;
+                } else {
+                    content.innerHTML = `Error: ${data.error}`;
+                }
+            })
+            .catch(error => {
+                content.innerHTML = `Error loading detailed findings: ${error.message}`;
+            });
+        }
+        
+        function hideQuickAnalysis() {
+            const quickAnalysisDiv = document.getElementById('quickAnalysis');
+            if (quickAnalysisDiv) {
+                quickAnalysisDiv.style.display = 'none';
+            } else {
+                console.error('quickAnalysis element not found in hideQuickAnalysis');
+            }
+        }
+        
+        // Cleanup event source on page unload
+        window.addEventListener('beforeunload', function() {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>
