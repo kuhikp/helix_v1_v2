@@ -1,0 +1,933 @@
+{% extends 'authentication/base.html' %}
+{% load dict_extras %}
+
+{% block title %}Tag Mapper{% endblock %}
+
+{% block content %}
+<style>
+    .mapper-header {
+        background: linear-gradient(135deg, #FF9500 0%, #FF6B35 100%);
+        border-radius: 20px;
+        color: white;
+        padding: 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(255, 149, 0, 0.3);
+    }
+    
+    .mapper-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .header-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 20px;
+        color: white;
+    }
+    
+    .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1C1C1E;
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        color: #8E8E93;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .progress-ring {
+        position: relative;
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 16px;
+    }
+    
+    .progress-ring svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+        fill: none;
+        stroke-width: 6;
+        stroke-linecap: round;
+    }
+    
+    .progress-ring-bg {
+        stroke: #F2F2F7;
+    }
+    
+    .progress-ring-progress {
+        stroke: #FF9500;
+        stroke-dasharray: 157;
+        stroke-dashoffset: 157;
+        transition: stroke-dashoffset 0.5s ease;
+    }
+    
+    .progress-percentage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 14px;
+        font-weight: 700;
+        color: #1C1C1E;
+    }
+    
+    .controls-container {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+    
+    .section-title {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F2F2F7;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-right: 12px;
+        color: #FF9500;
+    }
+    
+    .search-container {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .search-input {
+        width: 100%;
+        border: 2px solid #F2F2F7;
+        border-radius: 12px;
+        padding: 16px 50px 16px 16px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: #FAFAFA;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #FF9500;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(255, 149, 0, 0.1);
+    }
+    
+    .search-icon {
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #8E8E93;
+        font-size: 16px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .btn-action {
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 12px 20px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+    }
+    
+    .btn-primary-action {
+        background: linear-gradient(135deg, #007AFF, #5856D6);
+        color: white;
+        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    }
+    
+    .btn-primary-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-secondary-action {
+        background: linear-gradient(135deg, #FF9500, #FF6B35);
+        color: white;
+        box-shadow: 0 4px 16px rgba(255, 149, 0, 0.3);
+    }
+    
+    .btn-secondary-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 149, 0, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-action i {
+        margin-right: 8px;
+    }
+    
+    .mapping-table-container {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    
+    .table-header {
+        background: #F2F2F7;
+        padding: 20px 24px;
+        border-bottom: 1px solid #E5E5EA;
+    }
+    
+    .table-title {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .table-title i {
+        margin-right: 12px;
+        color: #FF9500;
+    }
+    
+    .table-responsive {
+        border-radius: 0 0 16px 16px;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .mapping-table {
+        margin: 0;
+        border: none;
+    }
+    
+    .mapping-table th {
+        background: #FAFAFA;
+        color: #1C1C1E;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 16px;
+        border: none;
+        border-bottom: 2px solid #F2F2F7;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .mapping-table td {
+        padding: 20px 16px;
+        border: none;
+        border-bottom: 1px solid #F2F2F7;
+        vertical-align: middle;
+    }
+    
+    .mapping-table tbody tr:hover {
+        background: #FAFAFA;
+    }
+    
+    .v1-tag-cell {
+        min-width: 200px;
+    }
+    
+    .v1-tag-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .v1-tag-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #007AFF, #5856D6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        margin-right: 12px;
+        font-size: 14px;
+    }
+    
+    .v1-tag-name {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin: 0;
+        font-size: 14px;
+    }
+    
+    .v2-input-container {
+        position: relative;
+        min-width: 300px;
+    }
+    
+    .v2-input {
+        width: 100%;
+        border: 2px solid #F2F2F7;
+        border-radius: 10px;
+        padding: 12px 40px 12px 12px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background: #FAFAFA;
+    }
+    
+    .v2-input:focus {
+        outline: none;
+        border-color: #FF9500;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(255, 149, 0, 0.1);
+    }
+    
+    .v2-input.has-value {
+        border-color: #34C759;
+        background: rgba(52, 199, 89, 0.05);
+    }
+    
+    .input-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #8E8E93;
+        font-size: 12px;
+    }
+    
+    .input-icon.has-value {
+        color: #34C759;
+    }
+    
+    .weight-input {
+        width: 80px;
+        border: 2px solid #F2F2F7;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        text-align: center;
+        background: #F2F2F7;
+        color: #8E8E93;
+    }
+    
+    .weight-input:disabled {
+        cursor: not-allowed;
+    }
+    
+    .mapping-status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-mapped {
+        background: rgba(52, 199, 89, 0.1);
+        color: #34C759;
+    }
+    
+    .status-unmapped {
+        background: rgba(255, 59, 48, 0.1);
+        color: #FF3B30;
+    }
+    
+    .save-buttons {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        margin-top: 24px;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #34C759, #30D158);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 16px 32px;
+        font-weight: 600;
+        font-size: 16px;
+        box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+        transition: all 0.3s ease;
+        margin: 0 8px;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+        color: white;
+    }
+    
+    .btn-save:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 64px 32px;
+        color: #8E8E93;
+    }
+    
+    .empty-state i {
+        font-size: 64px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+    
+    .empty-state h4 {
+        color: #1C1C1E;
+        margin-bottom: 8px;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        display: none;
+    }
+    
+    .loading-spinner {
+        animation: spin 1s linear infinite;
+        font-size: 32px;
+        color: #FF9500;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .message-container {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+        border: 2px solid rgba(52, 199, 89, 0.2);
+    }
+    
+    .message-success {
+        background: rgba(52, 199, 89, 0.1);
+        color: #34C759;
+    }
+    
+    .message-icon {
+        font-size: 18px;
+        margin-right: 12px;
+    }
+    
+    .batch-actions {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-batch {
+        background: #F2F2F7;
+        color: #8E8E93;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-batch:hover {
+        background: #E5E5EA;
+        color: #1C1C1E;
+        transform: translateY(-1px);
+    }
+    
+    .filter-controls {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-select {
+        border: 2px solid #F2F2F7;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 14px;
+        background: #FAFAFA;
+        min-width: 120px;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: #FF9500;
+        background: white;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="mapper-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-exchange-alt me-3"></i>Tag Mapper</h1>
+                <p class="header-subtitle">Map Version 1 tags to Version 2 components</p>
+            </div>
+            <div>
+                <a href="{% url 'auto_map_v1_to_v2_tags' %}" class="btn btn-light" style="border-radius: 12px; padding: 12px 20px;">
+                    <i class="fas fa-magic me-2"></i>Auto Map V1 to V2
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    {% if messages %}
+        {% for message in messages %}
+        <div class="message-container message-success">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle message-icon"></i>
+                <div>{{ message }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Statistics -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #007AFF, #5856D6);">
+                <i class="fas fa-tags"></i>
+            </div>
+            <div class="stat-number">{{ total_v1_tags }}</div>
+            <div class="stat-label">V1 Tags</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #34C759, #30D158);">
+                <i class="fas fa-link"></i>
+            </div>
+            <div class="stat-number">{{ total_mappings }}</div>
+            <div class="stat-label">Total Mappings</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="progress-ring">
+                <svg>
+                    <circle class="progress-ring-circle progress-ring-bg" cx="30" cy="30" r="25"></circle>
+                    <circle class="progress-ring-circle progress-ring-progress" cx="30" cy="30" r="25" id="progressCircle"></circle>
+                </svg>
+                <div class="progress-percentage" id="progressPercentage">0%</div>
+            </div>
+            <div class="stat-label">Mapped Progress</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #5856D6, #AF52DE);">
+                <i class="fas fa-code"></i>
+            </div>
+            <div class="stat-number" id="unmappedCount">0</div>
+            <div class="stat-label">Unmapped Tags</div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-container">
+        <h5 class="section-title">
+            <i class="fas fa-cog"></i>Mapping Controls
+        </h5>
+        
+        <div class="search-container">
+            <input type="text" class="search-input" id="searchInput" placeholder="Search V1 tags..." onkeyup="filterTags()">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+        
+        <div class="filter-controls">
+            <select class="filter-select" id="statusFilter" onchange="filterByStatus()">
+                <option value="">All Tags</option>
+                <option value="mapped">Mapped Only</option>
+                <option value="unmapped">Unmapped Only</option>
+            </select>
+            
+            <div class="batch-actions">
+                <button class="btn-batch" onclick="clearAllMappings()" title="Clear all mappings">
+                    <i class="fas fa-eraser me-1"></i>Clear All
+                </button>
+                <button class="btn-batch" onclick="exportMappings()" title="Export current mappings">
+                    <i class="fas fa-download me-1"></i>Export
+                </button>
+                <button class="btn-batch" onclick="importMappings()" title="Import mappings">
+                    <i class="fas fa-upload me-1"></i>Import
+                </button>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button type="button" class="btn-action btn-primary-action" onclick="validateMappings()">
+                <i class="fas fa-check-double"></i>Validate Mappings
+            </button>
+            <button type="button" class="btn-action btn-secondary-action" onclick="previewMappings()">
+                <i class="fas fa-eye"></i>Preview Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- Mapping Table -->
+    <form method="post" id="mappingForm">
+        {% csrf_token %}
+        
+        <div class="mapping-table-container">
+            <div class="table-header">
+                <h5 class="table-title">
+                    <i class="fas fa-table"></i>Tag Mappings
+                </h5>
+            </div>
+            
+            {% if v1_tags %}
+            <div class="table-responsive">
+                <table class="table mapping-table">
+                    <thead>
+                        <tr>
+                            <th>V1 Tag</th>
+                            <th>V2 Component Names</th>
+                            <th>Weight</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v1_tag in v1_tags %}
+                        <tr data-tag-name="{{ v1_tag.name|lower }}">
+                            <td class="v1-tag-cell">
+                                <div class="v1-tag-info">
+                                    <div class="v1-tag-avatar">
+                                        V1
+                                    </div>
+                                    <div>
+                                        <h6 class="v1-tag-name">{{ v1_tag.name }}</h6>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="v2-input-container">
+                                    <input 
+                                        type="text" 
+                                        class="v2-input" 
+                                        name="v2_component_names_{{ v1_tag.id }}" 
+                                        value="{% with v1_to_v2_map|get_item:v1_tag.name as mapped_values %}{% for v2_dict in mapped_values %}{{ v2_dict.v2_name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endwith %}" 
+                                        placeholder="Enter V2 component names (comma separated)"
+                                        onchange="updateMappingStatus(this)"
+                                        onkeyup="updateMappingStatus(this)"
+                                    >
+                                    <i class="fas fa-link input-icon"></i>
+                                </div>
+                            </td>
+                            <td>
+                                <input 
+                                    type="number" 
+                                    class="weight-input" 
+                                    name="weight_{{ v1_tag.id }}" 
+                                    value="{% with v1_to_v2_map|get_item:v1_tag.name as mapped_values %}{% if mapped_values %}{{ mapped_values.0.weight }}{% else %}1{% endif %}{% endwith %}" 
+                                    min="1" 
+                                    disabled
+                                    title="Weight is automatically set to 1"
+                                >
+                            </td>
+                            <td>
+                                <span class="mapping-status status-unmapped" data-status="unmapped">
+                                    <i class="fas fa-times me-1"></i>Unmapped
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-tags"></i>
+                <h4>No V1 Tags Found</h4>
+                <p>No Version 1 tags are available for mapping.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Save Buttons -->
+        <div class="save-buttons">
+            <button type="submit" class="btn-save" id="saveButton">
+                <i class="fas fa-save me-2"></i>Save All Mappings
+            </button>
+            
+            <button type="button" class="btn-save" style="background: linear-gradient(135deg, #FF9500, #FF6B35);" onclick="resetForm()">
+                <i class="fas fa-undo me-2"></i>Reset Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="text-center">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner"></i>
+        </div>
+        <h5 class="mt-3">Saving mappings...</h5>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize mapping status for all inputs
+    const inputs = document.querySelectorAll('.v2-input');
+    inputs.forEach(input => {
+        updateMappingStatus(input);
+    });
+    
+    // Update statistics
+    updateStatistics();
+    
+    // Form submission handling
+    const form = document.getElementById('mappingForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const saveButton = document.getElementById('saveButton');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        
+        // Show loading
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+        loadingOverlay.style.display = 'flex';
+        
+        // Submit form after short delay for UX
+        setTimeout(() => {
+            form.submit();
+        }, 500);
+    });
+});
+
+function updateMappingStatus(input) {
+    const row = input.closest('tr');
+    const statusElement = row.querySelector('.mapping-status');
+    const icon = row.querySelector('.input-icon');
+    const value = input.value.trim();
+    
+    if (value) {
+        input.classList.add('has-value');
+        icon.classList.add('has-value');
+        icon.className = 'fas fa-check input-icon has-value';
+        
+        statusElement.className = 'mapping-status status-mapped';
+        statusElement.innerHTML = '<i class="fas fa-check me-1"></i>Mapped';
+        statusElement.setAttribute('data-status', 'mapped');
+    } else {
+        input.classList.remove('has-value');
+        icon.classList.remove('has-value');
+        icon.className = 'fas fa-link input-icon';
+        
+        statusElement.className = 'mapping-status status-unmapped';
+        statusElement.innerHTML = '<i class="fas fa-times me-1"></i>Unmapped';
+        statusElement.setAttribute('data-status', 'unmapped');
+    }
+    
+    updateStatistics();
+}
+
+function updateStatistics() {
+    const totalTags = document.querySelectorAll('.v2-input').length;
+    const mappedTags = document.querySelectorAll('.status-mapped').length;
+    const unmappedTags = totalTags - mappedTags;
+    const percentage = totalTags > 0 ? Math.round((mappedTags / totalTags) * 100) : 0;
+    
+    // Update progress ring
+    const progressCircle = document.getElementById('progressCircle');
+    const progressPercentage = document.getElementById('progressPercentage');
+    const unmappedCount = document.getElementById('unmappedCount');
+    
+    if (progressCircle && progressPercentage) {
+        const circumference = 157; // 2 * π * r (r=25)
+        const offset = circumference - (percentage / 100) * circumference;
+        
+        progressCircle.style.strokeDashoffset = offset;
+        progressPercentage.textContent = percentage + '%';
+    }
+    
+    if (unmappedCount) {
+        unmappedCount.textContent = unmappedTags;
+    }
+}
+
+function filterTags() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('.mapping-table tbody tr');
+    
+    rows.forEach(row => {
+        const tagName = row.getAttribute('data-tag-name');
+        if (tagName && tagName.includes(filter)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function filterByStatus() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rows = document.querySelectorAll('.mapping-table tbody tr');
+    
+    rows.forEach(row => {
+        const status = row.querySelector('.mapping-status').getAttribute('data-status');
+        
+        if (!statusFilter || status === statusFilter) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function validateMappings() {
+    const inputs = document.querySelectorAll('.v2-input');
+    let hasErrors = false;
+    
+    inputs.forEach(input => {
+        const value = input.value.trim();
+        if (value) {
+            // Simple validation - check for valid component names
+            const components = value.split(',').map(c => c.trim()).filter(c => c);
+            if (components.length === 0) {
+                input.style.borderColor = '#FF3B30';
+                hasErrors = true;
+            } else {
+                input.style.borderColor = '#34C759';
+            }
+        }
+    });
+    
+    if (hasErrors) {
+        showAlert('Please check the highlighted mappings for errors.', 'error');
+    } else {
+        showAlert('All mappings are valid!', 'success');
+    }
+}
+
+function previewMappings() {
+    const mappedCount = document.querySelectorAll('.status-mapped').length;
+    const totalCount = document.querySelectorAll('.v2-input').length;
+    
+    const message = `Preview: ${mappedCount} of ${totalCount} tags are mapped (${Math.round((mappedCount/totalCount)*100)}% complete)`;
+    showAlert(message, 'info');
+}
+
+function clearAllMappings() {
+    if (confirm('Are you sure you want to clear all mappings? This action cannot be undone.')) {
+        const inputs = document.querySelectorAll('.v2-input');
+        inputs.forEach(input => {
+            input.value = '';
+            updateMappingStatus(input);
+        });
+        showAlert('All mappings cleared.', 'info');
+    }
+}
+
+function resetForm() {
+    if (confirm('Are you sure you want to reset all changes?')) {
+        window.location.reload();
+    }
+}
+
+function exportMappings() {
+    showAlert('Export functionality coming soon!', 'info');
+}
+
+function importMappings() {
+    showAlert('Import functionality coming soon!', 'info');
+}
+
+function showAlert(message, type = 'info') {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.style.position = 'fixed';
+    alert.style.top = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '9999';
+    alert.style.borderRadius = '12px';
+    alert.innerHTML = `
+        <i class="fas fa-info-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

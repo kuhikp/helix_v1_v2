@@ -1,0 +1,498 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Import Websites from CSV{% endblock %}
+
+{% block content %}
+<style>
+    /* iPhone-style design matching the complexity mapping template */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-green: #34C759;
+        --ios-green-dark: #248A3D;
+        --ios-orange: #FF9500;
+        --ios-orange-dark: #CC7700;
+        --ios-red: #FF3B30;
+        --ios-red-dark: #D70015;
+        --ios-purple: #5856D6;
+        --ios-purple-dark: #3634A3;
+        --ios-gray: #8E8E93;
+        --ios-gray-dark: #6D6D70;
+        --ios-background: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-border: #E5E5EA;
+    }
+    
+    body {
+        background: var(--ios-background);
+        color: var(--ios-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-green) 0%, var(--ios-blue) 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(52, 199, 89, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+        50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .page-header p {
+        font-size: 1.1rem;
+        margin: 16px 0 0 0;
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .upload-card {
+        background: var(--ios-surface);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--ios-border);
+        margin-bottom: 32px;
+    }
+    
+    .upload-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 2px solid var(--ios-border);
+    }
+    
+    .upload-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, var(--ios-green), var(--ios-blue));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.3);
+    }
+    
+    .upload-icon i {
+        font-size: 28px;
+        color: white;
+    }
+    
+    .upload-info h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0 0 8px 0;
+        color: var(--ios-text-primary);
+    }
+    
+    .upload-info p {
+        color: var(--ios-text-secondary);
+        margin: 0;
+        line-height: 1.6;
+        font-size: 1rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--ios-text-primary);
+        margin-bottom: 12px;
+        display: block;
+        font-size: 16px;
+    }
+    
+    .file-upload-area {
+        border: 3px dashed var(--ios-border);
+        border-radius: 20px;
+        padding: 48px 24px;
+        text-align: center;
+        background: linear-gradient(135deg, #F8F9FF 0%, #F0F8FF 100%);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .file-upload-area:hover {
+        border-color: var(--ios-blue);
+        background: linear-gradient(135deg, #E3F2FD 0%, #F0F8FF 100%);
+        transform: translateY(-2px);
+    }
+    
+    .file-upload-area.dragover {
+        border-color: var(--ios-green);
+        background: linear-gradient(135deg, #E8F5E8 0%, #F0FFF0 100%);
+        box-shadow: 0 8px 32px rgba(52, 199, 89, 0.2);
+    }
+    
+    .file-upload-icon {
+        font-size: 48px;
+        color: var(--ios-blue);
+        margin-bottom: 16px;
+        display: block;
+    }
+    
+    .file-upload-text {
+        font-size: 18px;
+        color: var(--ios-text-primary);
+        line-height: 1.5;
+    }
+    
+    .file-upload-text strong {
+        color: var(--ios-blue);
+        font-weight: 600;
+    }
+    
+    #id_csv_file {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    
+    .form-text {
+        color: var(--ios-text-secondary);
+        font-size: 14px;
+        margin-top: 8px;
+        line-height: 1.4;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--ios-green), var(--ios-blue));
+        border: none;
+        border-radius: 16px;
+        padding: 16px 32px;
+        font-weight: 600;
+        font-size: 16px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+        background: linear-gradient(135deg, var(--ios-green-dark), var(--ios-blue-dark));
+    }
+    
+    .btn-secondary {
+        background: var(--ios-border);
+        border: 2px solid var(--ios-border);
+        border-radius: 16px;
+        padding: 14px 28px;
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--ios-text-primary);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-secondary:hover {
+        background: #D1D1D6;
+        border-color: #D1D1D6;
+        color: var(--ios-text-primary);
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        margin-top: 32px;
+        flex-wrap: wrap;
+    }
+    
+    .template-download-section {
+        margin-bottom: 24px;
+    }
+    
+    .alert {
+        background: linear-gradient(135deg, #E8F5E8 0%, #F0FFF0 100%);
+        border: 2px solid var(--ios-green);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 0;
+    }
+    
+    .alert h5 {
+        color: var(--ios-green);
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .alert p {
+        color: var(--ios-text-secondary);
+        margin-bottom: 16px;
+        line-height: 1.5;
+    }
+    
+    .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        border-radius: 16px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+    
+    .text-danger {
+        color: var(--ios-red) !important;
+    }
+    
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 24px;
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+        }
+        
+        .upload-card {
+            padding: 20px;
+        }
+        
+        .upload-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .upload-icon {
+            margin-right: 0;
+            margin-bottom: 16px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-upload me-3"></i>Import Websites</h1>
+                <p>Upload a CSV file to bulk import website URLs for analysis. This will help you quickly add multiple sites to your project for comprehensive component tracking.</p>
+            </div>
+            <a href="{% url 'site_list' %}" class="back-btn">
+                <i class="fas fa-arrow-left me-2"></i>Back to Sites
+            </a>
+        </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="upload-card">
+        <div class="upload-header">
+            <div class="upload-icon">
+                <i class="fas fa-globe"></i>
+            </div>
+            <div class="upload-info">
+                <h2>Upload Website CSV</h2>
+                <p>Select a CSV file containing website URLs. Each URL will be added to your site collection for component analysis and tracking.</p>
+            </div>
+        </div>
+
+        <!-- Sample Template Download -->
+        <div class="template-download-section">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-info-circle me-3" style="font-size: 24px; color: var(--ios-green);"></i>
+                <div class="flex-grow-1">
+                    <h5 class="mb-1">Need a template?</h5>
+                    <p class="mb-2">Download our sample CSV template with examples of properly formatted website URLs.</p>
+                    <a href="{% url 'download_sites_import_template' %}" class="btn-secondary">
+                        <i class="fas fa-download me-2"></i>Download Sample Template
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="websites-upload-form" id="uploadForm">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="csv_file" class="form-label">
+                    <i class="fas fa-file-upload me-2"></i>Select CSV File
+                </label>
+                
+                <div class="file-upload-area" id="uploadArea">
+                    <div class="file-upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="file-upload-text" id="uploadText">
+                        <strong>Click to select</strong> or drag and drop your CSV file here
+                    </div>
+                    <input type="file" name="csv_file" id="id_csv_file" accept=".csv" required>
+                </div>
+                
+                <div class="form-text">
+                    <strong>CSV Format:</strong> One column with header "website_url" containing website URLs (e.g., https://example.com)
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    <i class="fas fa-upload me-2"></i>Import Websites
+                </button>
+                
+                <a href="{% url 'site_list' %}" class="btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Requirements Section -->
+    <div class="upload-card">
+        <div class="upload-header">
+            <div class="upload-icon">
+                <i class="fas fa-list-check"></i>
+            </div>
+            <div class="upload-info">
+                <h2>Requirements & Guidelines</h2>
+                <p>Please ensure your CSV file meets the following requirements for successful import:</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h4 class="info-title">
+                    <i class="fas fa-check-circle text-success me-2"></i>File Requirements
+                </h4>
+                <ul class="requirements-list">
+                    <li>CSV file format (.csv extension)</li>
+                    <li>Header row with "website_url" column</li>
+                    <li>UTF-8 encoding recommended</li>
+                    <li>Maximum file size: 10MB</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h4 class="info-title">
+                    <i class="fas fa-globe text-primary me-2"></i>URL Format
+                </h4>
+                <ul class="requirements-list">
+                    <li>Include protocol (https:// or http://)</li>
+                    <li>Valid domain format</li>
+                    <li>One URL per row</li>
+                    <li>Duplicates will be automatically skipped</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced file upload functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('id_csv_file');
+    const uploadText = document.getElementById('uploadText');
+    const submitBtn = document.getElementById('submitBtn');
+    const form = document.getElementById('uploadForm');
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateFileDisplay(files[0]);
+        }
+    });
+    
+    // File selection
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            updateFileDisplay(e.target.files[0]);
+        }
+    });
+    
+    function updateFileDisplay(file) {
+        if (file) {
+            uploadText.innerHTML = `
+                <strong>Selected:</strong> ${file.name}<br>
+                <small>Size: ${(file.size / 1024).toFixed(1)} KB</small>
+            `;
+            uploadArea.style.borderColor = 'var(--ios-green)';
+            uploadArea.style.background = 'linear-gradient(135deg, #E8F5E8 0%, #F0FFF0 100%)';
+        }
+    }
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            alert('Please select a CSV file to upload.');
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        if (!file.name.toLowerCase().endsWith('.csv')) {
+            e.preventDefault();
+            alert('Please select a CSV file (.csv extension required).');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Importing...';
+        submitBtn.disabled = true;
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Delete Tag{% endblock %}
+
+{% block content %}
+<h1>Are you sure you want to delete this tag?</h1>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Yes, delete</button>
+</form>
+<a href="{% url 'tag_list' %}">Cancel</a>
+{% endblock %}

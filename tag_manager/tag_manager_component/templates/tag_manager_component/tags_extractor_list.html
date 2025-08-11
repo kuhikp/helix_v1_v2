@@ -1,0 +1,625 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Tags Extractor{% endblock %}
+
+{% block content %}
+<style>
+    .extractor-header {
+        background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+        border-radius: 20px;
+        color: white;
+        padding: 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+    }
+    
+    .extractor-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .header-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        font-size: 20px;
+        color: white;
+    }
+    
+    .stat-number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1C1C1E;
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        color: #8E8E93;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .actions-container {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+    
+    .section-title {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F2F2F7;
+    }
+    
+    .action-button {
+        background: linear-gradient(135deg, #34C759, #30D158);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 14px 24px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+    }
+    
+    .action-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .action-button i {
+        margin-right: 8px;
+    }
+    
+    .extractors-table-container {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    
+    .table-header {
+        background: #F2F2F7;
+        padding: 20px 24px;
+        border-bottom: 1px solid #E5E5EA;
+    }
+    
+    .table-title {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+    
+    .table-title i {
+        margin-right: 12px;
+        color: #007AFF;
+    }
+    
+    .table-responsive {
+        border-radius: 0 0 16px 16px;
+    }
+    
+    .extractor-table {
+        margin: 0;
+        border: none;
+    }
+    
+    .extractor-table th {
+        background: #FAFAFA;
+        color: #1C1C1E;
+        font-weight: 600;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 16px;
+        border: none;
+        border-bottom: 2px solid #F2F2F7;
+    }
+    
+    .extractor-table td {
+        padding: 20px 16px;
+        border: none;
+        border-bottom: 1px solid #F2F2F7;
+        vertical-align: middle;
+    }
+    
+    .extractor-table tbody tr:hover {
+        background: #FAFAFA;
+    }
+    
+    .extractor-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .extractor-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #007AFF, #5856D6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        margin-right: 16px;
+        font-size: 18px;
+    }
+    
+    .extractor-details h6 {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin-bottom: 4px;
+        font-size: 14px;
+    }
+    
+    .extractor-details p {
+        color: #8E8E93;
+        margin: 0;
+        font-size: 12px;
+        word-break: break-all;
+    }
+    
+    .version-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .version-v1 {
+        background: rgba(255, 149, 0, 0.1);
+        color: #FF9500;
+    }
+    
+    .version-v2 {
+        background: rgba(0, 122, 255, 0.1);
+        color: #007AFF;
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-imported {
+        background: rgba(52, 199, 89, 0.1);
+        color: #34C759;
+    }
+    
+    .status-pending {
+        background: rgba(255, 59, 48, 0.1);
+        color: #FF3B30;
+    }
+    
+    .progress-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .progress-bar-container {
+        flex: 1;
+        height: 8px;
+        background: #F2F2F7;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(135deg, #34C759, #30D158);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        color: #8E8E93;
+        font-size: 12px;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .btn-process {
+        background: linear-gradient(135deg, #007AFF, #5856D6);
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+    }
+    
+    .btn-process:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4);
+    }
+    
+    .btn-complete {
+        background: #34C759;
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 64px 32px;
+        color: #8E8E93;
+    }
+    
+    .empty-state i {
+        font-size: 64px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+    
+    .empty-state h4 {
+        color: #1C1C1E;
+        margin-bottom: 8px;
+    }
+    
+    .search-container {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .search-input {
+        width: 100%;
+        border: 2px solid #F2F2F7;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: #FAFAFA;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #007AFF;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="extractor-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-code-branch me-3"></i>Tags Extractor</h1>
+                <p class="header-subtitle">Extract and manage tags from repositories</p>
+            </div>
+            <div>
+                <a href="{% url 'tags_extractor_create' %}" class="btn btn-light" style="border-radius: 12px; padding: 12px 20px;">
+                    <i class="fas fa-plus me-2"></i>New Extractor
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #007AFF, #5856D6);">
+                <i class="fas fa-database"></i>
+            </div>
+            <div class="stat-number">{{ extractor_info|length }}</div>
+            <div class="stat-label">Total Extractors</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #34C759, #30D158);">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-number" id="importedCount">0</div>
+            <div class="stat-label">Imported</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #FF9500, #FF6B35);">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-number" id="pendingCount">0</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #5856D6, #AF52DE);">
+                <i class="fas fa-code"></i>
+            </div>
+            <div class="stat-number" id="totalPages">0</div>
+            <div class="stat-label">Total Pages</div>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-container">
+        <input type="text" class="search-input" placeholder="Search extractors by repository URL or version..." id="extractorSearch">
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-container">
+        <h5 class="section-title"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+        <div class="d-flex gap-3 flex-wrap">
+            <a href="{% url 'tags_extractor_create' %}" class="action-button">
+                <i class="fas fa-plus"></i>Add New Extractor
+            </a>
+            <button class="action-button" style="background: linear-gradient(135deg, #FF9500, #FF6B35);" onclick="processPendingAll()">
+                <i class="fas fa-play"></i>Process All Pending
+            </button>
+            <button class="action-button" style="background: linear-gradient(135deg, #5856D6, #AF52DE);" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i>Refresh Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Extractors Table -->
+    <div class="extractors-table-container">
+        <div class="table-header">
+            <h5 class="table-title">
+                <i class="fas fa-list"></i>Repository Extractors
+            </h5>
+        </div>
+        
+        {% if extractor_info %}
+        <div class="table-responsive">
+            <table class="table extractor-table">
+                <thead>
+                    <tr>
+                        <th>Repository</th>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Created</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for info in extractor_info %}
+                    <tr data-repo="{{ info.extractor.repo_url|lower }}" data-version="{{ info.extractor.version_value|lower }}">
+                        <td>
+                            <div class="extractor-info">
+                                <div class="extractor-avatar">
+                                    {{ info.extractor.version_value }}
+                                </div>
+                                <div class="extractor-details">
+                                    <h6>
+                                        <a href="{% url 'tags_extractor_detail' info.extractor.id %}" 
+                                           style="color: #1C1C1E; text-decoration: none;">
+                                            Repository {{ forloop.counter }}
+                                        </a>
+                                    </h6>
+                                    <p>{{ info.extractor.repo_url|truncatechars:50 }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="version-badge version-{{ info.extractor.version_value|lower }}">
+                                <i class="fas fa-tag me-1"></i>{{ info.extractor.version_value }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if info.extractor.imported %}
+                                <span class="status-badge status-imported">
+                                    <i class="fas fa-check me-1"></i>Imported
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-pending">
+                                    <i class="fas fa-clock me-1"></i>Pending
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="progress-container">
+                                {% if info.total_pages and info.total_pages > 0 %}
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: {% widthratio info.start_page info.total_pages 100 %}%"></div>
+                                    </div>
+                                    <div class="progress-text">{{ info.start_page }}/{{ info.total_pages }}</div>
+                                {% else %}
+                                    <div class="progress-text">No data</div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-muted">{{ info.extractor.created_at|date:"M d, Y" }}</span>
+                            <br>
+                            <small class="text-muted">{{ info.extractor.created_at|time:"H:i" }}</small>
+                        </td>
+                        <td class="text-center">
+                            <div class="action-buttons">
+                                <a href="{% url 'tags_extractor_detail' info.extractor.id %}" 
+                                   class="btn-action" 
+                                   style="background: linear-gradient(135deg, #5856D6, #AF52DE); color: white; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; margin-right: 8px;" 
+                                   title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if info.extractor.start_page < info.total_pages %}
+                                    <a href="{% url 'process_pending_items' info.extractor.id %}" 
+                                       class="btn-action btn-process" 
+                                       title="Process Pending Items">
+                                        <i class="fas fa-play"></i>
+                                    </a>
+                                {% else %}
+                                    <button class="btn-action btn-complete" title="Complete" disabled>
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-code-branch"></i>
+            <h4>No Extractors Found</h4>
+            <p>Start by creating your first repository extractor.</p>
+            <a href="{% url 'tags_extractor_create' %}" class="action-button mt-3">
+                <i class="fas fa-plus"></i>Create Extractor
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate statistics
+    const extractorRows = document.querySelectorAll('.extractor-table tbody tr');
+    let importedCount = 0;
+    let pendingCount = 0;
+    let totalPages = 0;
+    
+    extractorRows.forEach(row => {
+        const statusBadge = row.querySelector('.status-badge');
+        if (statusBadge.classList.contains('status-imported')) {
+            importedCount++;
+        } else {
+            pendingCount++;
+        }
+        
+        const progressText = row.querySelector('.progress-text').textContent;
+        if (progressText !== 'No data') {
+            const pages = progressText.split('/')[1];
+            totalPages += parseInt(pages) || 0;
+        }
+    });
+    
+    document.getElementById('importedCount').textContent = importedCount;
+    document.getElementById('pendingCount').textContent = pendingCount;
+    document.getElementById('totalPages').textContent = totalPages;
+    
+    // Search functionality
+    const searchInput = document.getElementById('extractorSearch');
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.extractor-table tbody tr');
+        
+        rows.forEach(row => {
+            const repo = row.getAttribute('data-repo');
+            const version = row.getAttribute('data-version');
+            
+            if (repo.includes(searchTerm) || version.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+
+function processPendingAll() {
+    if (confirm('Are you sure you want to process all pending extractors? This may take some time.')) {
+        // Get all pending extractor IDs
+        const pendingButtons = document.querySelectorAll('.btn-process');
+        if (pendingButtons.length === 0) {
+            showAlert('No pending extractors found.', 'info');
+            return;
+        }
+        
+        showAlert('Processing all pending extractors...', 'info');
+        // You can implement batch processing here
+    }
+}
+
+function refreshData() {
+    showAlert('Refreshing data...', 'info');
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+}
+
+function showAlert(message, type = 'info') {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.style.position = 'fixed';
+    alert.style.top = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '9999';
+    alert.style.borderRadius = '12px';
+    alert.innerHTML = `
+        <i class="fas fa-info-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

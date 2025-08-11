@@ -1,0 +1,9 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Error{% endblock %}
+
+{% block content %}
+<h1>An error occurred</h1>
+<p>{{ error }}</p>
+<a href="{% url 'site_list' %}" class="btn btn-secondary">Back to Site List</a>
+{% endblock %}

@@ -1,0 +1,1 @@
+default_app_config = 'tag_manager_component.apps.TagManagerComponentConfig'

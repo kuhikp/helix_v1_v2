@@ -1,0 +1,472 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}
+    {% if is_complexity_only %}
+        Batch Complexity Update Progress
+    {% else %}
+        Batch Analysis Progress
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+    /* iPhone-style design matching other templates */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-green: #34C759;
+        --ios-green-dark: #248A3D;
+        --ios-orange: #FF9500;
+        --ios-orange-dark: #CC7700;
+        --ios-red: #FF3B30;
+        --ios-red-dark: #D70015;
+        --ios-purple: #5856D6;
+        --ios-purple-dark: #3634A3;
+        --ios-gray: #8E8E93;
+        --ios-gray-dark: #6D6D70;
+        --ios-background: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-border: #E5E5EA;
+    }
+    
+    body {
+        background: var(--ios-background);
+        color: var(--ios-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+        transform: rotate(25deg);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%) rotate(25deg); }
+        100% { transform: translateX(100%) rotate(25deg); }
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .progress-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .status-card {
+        background: var(--ios-surface);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--ios-border);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    
+    .status-card-header {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8f4f8 100%);
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--ios-border);
+    }
+    
+    .status-card-header h3 {
+        color: var(--ios-text-primary);
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .status-card-body {
+        padding: 32px;
+    }
+    
+    .progress-wrapper {
+        margin-bottom: 24px;
+    }
+    
+    .progress {
+        height: 20px;
+        border-radius: 10px;
+        background: #f0f0f0;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%);
+        transition: width 0.5s ease;
+        box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+    }
+    
+    .progress-text {
+        text-align: center;
+        margin-top: 12px;
+        font-weight: 600;
+        color: var(--ios-text-primary);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .stat-item {
+        background: var(--ios-surface);
+        border-radius: 16px;
+        padding: 24px;
+        text-align: center;
+        border: 1px solid var(--ios-border);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--ios-text-secondary);
+        font-weight: 500;
+    }
+    
+    .current-site {
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4f4d4 100%);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 24px;
+        border-left: 4px solid var(--ios-green);
+    }
+    
+    .current-site h4 {
+        color: var(--ios-green-dark);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .current-site p {
+        color: var(--ios-text-primary);
+        margin: 0;
+        font-family: monospace;
+        word-break: break-all;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-top: 32px;
+    }
+    
+    .btn {
+        padding: 16px 32px;
+        border: none;
+        border-radius: 16px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        min-width: 160px;
+        justify-content: center;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-blue-dark) 100%);
+        color: white;
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(0, 122, 255, 0.4);
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, var(--ios-green) 0%, var(--ios-green-dark) 100%);
+        color: white;
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.3);
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(52, 199, 89, 0.4);
+    }
+    
+    .btn-secondary {
+        background: var(--ios-surface);
+        color: var(--ios-text-primary);
+        border: 2px solid var(--ios-border);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        border-color: var(--ios-blue);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .status-starting { color: var(--ios-orange); }
+    .status-processing { color: var(--ios-blue); }
+    .status-completed { color: var(--ios-green); }
+    .status-failed { color: var(--ios-red); }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--ios-blue);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .hidden {
+        display: none;
+    }
+    
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+        }
+        
+        .status-card-body {
+            padding: 24px;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+
+<div class="progress-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>
+            {% if is_complexity_only %}
+                🔄 Batch Complexity Update
+            {% else %}
+                ⚙️ Batch Site Analysis
+            {% endif %}
+        </h1>
+        <p>
+            {% if is_complexity_only %}
+                Updating complexity classification for all websites
+            {% else %}
+                Processing websites and analyzing components
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Progress Status -->
+    <div class="status-card">
+        <div class="status-card-header">
+            <h3>
+                <span class="loading-spinner"></span>
+                Processing Status
+            </h3>
+        </div>
+        <div class="status-card-body">
+            <!-- Progress Bar -->
+            <div class="progress-wrapper">
+                <div class="progress">
+                    <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText">Initializing...</div>
+            </div>
+
+            <!-- Current Site -->
+            <div class="current-site" id="currentSiteSection" style="display: none;">
+                <h4>Currently Processing:</h4>
+                <p id="currentSite">-</p>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value status-processing" id="currentCount">0</div>
+                    <div class="stat-label">
+                        {% if is_complexity_only %}
+                            Updated
+                        {% else %}
+                            Processed
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">Total Sites</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value status-starting" id="elapsedTime">0s</div>
+                    <div class="stat-label">Elapsed Time</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value status-starting" id="estimatedRemaining">-</div>
+                    <div class="stat-label">Est. Remaining</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="btn-group">
+        <button class="btn btn-secondary" onclick="location.reload()">
+            <i class="fas fa-sync me-2"></i>Refresh Status
+        </button>
+        <a href="{% url 'site_list' %}" class="btn btn-secondary">
+            <i class="fas fa-list me-2"></i>View Sites
+        </a>
+        <button class="btn btn-success hidden" id="completedButton" onclick="showResults()">
+            <i class="fas fa-check me-2"></i>View Results
+        </button>
+    </div>
+</div>
+
+<script>
+let progressInterval;
+
+function updateProgress() {
+    const progressUrl = "{% if is_complexity_only %}{% url 'batch_complexity_progress' %}{% else %}{% url 'batch_analysis_progress' %}{% endif %}";
+    
+    fetch(progressUrl)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Progress data:', data);
+            
+            // Update progress bar
+            const percentage = data.total > 0 ? (data.current / data.total) * 100 : 0;
+            document.getElementById('progressBar').style.width = percentage + '%';
+            
+            // Update text
+            const progressText = document.getElementById('progressText');
+            if (data.status === 'completed') {
+                progressText.textContent = `✅ Completed: ${data.current}/${data.total} sites`;
+                progressText.className = 'progress-text status-completed';
+                clearInterval(progressInterval);
+                document.getElementById('completedButton').classList.remove('hidden');
+                document.querySelector('.loading-spinner').style.display = 'none';
+            } else if (data.status === 'failed') {
+                progressText.textContent = `❌ Failed: ${data.error || 'Unknown error'}`;
+                progressText.className = 'progress-text status-failed';
+                clearInterval(progressInterval);
+                document.querySelector('.loading-spinner').style.display = 'none';
+            } else if (data.status === 'processing') {
+                progressText.textContent = `⚙️ Processing: ${data.current}/${data.total} sites`;
+                progressText.className = 'progress-text status-processing';
+            } else {
+                progressText.textContent = '🔄 Starting...';
+                progressText.className = 'progress-text status-starting';
+            }
+            
+            // Update current site
+            if (data.current_site) {
+                document.getElementById('currentSiteSection').style.display = 'block';
+                document.getElementById('currentSite').textContent = data.current_site;
+            }
+            
+            // Update statistics
+            document.getElementById('currentCount').textContent = data.current || 0;
+            document.getElementById('totalCount').textContent = data.total || 0;
+            
+            // Update timing
+            if (data.elapsed_time) {
+                document.getElementById('elapsedTime').textContent = formatTime(data.elapsed_time);
+            }
+            if (data.estimated_remaining) {
+                document.getElementById('estimatedRemaining').textContent = formatTime(data.estimated_remaining);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching progress:', error);
+            document.getElementById('progressText').textContent = '❌ Error checking progress';
+            document.getElementById('progressText').className = 'progress-text status-failed';
+        });
+}
+
+function formatTime(seconds) {
+    if (seconds < 60) {
+        return Math.round(seconds) + 's';
+    } else if (seconds < 3600) {
+        return Math.round(seconds / 60) + 'm';
+    } else {
+        return Math.round(seconds / 3600) + 'h';
+    }
+}
+
+function showResults() {
+    // Show detailed results - could redirect to a results page
+    window.location.href = '{% url "site_list" %}';
+}
+
+// Start polling for progress
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress();
+    progressInterval = setInterval(updateProgress, 2000); // Update every 2 seconds
+});
+
+// Clean up interval when page unloads
+window.addEventListener('beforeunload', function() {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+    }
+});
+</script>
+{% endblock %}

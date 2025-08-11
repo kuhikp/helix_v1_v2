@@ -1,0 +1,516 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Batch Analysis Progress{% endblock %}
+
+{% block content %}
+<style>
+    /* iPhone-style design matching other templates */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-green: #34C759;
+        --ios-green-dark: #248A3D;
+        --ios-orange: #FF9500;
+        --ios-orange-dark: #CC7700;
+        --ios-red: #FF3B30;
+        --ios-red-dark: #D70015;
+        --ios-purple: #5856D6;
+        --ios-purple-dark: #3634A3;
+        --ios-gray: #8E8E93;
+        --ios-gray-dark: #6D6D70;
+        --ios-background: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-border: #E5E5EA;
+    }
+    
+    body {
+        background: var(--ios-background);
+        color: var(--ios-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+        50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+    }
+    
+    .progress-card {
+        background: var(--ios-surface);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--ios-border);
+        margin-bottom: 32px;
+    }
+    
+    .progress-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+    
+    .progress-circle {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto 24px;
+        position: relative;
+    }
+    
+    .progress-circle svg {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+    
+    .progress-circle .background {
+        fill: none;
+        stroke: var(--ios-border);
+        stroke-width: 8;
+    }
+    
+    .progress-circle .progress {
+        fill: none;
+        stroke: url(#progressGradient);
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.5s ease;
+    }
+    
+    .progress-percentage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--ios-blue);
+    }
+    
+    .progress-status {
+        font-size: 1.2rem;
+        color: var(--ios-text-secondary);
+        margin-bottom: 16px;
+    }
+    
+    .current-site {
+        background: linear-gradient(135deg, #F8F9FF 0%, #F0F8FF 100%);
+        border: 2px solid var(--ios-blue);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+    
+    .current-site h5 {
+        color: var(--ios-blue);
+        margin-bottom: 8px;
+    }
+    
+    .current-site .site-url {
+        font-family: monospace;
+        background: rgba(0, 122, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 8px;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+    
+    .stat-item {
+        background: linear-gradient(135deg, #F8F9FF 0%, #F0F8FF 100%);
+        border: 1px solid var(--ios-border);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--ios-blue);
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        color: var(--ios-text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .results-section {
+        margin-top: 32px;
+    }
+    
+    .results-tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .tab-btn {
+        background: var(--ios-border);
+        border: none;
+        border-radius: 12px;
+        padding: 12px 20px;
+        font-weight: 600;
+        color: var(--ios-text-secondary);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .tab-btn.active {
+        background: var(--ios-blue);
+        color: white;
+    }
+    
+    .tab-content {
+        display: none;
+        background: var(--ios-surface);
+        border: 1px solid var(--ios-border);
+        border-radius: 16px;
+        padding: 20px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .site-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .site-list li {
+        padding: 8px 12px;
+        margin-bottom: 4px;
+        background: #F8F9FA;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .site-list .success {
+        background: rgba(52, 199, 89, 0.1);
+        border-left: 4px solid var(--ios-green);
+    }
+    
+    .site-list .error {
+        background: rgba(255, 59, 48, 0.1);
+        border-left: 4px solid var(--ios-red);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+        border: none;
+        border-radius: 16px;
+        padding: 16px 32px;
+        font-weight: 600;
+        font-size: 16px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
+        background: linear-gradient(135deg, var(--ios-blue-dark), var(--ios-purple-dark));
+        color: white;
+        text-decoration: none;
+    }
+    
+    .loading-dots {
+        display: inline-block;
+    }
+    
+    .loading-dots span {
+        display: inline-block;
+        animation: loading-dots 1.4s infinite both;
+    }
+    
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    
+    @keyframes loading-dots {
+        0%, 80%, 100% { opacity: 0.3; }
+        40% { opacity: 1; }
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .fa-spin {
+        animation: spin 1s linear infinite;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="text-center">
+            <h1><i class="fas fa-cogs me-3"></i>Batch Analysis Progress</h1>
+            <p>Real-time progress tracking for website sitemap analysis</p>
+        </div>
+    </div>
+
+    <!-- Progress Card -->
+    <div class="progress-card">
+        <div class="progress-header">
+            <div class="progress-circle">
+                <svg viewBox="0 0 100 100">
+                    <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#007AFF"/>
+                            <stop offset="100%" style="stop-color:#5856D6"/>
+                        </linearGradient>
+                    </defs>
+                    <circle class="background" cx="50" cy="50" r="42"/>
+                    <circle class="progress" cx="50" cy="50" r="42" 
+                            stroke-dasharray="264" stroke-dashoffset="264" id="progressCircle"/>
+                </svg>
+                <div class="progress-percentage" id="progressPercentage">0%</div>
+            </div>
+            
+            <div class="progress-status" id="progressStatus">Initializing...</div>
+        </div>
+        
+        <!-- Current Site Being Processed -->
+        <div class="current-site" id="currentSiteSection" style="display: none;">
+            <h5><i class="fas fa-globe me-2"></i>Currently Processing</h5>
+            <div class="site-url" id="currentSiteUrl">-</div>
+            <div class="loading-dots">
+                <span>.</span><span>.</span><span>.</span>
+            </div>
+        </div>
+        
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number" id="totalSites">-</div>
+                <div class="stat-label">Total Sites</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="currentSite">-</div>
+                <div class="stat-label">Current Site</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completedSites">-</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="failedSites">-</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="estimatedTime">-</div>
+                <div class="stat-label">Time Remaining</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="progress-card">
+        <div class="results-section">
+            <h3><i class="fas fa-chart-line me-2"></i>Analysis Results</h3>
+            
+            <div class="results-tabs">
+                <button class="tab-btn active" onclick="switchTab('completed')">
+                    <i class="fas fa-check me-2"></i>Completed (<span id="completedCount">0</span>)
+                </button>
+                <button class="tab-btn" onclick="switchTab('failed')">
+                    <i class="fas fa-times me-2"></i>Failed (<span id="failedCount">0</span>)
+                </button>
+            </div>
+            
+            <div id="completedTab" class="tab-content active">
+                <ul class="site-list" id="completedList">
+                    <li class="text-muted text-center">No sites completed yet...</li>
+                </ul>
+            </div>
+            
+            <div id="failedTab" class="tab-content">
+                <ul class="site-list" id="failedList">
+                    <li class="text-muted text-center">No failed sites...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completion Actions -->
+    <div class="progress-card text-center" id="completionActions" style="display: none;">
+        <h3><i class="fas fa-check-circle text-success me-2"></i>Analysis Complete!</h3>
+        <p class="mb-4">Batch analysis has finished. You can now view the results or return to the sites list.</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <a href="{% url 'site_list' %}" class="btn-primary">
+                <i class="fas fa-list me-2"></i>View Sites
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+let progressInterval;
+let isCompleted = false;
+
+function updateProgress() {
+    if (isCompleted) return;
+    
+    fetch('{% url "batch_analysis_progress" %}')
+        .then(response => response.json())
+        .then(data => {
+            // Update progress circle
+            const progressCircle = document.getElementById('progressCircle');
+            const progressPercentage = document.getElementById('progressPercentage');
+            const progressStatus = document.getElementById('progressStatus');
+            
+            const percentage = data.percentage || 0;
+            const circumference = 264; // 2 * π * 42
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            progressCircle.style.strokeDashoffset = offset;
+            progressPercentage.textContent = percentage + '%';
+            
+            // Update status
+            const status = data.status || 'not_started';
+            let statusText = 'Initializing...';
+            
+            switch(status) {
+                case 'starting':
+                    statusText = 'Starting analysis...';
+                    break;
+                case 'processing':
+                    statusText = 'Processing sites...';
+                    break;
+                case 'completed':
+                    statusText = 'Analysis completed!';
+                    isCompleted = true;
+                    clearInterval(progressInterval);
+                    showCompletionActions();
+                    break;
+                case 'error':
+                    statusText = 'Error occurred during analysis';
+                    break;
+            }
+            
+            progressStatus.textContent = statusText;
+            
+            // Update stats
+            document.getElementById('totalSites').textContent = data.total || '-';
+            document.getElementById('currentSite').textContent = data.current || '-';
+            document.getElementById('completedSites').textContent = (data.completed_sites || []).length;
+            document.getElementById('failedSites').textContent = (data.failed_sites || []).length;
+            document.getElementById('estimatedTime').textContent = data.estimated_remaining ? data.estimated_remaining + 's' : '-';
+            
+            // Update current site
+            const currentSiteSection = document.getElementById('currentSiteSection');
+            const currentSiteUrl = document.getElementById('currentSiteUrl');
+            
+            if (data.current_site && status === 'processing') {
+                currentSiteSection.style.display = 'block';
+                currentSiteUrl.textContent = data.current_site;
+            } else {
+                currentSiteSection.style.display = 'none';
+            }
+            
+            // Update completed sites list
+            updateSitesList('completed', data.completed_sites || []);
+            updateSitesList('failed', data.failed_sites || []);
+            
+            // Update counts in tabs
+            document.getElementById('completedCount').textContent = (data.completed_sites || []).length;
+            document.getElementById('failedCount').textContent = (data.failed_sites || []).length;
+        })
+        .catch(error => {
+            console.error('Error fetching progress:', error);
+        });
+}
+
+function updateSitesList(type, sites) {
+    const listId = type + 'List';
+    const list = document.getElementById(listId);
+    
+    if (sites.length === 0) {
+        list.innerHTML = `<li class="text-muted text-center">No ${type} sites...</li>`;
+        return;
+    }
+    
+    list.innerHTML = sites.map(site => {
+        const url = typeof site === 'string' ? site : site.url;
+        const error = typeof site === 'object' ? site.error : '';
+        const className = type === 'completed' ? 'success' : 'error';
+        
+        return `
+            <li class="${className}">
+                <span>${url}</span>
+                ${error ? `<small class="text-muted">${error}</small>` : ''}
+                <i class="fas fa-${type === 'completed' ? 'check' : 'times'} text-${type === 'completed' ? 'success' : 'danger'}"></i>
+            </li>
+        `;
+    }).join('');
+}
+
+function switchTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(tabName + 'Tab').classList.add('active');
+}
+
+function showCompletionActions() {
+    document.getElementById('completionActions').style.display = 'block';
+}
+
+// Start progress polling
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress(); // Initial update
+    progressInterval = setInterval(updateProgress, 2000); // Update every 2 seconds
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+    }
+});
+</script>
+
+{% endblock %}

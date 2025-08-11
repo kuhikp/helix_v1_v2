@@ -1,0 +1,578 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Create Tags Extractor{% endblock %}
+
+{% block content %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+        border-radius: 20px;
+        color: white;
+        padding: 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.3);
+    }
+    
+    .form-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .header-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        margin-bottom: 24px;
+    }
+    
+    .form-section {
+        margin-bottom: 32px;
+    }
+    
+    .section-title {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F2F2F7;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-right: 12px;
+        color: #34C759;
+    }
+    
+    .form-group {
+        margin-bottom: 24px;
+    }
+    
+    .form-label {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+    }
+    
+    .form-label i {
+        margin-right: 8px;
+        color: #8E8E93;
+        width: 16px;
+    }
+    
+    .form-label .required {
+        color: #FF3B30;
+        margin-left: 4px;
+    }
+    
+    .form-control {
+        border: 2px solid #F2F2F7;
+        border-radius: 12px;
+        padding: 16px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: #FAFAFA;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #34C759;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.1);
+    }
+    
+    .form-select {
+        border: 2px solid #F2F2F7;
+        border-radius: 12px;
+        padding: 16px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        background: #FAFAFA;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238E8E93' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 12px center;
+        background-repeat: no-repeat;
+        background-size: 16px;
+        padding-right: 40px;
+    }
+    
+    .form-select:focus {
+        outline: none;
+        border-color: #34C759;
+        background-color: white;
+        box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.1);
+    }
+    
+    .form-help {
+        color: #8E8E93;
+        font-size: 12px;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-help i {
+        margin-right: 6px;
+        font-size: 10px;
+    }
+    
+    .version-info {
+        background: rgba(52, 199, 89, 0.05);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 12px;
+    }
+    
+    .version-info h6 {
+        color: #34C759;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .version-info h6 i {
+        margin-right: 8px;
+    }
+    
+    .version-info ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #8E8E93;
+        font-size: 14px;
+    }
+    
+    .version-info li {
+        margin-bottom: 4px;
+    }
+    
+    .action-buttons {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+    }
+    
+    .btn-action {
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 16px 32px;
+        margin: 0 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #34C759, #30D158);
+        color: white;
+        box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .btn-cancel {
+        background: #F2F2F7;
+        color: #8E8E93;
+    }
+    
+    .btn-cancel:hover {
+        background: #E5E5EA;
+        color: #1C1C1E;
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .message-container {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+    
+    .message-success {
+        background: rgba(52, 199, 89, 0.1);
+        border: 2px solid rgba(52, 199, 89, 0.2);
+        color: #34C759;
+    }
+    
+    .message-error {
+        background: rgba(255, 59, 48, 0.1);
+        border: 2px solid rgba(255, 59, 48, 0.2);
+        color: #FF3B30;
+    }
+    
+    .message-icon {
+        font-size: 20px;
+        margin-right: 12px;
+    }
+    
+    .tags-preview {
+        background: #F2F2F7;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 16px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .tags-preview h6 {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin-bottom: 12px;
+    }
+    
+    .tag-item {
+        background: white;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: #8E8E93;
+    }
+    
+    .loading-state {
+        text-align: center;
+        padding: 40px;
+        color: #8E8E93;
+    }
+    
+    .loading-spinner {
+        animation: spin 1s linear infinite;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .form-validation {
+        border-color: #FF3B30 !important;
+        background: rgba(255, 59, 48, 0.05);
+    }
+    
+    .validation-message {
+        color: #FF3B30;
+        font-size: 12px;
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .validation-message i {
+        margin-right: 6px;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="form-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-plus-circle me-3"></i>Create Tags Extractor</h1>
+                <p class="header-subtitle">Add a new repository for tag extraction</p>
+            </div>
+            <div>
+                <a href="{% url 'tags_extractor_list' %}" class="btn btn-light" style="border-radius: 12px; padding: 12px 20px;">
+                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="message-container {% if 'successfully' in message or 'Complete' in message %}message-success{% else %}message-error{% endif %}">
+        <div class="d-flex align-items-center">
+            <i class="fas {% if 'successfully' in message or 'Complete' in message %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} message-icon"></i>
+            <div>{{ message }}</div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Form Container -->
+            <div class="form-container">
+                <form method="post" id="extractorForm">
+                    {% csrf_token %}
+                    
+                    <div class="form-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-info-circle"></i>Basic Information
+                        </h5>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-tag"></i>Version
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.version_value }}
+                            <div class="form-help">
+                                <i class="fas fa-info-circle"></i>
+                                Select the version for tag extraction
+                            </div>
+                            
+                            <div class="version-info">
+                                <h6><i class="fas fa-lightbulb"></i>Version Information</h6>
+                                <ul>
+                                    <li><strong>V1:</strong> Extract tags from Version 1 repositories</li>
+                                    <li><strong>V2:</strong> Extract tags from Version 2 repositories</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-link"></i>Repository URL
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.repo_url }}
+                            <div class="form-help">
+                                <i class="fas fa-info-circle"></i>
+                                Enter the complete URL of the repository to extract tags from
+                            </div>
+                            {% if form.repo_url.errors %}
+                                <div class="validation-message">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    {{ form.repo_url.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-section" style="border-top: 2px solid #F2F2F7; padding-top: 24px;">
+                        <h5 class="section-title">
+                            <i class="fas fa-cogs"></i>Extraction Settings
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-file-alt"></i>Total Pages
+                                    </label>
+                                    {{ form.total_pages }}
+                                    <div class="form-help">
+                                        <i class="fas fa-info-circle"></i>
+                                        Number of pages to process (0 for auto-detection)
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-play"></i>Start Page
+                                    </label>
+                                    {{ form.start_page }}
+                                    <div class="form-help">
+                                        <i class="fas fa-info-circle"></i>
+                                        Page number to start extraction from
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-align-left"></i>Description
+                            </label>
+                            {{ form.description }}
+                            <div class="form-help">
+                                <i class="fas fa-info-circle"></i>
+                                Optional description for this extractor
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'tags_extractor_list' %}" class="btn-action btn-cancel">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    
+                    <button type="submit" form="extractorForm" class="btn-action btn-submit" id="submitButton">
+                        <i class="fas fa-rocket me-2"></i>Create & Extract
+                    </button>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Creating an extractor will automatically start the tag extraction process
+                    </small>
+                </div>
+            </div>
+
+            {% if tags_found %}
+            <div class="form-container">
+                <h5 class="section-title">
+                    <i class="fas fa-tags"></i>Extracted Tags Preview
+                </h5>
+                
+                <div class="tags-preview">
+                    <h6>Found {{ tags_found|length }} tags:</h6>
+                    {% for tag in tags_found %}
+                    <div class="tag-item">
+                        <strong>{{ tag.name }}</strong> - {{ tag.path|default:"No path" }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('extractorForm');
+    const submitButton = document.getElementById('submitButton');
+    const repoUrlInput = document.querySelector('input[name="repo_url"]');
+    const versionSelect = document.querySelector('select[name="version_value"]');
+    
+    // Add classes to form elements
+    document.querySelectorAll('input[type="text"], input[type="url"], input[type="number"], textarea').forEach(input => {
+        input.classList.add('form-control');
+    });
+    
+    document.querySelectorAll('select').forEach(select => {
+        select.classList.add('form-select');
+    });
+    
+    // Real-time validation
+    repoUrlInput.addEventListener('input', function() {
+        const url = this.value;
+        if (url && !isValidUrl(url)) {
+            this.classList.add('form-validation');
+            showFieldError(this, 'Please enter a valid URL');
+        } else {
+            this.classList.remove('form-validation');
+            hideFieldError(this);
+        }
+    });
+    
+    // Form submission handling
+    form.addEventListener('submit', function(e) {
+        const repoUrl = repoUrlInput.value.trim();
+        const version = versionSelect.value;
+        
+        if (!repoUrl || !version) {
+            e.preventDefault();
+            showAlert('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        if (!isValidUrl(repoUrl)) {
+            e.preventDefault();
+            showAlert('Please enter a valid repository URL', 'error');
+            return;
+        }
+        
+        // Show loading state
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+        
+        // Show loading message
+        showLoadingState();
+    });
+    
+    function isValidUrl(string) {
+        try {
+            new URL(string);
+            return true;
+        } catch (_) {
+            return false;
+        }
+    }
+    
+    function showFieldError(field, message) {
+        hideFieldError(field);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'validation-message';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i>${message}`;
+        field.parentNode.appendChild(errorDiv);
+    }
+    
+    function hideFieldError(field) {
+        const existingError = field.parentNode.querySelector('.validation-message');
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+    
+    function showLoadingState() {
+        const loadingHTML = `
+            <div class="loading-state">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner"></i>
+                </div>
+                <h5>Creating Extractor...</h5>
+                <p>Please wait while we set up the repository extractor and begin tag extraction.</p>
+            </div>
+        `;
+        
+        // Find a good place to show loading state
+        const formContainer = document.querySelector('.form-container');
+        if (formContainer) {
+            formContainer.innerHTML = loadingHTML;
+        }
+    }
+});
+
+function showAlert(message, type = 'info') {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.style.position = 'fixed';
+    alert.style.top = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '9999';
+    alert.style.borderRadius = '12px';
+    alert.innerHTML = `
+        <i class="fas fa-info-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

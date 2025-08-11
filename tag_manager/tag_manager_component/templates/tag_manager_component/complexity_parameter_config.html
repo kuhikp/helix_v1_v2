@@ -1,0 +1,1210 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Complexity Parameter Configuration{% endblock %}
+
+{% block content %}
+<style>
+    /* iPhone-style design matching the other templates */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-green: #34C759;
+        --ios-green-dark: #248A3D;
+        --ios-orange: #FF9500;
+        --ios-orange-dark: #CC7700;
+        --ios-red: #FF3B30;
+        --ios-red-dark: #D70015;
+        --ios-purple: #5856D6;
+        --ios-purple-dark: #3634A3;
+        --ios-gray: #8E8E93;
+        --ios-gray-dark: #6D6D70;
+        --ios-background: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-border: #E5E5EA;
+    }
+    
+    body {
+        background: var(--ios-background);
+        color: var(--ios-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+        transform: rotate(25deg);
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { transform: translateX(-100%) rotate(25deg); }
+        100% { transform: translateX(100%) rotate(25deg); }
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+        .header-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+        
+        /* Enhanced Messages Styling */
+        .messages-container {
+            margin-bottom: 24px;
+        }
+        
+        .alert {
+            border-radius: 12px;
+            border: none;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-error {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .alert-warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .alert i {
+            font-size: 1.2rem;
+        }
+        
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            opacity: 0.6;
+            cursor: pointer;
+            margin-left: auto;
+        }
+        
+        /* Configuration Status Card */
+        .config-status-card {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f4f8 100%);
+            border-radius: 16px;
+            border: 1px solid var(--ios-border);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+        
+        .config-status-header {
+            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+            color: white;
+            padding: 16px 24px;
+            font-weight: 600;
+        }
+        
+        .config-status-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        
+        .config-status-body {
+            padding: 20px 24px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .status-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .status-label {
+            font-size: 0.9rem;
+            color: var(--ios-text-secondary);
+            font-weight: 500;
+        }
+        
+        .status-value {
+            font-size: 1rem;
+            color: var(--ios-text-primary);
+            font-weight: 600;
+        }
+        
+        .status-active {
+            color: #28a745;
+        }    .configuration-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .config-card {
+        background: var(--ios-surface);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--ios-border);
+        overflow: hidden;
+        margin-bottom: 32px;
+    }
+    
+    .config-card-header {
+        background: linear-gradient(135deg, #f8f9ff 0%, #e8f4f8 100%);
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--ios-border);
+    }
+    
+    .config-card-header h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--ios-text-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .config-card-body {
+        padding: 32px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .form-group {
+        position: relative;
+    }
+    
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: var(--ios-text-primary);
+        margin-bottom: 8px;
+        font-size: 0.95rem;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 16px;
+        border: 2px solid var(--ios-border);
+        border-radius: 16px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--ios-surface);
+        color: var(--ios-text-primary);
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--ios-blue);
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .form-group .help-text {
+        font-size: 0.875rem;
+        color: var(--ios-text-secondary);
+        margin-top: 8px;
+        line-height: 1.4;
+    }
+    
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+    }
+    
+    .summary-card {
+        background: var(--ios-surface);
+        border-radius: 20px;
+        padding: 24px;
+        text-align: center;
+        border: 1px solid var(--ios-border);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+    
+    .summary-card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+        display: block;
+    }
+    
+    .summary-card-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--ios-blue);
+        margin-bottom: 4px;
+    }
+    
+    .summary-card-label {
+        font-size: 0.9rem;
+        color: var(--ios-text-secondary);
+        font-weight: 500;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-top: 40px;
+    }
+    
+    .btn {
+        padding: 16px 32px;
+        border: none;
+        border-radius: 16px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        min-width: 160px;
+        justify-content: center;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-blue-dark) 100%);
+        color: white;
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px rgba(0, 122, 255, 0.4);
+    }
+    
+    .btn-secondary {
+        background: var(--ios-surface);
+        color: var(--ios-text-primary);
+        border: 2px solid var(--ios-border);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        border-color: var(--ios-blue);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .alert {
+        padding: 16px 20px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        border: 1px solid;
+        font-weight: 500;
+    }
+    
+    .alert-success {
+        background: linear-gradient(135deg, #d4f4dd 0%, #c8f7c5 100%);
+        color: var(--ios-green-dark);
+        border-color: var(--ios-green);
+    }
+    
+    .alert-error {
+        background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+        color: var(--ios-red-dark);
+        border-color: var(--ios-red);
+    }
+    
+    .info-section {
+        background: linear-gradient(135deg, #e8f4f8 0%, #f0f9ff 100%);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 32px;
+        border: 1px solid #b3e5fc;
+    }
+    
+    .info-section h3 {
+        color: var(--ios-blue);
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .info-section ul {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--ios-text-primary);
+        line-height: 1.6;
+    }
+    
+    .info-section li {
+        margin-bottom: 8px;
+    }
+    
+    .timestamp {
+        font-size: 0.875rem;
+        color: var(--ios-text-secondary);
+        text-align: center;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--ios-border);
+    }
+    
+    /* Tab Navigation Styles */
+        .tab-navigation {
+            display: flex;
+            background: var(--ios-light-gray);
+            border-radius: 15px;
+            padding: 6px;
+            margin-bottom: 30px;
+            border: 1px solid #e5e5e7;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-button {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            color: var(--ios-text-secondary);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-button:hover {
+            color: var(--ios-blue);
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        .tab-button.active {
+            background: white;
+            color: var(--ios-text-primary);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .tab-icon {
+            font-size: 1.1rem;
+            margin-right: 4px;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .complexity-section {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .complexity-header {
+            padding: 24px 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #e5e5e7;
+        }
+
+        .complexity-header.simple {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+        }
+
+        .complexity-header.medium {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+        }
+
+        .complexity-header.complex {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+        }
+
+        .complexity-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .complexity-body {
+            padding: 30px;
+        }
+
+        .complexity-description {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border-left: 4px solid #007AFF;
+        }
+
+        .complexity-description.simple {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left-color: #28a745;
+        }
+
+        .complexity-description.medium {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-left-color: #ffc107;
+        }
+
+        .complexity-description.complex {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left-color: #dc3545;
+        }
+
+        .complexity-description h4 {
+            margin: 0 0 12px 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--ios-text-primary);
+        }
+
+        .complexity-description p {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--ios-text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .tab-button {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+            
+            .tab-icon {
+                font-size: 1rem;
+            }
+            
+            .complexity-header h3 {
+                font-size: 1.3rem;
+            }
+            
+            .complexity-description {
+                padding: 16px;
+            }
+            
+            .complexity-body {
+                padding: 20px;
+            }
+        }    .complexity-section {
+        background: var(--ios-surface);
+        border-radius: 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--ios-border);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    
+    .complexity-header {
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--ios-border);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .complexity-header.simple {
+        background: linear-gradient(135deg, #e8f5e8 0%, #d4f4d4 100%);
+    }
+    
+    .complexity-header.medium {
+        background: linear-gradient(135deg, #fff4e6 0%, #ffe4b3 100%);
+    }
+    
+    .complexity-header.complex {
+        background: linear-gradient(135deg, #ffe6e6 0%, #ffcccc 100%);
+    }
+    
+    .complexity-header h3 {
+        color: var(--ios-text-primary);
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .complexity-body {
+        padding: 32px;
+    }
+    
+    .complexity-description {
+        background: var(--ios-background);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 24px;
+        border-left: 4px solid;
+    }
+    
+    .complexity-description.simple {
+        border-left-color: var(--ios-green);
+    }
+    
+    .complexity-description.medium {
+        border-left-color: var(--ios-orange);
+    }
+    
+    .complexity-description.complex {
+        border-left-color: var(--ios-red);
+    }
+    
+    .complexity-description h4 {
+        color: var(--ios-text-primary);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .complexity-description p {
+        color: var(--ios-text-secondary);
+        margin: 0;
+        line-height: 1.6;
+    }
+    
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .page-header h1 {
+            font-size: 2rem;
+        }
+        
+        .config-card-body {
+            padding: 24px;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+
+<div class="configuration-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <span class="header-icon">⚙️</span>
+        <h1>{{ page_title }}</h1>
+        <p>Configure complexity parameters to define website analysis criteria</p>
+    </div>
+
+    <!-- Messages -->
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-triangle"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Configuration Status Info -->
+    <div class="config-status-card">
+        <div class="config-status-header">
+            <h3>💾 Configuration Status</h3>
+        </div>
+        <div class="config-status-body">
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-label">Last Updated:</span>
+                    <span class="status-value">
+                        {% if last_updated %}
+                            {{ last_updated|date:"M d, Y H:i" }}
+                        {% else %}
+                            Never
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Updated By:</span>
+                    <span class="status-value">
+                        {% if last_updated_by %}
+                            {{ last_updated_by.username }}
+                        {% else %}
+                            System
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Configuration ID:</span>
+                    <span class="status-value">#{{ config.pk }}</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Status:</span>
+                    <span class="status-value status-active">
+                        🟢 Active Configuration
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information Section -->
+    <div class="info-section">
+        <h3>ℹ️ About Complexity Parameters</h3>
+        <ul>
+            <li><strong>Single Configuration:</strong> This page manages the global complexity parameters used across all website analyses</li>
+            <li><strong>Website Complexity:</strong> These parameters help determine the overall complexity of websites based on component counts</li>
+            <li><strong>Analysis Framework:</strong> Values are used to calculate migration effort and resource requirements</li>
+            <li><strong>Real-time Updates:</strong> Changes take effect immediately across all analysis workflows</li>
+        </ul>
+    </div>
+
+    <!-- Batch Complexity Update Section -->
+    <div class="config-card">
+        <div class="config-card-header">
+            <h2>🔄 Update Site Complexity</h2>
+        </div>
+        <div class="config-card-body">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-sync-alt me-3" style="font-size: 24px; color: var(--ios-blue);"></i>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">Recalculate Website Complexity</h6>
+                    <p class="mb-2">Update the complexity classification for all websites based on their existing data and the current configuration parameters.</p>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'batch_update_complexity' %}" class="btn btn-primary">
+                            <i class="fas fa-sync-alt me-2"></i>Update All Site Complexity
+                        </a>
+                        <a href="{% url 'site_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-list me-2"></i>View Sites
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <h6>What this does:</h6>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Analyzes existing site data (pages, components, etc.)</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Applies current complexity configuration rules</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Updates complexity classification for all sites</li>
+                    <li><i class="fas fa-check text-success me-2"></i>No new site analysis - uses existing data only</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Summary -->
+    <!-- <div class="config-card">
+        <div class="config-card-header">
+            <h2>📊 Current Configuration Summary</h2>
+        </div>
+        <div class="config-card-body">
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <span class="summary-card-icon">📄</span>
+                    <div class="summary-card-value">{{ config.number_of_pages }}</div>
+                    <div class="summary-card-label">Base Pages</div>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-card-icon">🧩</span>
+                    <div class="summary-card-value">{{ total_components }}</div>
+                    <div class="summary-card-label">Total Components</div>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-card-icon">⚡</span>
+                    <div class="summary-card-value">{{ config.number_of_helix_v2_compatible }}</div>
+                    <div class="summary-card-label">V2 Compatible</div>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-card-icon">📊</span>
+                    <div class="summary-card-value">{{ total_by_complexity }}</div>
+                    <div class="summary-card-label">By Complexity</div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+
+
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+        <button type="button" class="tab-button {% if active_type == 'simple' %}active{% endif %}" data-tab="simple">
+            <span class="tab-icon">🟢</span>Simple Components
+        </button>
+        <button type="button" class="tab-button {% if active_type == 'medium' %}active{% endif %}" data-tab="medium">
+            <span class="tab-icon">🟠</span>Medium Components
+        </button>
+        <button type="button" class="tab-button {% if active_type == 'complex' %}active{% endif %}" data-tab="complex">
+            <span class="tab-icon">🔴</span>Complex Components
+        </button>
+    </div>
+
+    <!-- Simple Complexity Tab -->
+    <div class="tab-content {% if active_type == 'simple' %}active{% endif %}" id="simple-tab">
+        <form method="post" id="complexityFormSimple" class="complexityForm" {% if active_type != 'simple' %}style="display:none;"{% endif %}>
+            {% csrf_token %}
+            <input type="hidden" name="complexity_type" value="simple">
+            {% with form=forms.simple %}
+                {# ...existing form rendering code for simple... #}
+                {{ form.as_p }}
+            {% endwith %}
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary" id="saveButtonSimple">
+                    <span class="btn-icon">💾</span>
+                    <span class="btn-text">Save <span id="complexityTypeIndicator">Simple</span> Configuration</span>
+                    <span class="btn-spinner" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Saving...
+                    </span>
+                </button>
+                <a href="{% url 'tag_list' %}" class="btn btn-secondary">
+                    <span class="btn-icon">↩️</span>
+                    <span class="btn-text">Back to Tags</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Medium Complexity Tab -->
+    <div class="tab-content {% if active_type == 'medium' %}active{% endif %}" id="medium-tab">
+        <form method="post" id="complexityFormMedium" class="complexityForm" {% if active_type != 'medium' %}style="display:none;"{% endif %}>
+            {% csrf_token %}
+            <input type="hidden" name="complexity_type" value="medium">
+            {% with form=forms.medium %}
+                {{ form.as_p }}
+            {% endwith %}
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary" id="saveButtonMedium">
+                    <span class="btn-icon">💾</span>
+                    <span class="btn-text">Save <span id="complexityTypeIndicator">Medium</span> Configuration</span>
+                    <span class="btn-spinner" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Saving...
+                    </span>
+                </button>
+                <a href="{% url 'tag_list' %}" class="btn btn-secondary">
+                    <span class="btn-icon">↩️</span>
+                    <span class="btn-text">Back to Tags</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Complex Complexity Tab -->
+    <div class="tab-content {% if active_type == 'complex' %}active{% endif %}" id="complex-tab">
+        <form method="post" id="complexityFormComplex" class="complexityForm" {% if active_type != 'complex' %}style="display:none;"{% endif %}>
+            {% csrf_token %}
+            <input type="hidden" name="complexity_type" value="complex">
+            {% with form=forms.complex %}
+                {{ form.as_p }}
+            {% endwith %}
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary" id="saveButtonComplex">
+                    <span class="btn-icon">💾</span>
+                    <span class="btn-text">Save <span id="complexityTypeIndicator">Complex</span> Configuration</span>
+                    <span class="btn-spinner" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i> Saving...
+                    </span>
+                </button>
+                <a href="{% url 'tag_list' %}" class="btn btn-secondary">
+                    <span class="btn-icon">↩️</span>
+                    <span class="btn-text">Back to Tags</span>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Configuration Details -->
+    <div class="timestamp">
+        {% if config.updated_at %}
+            Last updated: {{ config.updated_at|date:"M d, Y H:i" }} 
+            {% if config.updated_by %}by {{ config.updated_by.get_full_name|default:config.updated_by.username }}{% endif %}
+        {% else %}
+            Configuration not yet updated
+        {% endif %}
+    </div>
+</div>
+
+<script>
+        // Update summary cards with current values from the visible form
+        function updateSummary() {
+            // Find the visible form
+            const activeForm = Array.from(document.querySelectorAll('.complexityForm')).find(f => f.style.display !== 'none');
+            if (!activeForm) return;
+            const getVal = id => {
+                const el = activeForm.querySelector(`#${id}`);
+                return el ? parseInt(el.value) || 0 : 0;
+            };
+            const pages = getVal('id_number_of_pages');
+            const v2Compatible = getVal('id_number_of_helix_v2_compatible');
+            const v2NonCompatible = getVal('id_number_of_helix_v2_non_compatible');
+            const customComponents = getVal('id_number_of_custom_components');
+            const simple = getVal('id_total_simple_components');
+            const medium = getVal('id_total_medium_components');
+            const complex = getVal('id_total_complex_components');
+            const totalComponents = v2Compatible + v2NonCompatible + customComponents;
+            const totalByComplexity = simple + medium + complex;
+            const summaryCards = document.querySelectorAll('.summary-card-value');
+            if (summaryCards.length >= 4) {
+                summaryCards[0].textContent = pages;
+                summaryCards[1].textContent = totalComponents;
+                summaryCards[2].textContent = v2Compatible;
+                summaryCards[3].textContent = totalByComplexity;
+            }
+        }
+    // Enhanced form validation and tab functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab switching functionality
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        // Function to update complexity type based on active tab
+        function updateComplexityType(activeTab) {
+            // Update the button text indicator
+            const complexityTypeIndicator = document.getElementById('complexityTypeIndicator');
+            if (complexityTypeIndicator) {
+                complexityTypeIndicator.textContent = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
+            }
+            console.log('Complexity type set to:', activeTab);
+        }
+
+        // Set initial complexity type based on current active tab from Django context
+        updateComplexityType("{{ active_type|default:'simple' }}");
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const targetTab = this.dataset.tab;
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                // Add active class to clicked button and corresponding content
+                this.classList.add('active');
+                document.getElementById(targetTab + '-tab').classList.add('active');
+                // Show only the form for the active tab
+                document.querySelectorAll('.complexityForm').forEach(f => f.style.display = 'none');
+                const activeForm = document.getElementById('complexityForm' + targetTab.charAt(0).toUpperCase() + targetTab.slice(1));
+                if (activeForm) activeForm.style.display = '';
+                // Update complexity type based on selected tab
+                updateComplexityType(targetTab);
+                // Add subtle animation effect
+                const activeContent = document.getElementById(targetTab + '-tab');
+                activeContent.style.animation = 'none';
+                setTimeout(() => {
+                    activeContent.style.animation = 'fadeIn 0.4s ease-in-out';
+                }, 10);
+                // Show notification about complexity type change
+                showNotification(`🎯 Complexity type set to: ${targetTab.charAt(0).toUpperCase() + targetTab.slice(1)}`, 'info');
+            });
+        });
+
+        // Validation helper
+        function validateInput(input) {
+            const value = parseInt(input.value);
+            const min = parseInt(input.getAttribute('min')) || 0;
+            if (isNaN(value) || value < min) {
+                input.style.borderColor = 'var(--ios-red)';
+                input.style.boxShadow = '0 0 0 4px rgba(255, 59, 48, 0.1)';
+            } else {
+                input.style.borderColor = 'var(--ios-green)';
+                input.style.boxShadow = '0 0 0 4px rgba(52, 199, 89, 0.1)';
+                setTimeout(() => {
+                    input.style.borderColor = '';
+                    input.style.boxShadow = '';
+                }, 1500);
+            }
+        }
+
+        // Attach validation and summary logic to all forms
+        document.querySelectorAll('.complexityForm').forEach(form => {
+            const inputs = form.querySelectorAll('input[type="number"]');
+            // Add real-time validation
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    validateInput(this);
+                    updateSummary();
+                });
+            });
+            // Form submission validation and UI feedback
+            form.addEventListener('submit', function(e) {
+                let isValid = true;
+                const saveButton = form.querySelector('.btn-primary');
+                const btnText = saveButton.querySelector('.btn-text');
+                const btnSpinner = saveButton.querySelector('.btn-spinner');
+                inputs.forEach(input => {
+                    const value = parseInt(input.value);
+                    const min = parseInt(input.getAttribute('min')) || 0;
+                    if (isNaN(value) || value < min) {
+                        isValid = false;
+                        validateInput(input);
+                    }
+                });
+                if (!isValid) {
+                    e.preventDefault();
+                    showNotification('❌ Please correct the validation errors before submitting.', 'error');
+                    // Focus on first invalid input and switch to its tab
+                    const firstInvalidInput = form.querySelector('input[style*="border-color: var(--ios-red)"]');
+                    if (firstInvalidInput) {
+                        const tabContent = firstInvalidInput.closest('.tab-content');
+                        if (tabContent) {
+                            const tabId = tabContent.id.replace('-tab', '');
+                            const tabButton = document.querySelector(`[data-tab="${tabId}"]`);
+                            if (tabButton) {
+                                tabButton.click();
+                                setTimeout(() => {
+                                    firstInvalidInput.focus();
+                                    firstInvalidInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 100);
+                            }
+                        }
+                    }
+                } else {
+                    // Show loading state
+                    btnText.style.display = 'none';
+                    btnSpinner.style.display = 'inline-flex';
+                    saveButton.disabled = true;
+                    // Get the current complexity type
+                    const currentComplexityType = form.querySelector('input[name="complexity_type"]').value;
+                    const complexityTypeDisplay = currentComplexityType.charAt(0).toUpperCase() + currentComplexityType.slice(1);
+                    // Show saving notification with complexity type
+                    showNotification(`💾 Saving ${complexityTypeDisplay} complexity configuration to database...`, 'info');
+                }
+            });
+        });
+        
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <span class="notification-content">${message}</span>
+                <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+            `;
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007AFF'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 1000;
+                max-width: 400px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.style.animation = 'slideOutRight 0.3s ease-in';
+                    setTimeout(() => notification.remove(), 300);
+                }
+            }, 5000);
+        }
+        
+        // Smooth scroll to validation errors on page load for all forms
+        document.querySelectorAll('.complexityForm').forEach(form => {
+            const firstError = form.querySelector('.text-danger');
+            if (firstError) {
+                const errorTabContent = firstError.closest('.tab-content');
+                if (errorTabContent) {
+                    const tabId = errorTabContent.id.replace('-tab', '');
+                    const tabButton = document.querySelector(`[data-tab="${tabId}"]`);
+                    if (tabButton) {
+                        tabButton.click();
+                        setTimeout(() => {
+                            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                    }
+                }
+            }
+        });
+        // Add additional CSS for notifications and button enhancements
+        const additionalStyles = document.createElement('style');
+        additionalStyles.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+
+            .notification-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.2rem;
+                cursor: pointer;
+                opacity: 0.8;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .notification-close:hover {
+                opacity: 1;
+            }
+
+            .btn-spinner {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .btn:disabled {
+                opacity: 0.7;
+                cursor: not-allowed;
+            }
+
+            .btn-icon {
+                font-size: 1.1rem;
+            }
+
+            .btn-text {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .alert-dismissible {
+                position: relative;
+                padding-right: 50px;
+            }
+
+            .alert .btn-close {
+                position: absolute;
+                top: 50%;
+                right: 15px;
+                transform: translateY(-50%);
+                color: inherit;
+                opacity: 0.6;
+            }
+
+            .alert .btn-close:hover {
+                opacity: 1;
+            }
+        `;
+        document.head.appendChild(additionalStyles);
+    });
+</script>
+{% endblock %}
