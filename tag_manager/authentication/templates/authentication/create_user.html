@@ -1,0 +1,418 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Create User{% endblock %}
+
+{% block content %}
+<style>
+    .create-user-header {
+        background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+        border-radius: 20px;
+        color: white;
+        padding: 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.3);
+    }
+    
+    .create-user-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .header-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+    }
+    
+    .form-section {
+        margin-bottom: 32px;
+    }
+    
+    .form-section h5 {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #F2F2F7;
+    }
+    
+    .form-floating {
+        margin-bottom: 20px;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid rgba(0, 0, 0, 0.06);
+        border-radius: 12px;
+        padding: 16px 20px;
+        font-size: 16px;
+        background-color: #F9F9FB;
+        transition: all 0.3s ease;
+        height: 60px;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #34C759;
+        box-shadow: 0 0 0 0.25rem rgba(52, 199, 89, 0.1);
+        background-color: white;
+        transform: translateY(-2px);
+    }
+    
+    .form-floating > label {
+        color: #8E8E93;
+        font-weight: 500;
+        padding: 16px 20px;
+    }
+    
+    .btn-create {
+        background: linear-gradient(135deg, #34C759, #30D158);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 17px;
+        font-weight: 600;
+        padding: 16px 32px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+    }
+    
+    .btn-create:hover {
+        background: linear-gradient(135deg, #2FB344, #28C946);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+    }
+    
+    .btn-cancel {
+        background: #F2F2F7;
+        border: none;
+        border-radius: 12px;
+        color: #8E8E93;
+        font-size: 17px;
+        font-weight: 600;
+        padding: 16px 32px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        margin-right: 16px;
+    }
+    
+    .btn-cancel:hover {
+        background: #E5E5EA;
+        color: #1C1C1E;
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .role-info {
+        background: rgba(0, 122, 255, 0.05);
+        border: 1px solid rgba(0, 122, 255, 0.1);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+    }
+    
+    .role-info h6 {
+        color: #007AFF;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .role-info ul {
+        margin-bottom: 0;
+        padding-left: 20px;
+    }
+    
+    .role-info li {
+        color: #8E8E93;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    .alert {
+        border: none;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        font-weight: 500;
+    }
+    
+    .password-requirements {
+        background: rgba(255, 149, 0, 0.05);
+        border: 1px solid rgba(255, 149, 0, 0.1);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+    }
+    
+    .password-requirements h6 {
+        color: #FF9500;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .password-requirements ul {
+        margin-bottom: 0;
+        padding-left: 20px;
+    }
+    
+    .password-requirements li {
+        color: #8E8E93;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    .form-actions {
+        background: #F9F9FB;
+        border-radius: 12px;
+        padding: 24px;
+        margin-top: 32px;
+        text-align: right;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="create-user-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-user-plus me-3"></i>Create New User</h1>
+                <p class="header-subtitle">Add a new user to the system</p>
+            </div>
+            <div>
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-light" style="border-radius: 12px; padding: 12px 20px;">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Form Container -->
+    <div class="form-container">
+        <form method="post" novalidate id="createUserForm">
+            {% csrf_token %}
+            
+            <!-- Personal Information Section -->
+            <div class="form-section">
+                <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            {{ form.first_name }}
+                            <label for="{{ form.first_name.id_for_label }}">
+                                <i class="fas fa-user me-2"></i>First Name
+                            </label>
+                        </div>
+                        {% if form.first_name.errors %}
+                            <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            {{ form.last_name }}
+                            <label for="{{ form.last_name.id_for_label }}">
+                                <i class="fas fa-user me-2"></i>Last Name
+                            </label>
+                        </div>
+                        {% if form.last_name.errors %}
+                            <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-floating">
+                    {{ form.email }}
+                    <label for="{{ form.email.id_for_label }}">
+                        <i class="fas fa-envelope me-2"></i>Email Address
+                    </label>
+                </div>
+                {% if form.email.errors %}
+                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Account Information Section -->
+            <div class="form-section">
+                <h5><i class="fas fa-key me-2"></i>Account Information</h5>
+                
+                <div class="form-floating">
+                    {{ form.username }}
+                    <label for="{{ form.username.id_for_label }}">
+                        <i class="fas fa-at me-2"></i>Username
+                    </label>
+                </div>
+                {% if form.username.errors %}
+                    <div class="text-danger small">{{ form.username.errors.0 }}</div>
+                {% endif %}
+                
+                <!-- Password Requirements -->
+                <div class="password-requirements">
+                    <h6><i class="fas fa-shield-alt me-2"></i>Password Requirements</h6>
+                    <ul>
+                        <li>At least 8 characters long</li>
+                        <li>Mix of uppercase and lowercase letters</li>
+                        <li>Include at least one number</li>
+                        <li>Use special characters for stronger security</li>
+                    </ul>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            {{ form.password1 }}
+                            <label for="{{ form.password1.id_for_label }}">
+                                <i class="fas fa-lock me-2"></i>Password
+                            </label>
+                        </div>
+                        {% if form.password1.errors %}
+                            <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            {{ form.password2 }}
+                            <label for="{{ form.password2.id_for_label }}">
+                                <i class="fas fa-lock me-2"></i>Confirm Password
+                            </label>
+                        </div>
+                        {% if form.password2.errors %}
+                            <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Assignment Section -->
+            <div class="form-section">
+                <h5><i class="fas fa-user-cog me-2"></i>Role Assignment</h5>
+                
+                <!-- Role Information -->
+                <div class="role-info">
+                    <h6><i class="fas fa-info-circle me-2"></i>Role Permissions</h6>
+                    <ul>
+                        <li><strong>Admin:</strong> Full system access, user management, and system configuration</li>
+                        <li><strong>Tag Manager:</strong> Manage tags, migrations, and component conversions</li>
+                    </ul>
+                </div>
+                
+                <div class="form-floating">
+                    {{ form.role }}
+                    <label for="{{ form.role.id_for_label }}">
+                        <i class="fas fa-user-tag me-2"></i>User Role
+                    </label>
+                </div>
+                {% if form.role.errors %}
+                    <div class="text-danger small">{{ form.role.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn-cancel">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+                <button type="submit" class="btn-create">
+                    <i class="fas fa-user-plus me-2"></i>Create User
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript for Form Enhancement -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('createUserForm');
+    const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+    const password2 = document.getElementById('{{ form.password2.id_for_label }}');
+    
+    // Add focus animations
+    const inputs = document.querySelectorAll('.form-control, .form-select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-2px)';
+        });
+        
+        input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Password confirmation validation
+    password2.addEventListener('input', function() {
+        if (this.value && this.value !== password1.value) {
+            this.setCustomValidity('Passwords do not match');
+            this.style.borderColor = '#FF3B30';
+        } else {
+            this.setCustomValidity('');
+            this.style.borderColor = '';
+        }
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const username = document.getElementById('{{ form.username.id_for_label }}').value;
+        const email = document.getElementById('{{ form.email.id_for_label }}').value;
+        const firstName = document.getElementById('{{ form.first_name.id_for_label }}').value;
+        const lastName = document.getElementById('{{ form.last_name.id_for_label }}').value;
+        
+        if (!username || !email || !firstName || !lastName || !password1.value || !password2.value) {
+            e.preventDefault();
+            showAlert('Please fill in all required fields', 'danger');
+            return;
+        }
+        
+        if (password1.value !== password2.value) {
+            e.preventDefault();
+            showAlert('Passwords do not match', 'danger');
+            return;
+        }
+        
+        if (password1.value.length < 8) {
+            e.preventDefault();
+            showAlert('Password must be at least 8 characters long', 'danger');
+            return;
+        }
+    });
+});
+
+function showAlert(message, type) {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.style.position = 'fixed';
+    alert.style.top = '20px';
+    alert.style.right = '20px';
+    alert.style.zIndex = '9999';
+    alert.style.borderRadius = '12px';
+    alert.innerHTML = `
+        <i class="fas fa-exclamation-circle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        if (alert.parentNode) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

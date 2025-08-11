@@ -1,0 +1,163 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Tag{% else %}Create Tag{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-header">
+            <i class="fas fa-tag text-primary"></i>
+            {% if form.instance.pk %}Edit Tag{% else %}Create Tag{% endif %}
+        </h1>
+        <a href="{% url 'tag_list' %}" class="btn btn-outline-secondary ios-button">
+            <i class="fas fa-arrow-left me-2"></i>Back to Tags
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card ios-card">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-edit me-2 text-success"></i>Tag Information
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row g-4">
+                    <!-- Basic Information -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-tag me-2 text-primary"></i>Tag Name
+                            </label>
+                            <input type="text" name="{{ form.name.name }}" id="{{ form.name.id_for_label }}" 
+                                   class="form-control" value="{{ form.name.value|default:'' }}" required>
+                            {% if form.name.errors %}
+                                <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.version.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-code-branch me-2 text-info"></i>Version
+                            </label>
+                            <select name="{{ form.version.name }}" id="{{ form.version.id_for_label }}" class="form-select">
+                                {% for choice in form.version.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if choice.0 == form.version.value %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.version.errors %}
+                                <div class="text-danger small mt-1">{{ form.version.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.theme_type.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-palette me-2 text-success"></i>Theme Type
+                            </label>
+                            <input type="text" name="{{ form.theme_type.name }}" id="{{ form.theme_type.id_for_label }}" 
+                                   class="form-control" value="{{ form.theme_type.value|default:'' }}">
+                            {% if form.theme_type.errors %}
+                                <div class="text-danger small mt-1">{{ form.theme_type.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.complexity.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-layer-group me-2 text-warning"></i>Complexity
+                            </label>
+                            <select name="{{ form.complexity.name }}" id="{{ form.complexity.id_for_label }}" class="form-select">
+                                {% for choice in form.complexity.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if choice.0 == form.complexity.value %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.complexity.errors %}
+                                <div class="text-danger small mt-1">{{ form.complexity.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="{{ form.path.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-folder me-2 text-secondary"></i>Path
+                            </label>
+                            <input type="text" name="{{ form.path.name }}" id="{{ form.path.id_for_label }}" 
+                                   class="form-control font-monospace" value="{{ form.path.value|default:'' }}">
+                            {% if form.path.errors %}
+                                <div class="text-danger small mt-1">{{ form.path.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="{{ form.details.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-info-circle me-2 text-info"></i>Details
+                            </label>
+                            <textarea name="{{ form.details.name }}" id="{{ form.details.id_for_label }}" 
+                                      class="form-control" rows="3">{{ form.details.value|default:'' }}</textarea>
+                            {% if form.details.errors %}
+                                <div class="text-danger small mt-1">{{ form.details.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.is_managed_by.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-user-cog me-2 text-dark"></i>Managed By
+                            </label>
+                            <select name="{{ form.is_managed_by.name }}" id="{{ form.is_managed_by.id_for_label }}" class="form-select">
+                                {% for choice in form.is_managed_by.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if choice.0 == form.is_managed_by.value %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.is_managed_by.errors %}
+                                <div class="text-danger small mt-1">{{ form.is_managed_by.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="{{ form.tags_extractor.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-extract me-2 text-muted"></i>Tags Extractor
+                            </label>
+                            <select name="{{ form.tags_extractor.name }}" id="{{ form.tags_extractor.id_for_label }}" class="form-select">
+                                <option value="">---------</option>
+                                {% for choice in form.tags_extractor.field.queryset %}
+                                    <option value="{{ choice.pk }}" {% if choice.pk == form.tags_extractor.value %}selected{% endif %}>{{ choice }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.tags_extractor.errors %}
+                                <div class="text-danger small mt-1">{{ form.tags_extractor.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                    <a href="{% url 'tag_list' %}" class="btn btn-outline-secondary ios-button">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary ios-button">
+                        <i class="fas fa-save me-2"></i>
+                        {% if form.instance.pk %}Update Tag{% else %}Create Tag{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

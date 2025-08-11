@@ -1,0 +1,430 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}View User - {{ user.username }}{% endblock %}
+
+{% block content %}
+<style>
+    .view-user-header {
+        background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+        border-radius: 20px;
+        color: white;
+        padding: 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+    }
+    
+    .view-user-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .header-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    
+    .user-profile-card {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        margin-bottom: 24px;
+    }
+    
+    .profile-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 2px solid #F2F2F7;
+    }
+    
+    .user-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #007AFF, #5856D6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 36px;
+        font-weight: 700;
+        margin-right: 24px;
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+    }
+    
+    .profile-info h2 {
+        color: #1C1C1E;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .profile-info p {
+        color: #8E8E93;
+        margin-bottom: 4px;
+        font-size: 16px;
+    }
+    
+    .role-badge {
+        display: inline-block;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 8px;
+    }
+    
+    .role-admin {
+        background: rgba(255, 59, 48, 0.1);
+        color: #FF3B30;
+    }
+    
+    .role-tag_manager {
+        background: rgba(0, 122, 255, 0.1);
+        color: #007AFF;
+    }
+    
+    .info-section {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 24px;
+    }
+    
+    .info-section h5 {
+        color: #1C1C1E;
+        font-weight: 600;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #F2F2F7;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 0;
+        border-bottom: 1px solid #F2F2F7;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: #8E8E93;
+        font-weight: 500;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-label i {
+        margin-right: 8px;
+        width: 16px;
+    }
+    
+    .info-value {
+        color: #1C1C1E;
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-active {
+        background: rgba(52, 199, 89, 0.1);
+        color: #34C759;
+    }
+    
+    .status-inactive {
+        background: rgba(255, 59, 48, 0.1);
+        color: #FF3B30;
+    }
+    
+    .action-buttons {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+    }
+    
+    .btn-action {
+        border-radius: 12px;
+        font-weight: 600;
+        padding: 16px 24px;
+        margin: 0 8px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-edit {
+        background: linear-gradient(135deg, #FF9500, #FF6B35);
+        color: white;
+        box-shadow: 0 4px 16px rgba(255, 149, 0, 0.3);
+    }
+    
+    .btn-edit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 149, 0, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-delete {
+        background: linear-gradient(135deg, #FF3B30, #FF6B6B);
+        color: white;
+        box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+    }
+    
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 59, 48, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-back {
+        background: #F2F2F7;
+        color: #8E8E93;
+        border: none;
+        margin-right: 16px;
+    }
+    
+    .btn-back:hover {
+        background: #E5E5EA;
+        color: #1C1C1E;
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .activity-section {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: 16px 0;
+        border-bottom: 1px solid #F2F2F7;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 16px;
+        color: white;
+    }
+    
+    .activity-content h6 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1C1C1E;
+    }
+    
+    .activity-content p {
+        margin: 0;
+        font-size: 12px;
+        color: #8E8E93;
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="view-user-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1><i class="fas fa-user me-3"></i>User Profile</h1>
+                <p class="header-subtitle">Detailed user information and settings</p>
+            </div>
+            <div>
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-light" style="border-radius: 12px; padding: 12px 20px;">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- User Profile Card -->
+        <div class="col-lg-8">
+            <div class="user-profile-card">
+                <div class="profile-header">
+                    <div class="user-avatar">
+                        {{ user.first_name|first|default:user.username|first|upper }}{{ user.last_name|first|default:""|upper }}
+                    </div>
+                    <div class="profile-info">
+                        <h2>{{ user.first_name|default:"Unknown" }} {{ user.last_name|default:"User" }}</h2>
+                        <p><i class="fas fa-envelope me-2"></i>{{ user.email }}</p>
+                        <p><i class="fas fa-at me-2"></i>{{ user.username }}</p>
+                        <span class="role-badge role-{{ user.role }}">
+                            <i class="fas fa-user-tag me-2"></i>{{ user.get_role_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Account Information -->
+                <div class="info-section">
+                    <h5><i class="fas fa-info-circle me-2"></i>Account Information</h5>
+                    
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-plus"></i>
+                            Date Joined
+                        </div>
+                        <div class="info-value">{{ user.date_joined|date:"M d, Y" }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-clock"></i>
+                            Last Login
+                        </div>
+                        <div class="info-value">{{ user.last_login|default:"Never"|date:"M d, Y H:i" }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-toggle-on"></i>
+                            Account Status
+                        </div>
+                        <div class="info-value">
+                            {% if user.is_active %}
+                                <span class="status-badge status-active">
+                                    <i class="fas fa-check-circle me-1"></i>Active
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-inactive">
+                                    <i class="fas fa-times-circle me-1"></i>Inactive
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-shield-alt"></i>
+                            Staff Status
+                        </div>
+                        <div class="info-value">
+                            {% if user.is_staff %}
+                                <span class="status-badge status-active">
+                                    <i class="fas fa-check me-1"></i>Staff Member
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-inactive">
+                                    <i class="fas fa-times me-1"></i>Regular User
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-crown"></i>
+                            Superuser Status
+                        </div>
+                        <div class="info-value">
+                            {% if user.is_superuser %}
+                                <span class="status-badge status-active">
+                                    <i class="fas fa-crown me-1"></i>Superuser
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-inactive">
+                                    <i class="fas fa-user me-1"></i>Regular User
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions and Activity -->
+        <div class="col-lg-4">
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <h5 class="mb-4"><i class="fas fa-cog me-2"></i>Actions</h5>
+                
+                <div class="d-grid gap-3">
+                    <a href="{% url 'edit_user' user.id %}" class="btn-action btn-edit">
+                        <i class="fas fa-edit me-2"></i>Edit User
+                    </a>
+                    
+                    <a href="{% url 'delete_user' user.id %}" class="btn-action btn-delete">
+                        <i class="fas fa-trash me-2"></i>Delete User
+                    </a>
+                    
+                    <a href="{% url 'admin_dashboard' %}" class="btn-action btn-back">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="activity-section">
+                <h5 class="mb-4"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: linear-gradient(135deg, #007AFF, #5856D6);">
+                        <i class="fas fa-sign-in-alt"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6>Last Login</h6>
+                        <p>{{ user.last_login|default:"Never logged in"|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: linear-gradient(135deg, #34C759, #30D158);">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6>Account Created</h6>
+                        <p>{{ user.date_joined|date:"M d, Y H:i" }}</p>
+                    </div>
+                </div>
+                
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: linear-gradient(135deg, #FF9500, #FF6B35);">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <div class="activity-content">
+                        <h6>Role Assigned</h6>
+                        <p>{{ user.get_role_display }} permissions</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

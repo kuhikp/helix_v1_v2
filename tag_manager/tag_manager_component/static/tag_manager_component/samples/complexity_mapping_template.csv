@@ -1,0 +1,49 @@
+tag_name,complexity
+# SIMPLE COMPONENTS (Basic UI elements),
+helix-button,simple
+helix-label,simple
+helix-icon,simple
+helix-badge,simple
+helix-separator,simple
+helix-spacer,simple
+helix-avatar,simple
+helix-tooltip,simple
+helix-spinner,simple
+# MEDIUM COMPONENTS (Interactive elements),
+helix-input,medium
+helix-textarea,medium
+helix-select,medium
+helix-checkbox,medium
+helix-radio,medium
+helix-slider,medium
+helix-toggle,medium
+helix-dropdown,medium
+helix-modal,medium
+helix-accordion,medium
+helix-tabs,medium
+helix-carousel,medium
+helix-pagination,medium
+helix-breadcrumb,medium
+helix-progress,medium
+# COMPLEX COMPONENTS (Advanced functionality),
+helix-data-table,complex
+helix-data-grid,complex
+helix-tree-view,complex
+helix-navigation,complex
+helix-form-builder,complex
+helix-calendar,complex
+helix-date-picker,complex
+helix-time-picker,complex
+helix-file-upload,complex
+helix-rich-text-editor,complex
+helix-chart,complex
+helix-dashboard,complex
+helix-workflow,complex
+helix-filter-panel,complex
+helix-search-advanced,complex
+# INSTRUCTIONS:,
+# 1. Replace the sample tag names with your actual tag names,
+# 2. Set complexity to one of: simple medium complex,
+# 3. Remove all comment lines (starting with #),
+# 4. Save the file and upload it,
+# 5. Tag names are case-insensitive,

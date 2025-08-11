@@ -1,0 +1,148 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Batch Update Complexity{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-header">
+            <i class="fas fa-sync-alt text-primary"></i> Batch Update Site Complexity
+        </h1>
+        <div>
+            <a href="{% url 'complexity_parameter_config' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Configuration
+            </a>
+        </div>
+    </div>
+
+    <!-- Information Card -->
+    <div class="card ios-card mb-4">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-info-circle me-2 text-info"></i>Complexity Update Process
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-lightbulb me-3" style="font-size: 24px; color: var(--ios-blue);"></i>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">What will happen?</h6>
+                    <p class="mb-2">This process will recalculate the complexity for all websites using their existing data and the current complexity configuration parameters.</p>
+                </div>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <h6>✅ What it WILL do:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>Use existing site data (pages, components)</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Apply current complexity rules</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Update complexity classification</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Show progress in real-time</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>❌ What it will NOT do:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-times text-danger me-2"></i>Re-analyze website content</li>
+                        <li><i class="fas fa-times text-danger me-2"></i>Fetch new data from sites</li>
+                        <li><i class="fas fa-times text-danger me-2"></i>Update component counts</li>
+                        <li><i class="fas fa-times text-danger me-2"></i>Modify existing site data</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sites Summary -->
+    <div class="card ios-card mb-4">
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <h3 class="text-primary">{{ total_sites }}</h3>
+                        <p class="text-muted">Total Sites</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <h3 class="text-success">
+                            {{ total_sites }}
+                        </h3>
+                        <p class="text-muted">Sites to Update</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <h3 class="text-info">~{% widthratio total_sites 10 1 %}</h3>
+                        <p class="text-muted">Estimated Minutes</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-item">
+                        <h3 class="text-warning">0</h3>
+                        <p class="text-muted">Currently Processing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Card -->
+    <div class="card ios-card">
+        <div class="card-body text-center">
+            <h4 class="mb-3">Ready to update site complexity?</h4>
+            <p class="text-muted mb-4">This process will run in the background and you can monitor the progress.</p>
+            
+            <form method="post" id="batchForm">
+                {% csrf_token %}
+                <div class="btn-group" role="group">
+                    <button type="submit" class="btn btn-primary btn-lg me-3" id="startButton">
+                        <i class="fas fa-play me-2"></i>Start Complexity Update
+                    </button>
+                    <a href="{% url 'site_list' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.stat-item {
+    padding: 20px;
+}
+
+.stat-item h3 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.stat-item p {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.ios-card {
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.btn-lg {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+}
+</style>
+
+<script>
+document.getElementById('batchForm').addEventListener('submit', function(e) {
+    const button = document.getElementById('startButton');
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Starting...';
+    button.disabled = true;
+});
+</script>
+{% endblock %}

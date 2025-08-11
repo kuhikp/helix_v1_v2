@@ -1,0 +1,645 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Complexity Mapping Upload{% endblock %}
+
+{% block content %}
+<style>
+    /* iPhone-style design matching the other templates */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-green: #34C759;
+        --ios-green-dark: #248A3D;
+        --ios-orange: #FF9500;
+        --ios-orange-dark: #CC7700;
+        --ios-red: #FF3B30;
+        --ios-red-dark: #D70015;
+        --ios-purple: #5856D6;
+        --ios-purple-dark: #3634A3;
+        --ios-gray: #8E8E93;
+        --ios-gray-dark: #6D6D70;
+        --ios-background: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-border: #E5E5EA;
+    }
+    
+    body {
+        background: var(--ios-background);
+        color: var(--ios-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-purple) 0%, var(--ios-blue) 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(88, 86, 214, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    
+    .page-header h1 {
+        font-size: 36px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-subtitle {
+        font-size: 18px;
+        opacity: 0.9;
+        margin-bottom: 0;
+        font-weight: 400;
+        line-height: 1.4;
+    }
+    
+    .upload-card {
+        background: var(--ios-surface);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--ios-border);
+        margin-bottom: 32px;
+    }
+    
+    .upload-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 2px solid var(--ios-border);
+    }
+    
+    .upload-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-blue));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 32px;
+        margin-right: 24px;
+        box-shadow: 0 8px 24px rgba(88, 86, 214, 0.3);
+    }
+    
+    .upload-info h2 {
+        color: var(--ios-text-primary);
+        font-weight: 700;
+        margin-bottom: 8px;
+        font-size: 24px;
+    }
+    
+    .upload-info p {
+        color: var(--ios-text-secondary);
+        margin-bottom: 0;
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    
+    .form-section {
+        background: var(--ios-surface);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--ios-border);
+    }
+    
+    .form-group {
+        margin-bottom: 24px;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--ios-text-primary);
+        margin-bottom: 12px;
+        display: block;
+        font-size: 16px;
+    }
+    
+    .form-control {
+        border: 2px solid var(--ios-border);
+        border-radius: 16px;
+        padding: 16px 20px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        width: 100%;
+        background: var(--ios-surface);
+    }
+    
+    .form-control:focus {
+        border-color: var(--ios-blue);
+        box-shadow: 0 0 0 0.25rem rgba(0, 122, 255, 0.1);
+        outline: none;
+        background: white;
+    }
+    
+    .form-text {
+        color: var(--ios-text-secondary);
+        font-size: 14px;
+        margin-top: 8px;
+        line-height: 1.4;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+        border: none;
+        border-radius: 16px;
+        padding: 16px 32px;
+        font-weight: 600;
+        font-size: 16px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
+        background: linear-gradient(135deg, var(--ios-blue-dark), var(--ios-purple-dark));
+    }
+    
+    .btn-secondary {
+        background: var(--ios-border);
+        border: 2px solid var(--ios-border);
+        border-radius: 16px;
+        padding: 14px 28px;
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--ios-text-primary);
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-secondary:hover {
+        background: #D1D1D6;
+        border-color: #D1D1D6;
+        color: var(--ios-text-primary);
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    .btn-success {
+        background: linear-gradient(135deg, var(--ios-green), #30D158);
+        border: none;
+        border-radius: 16px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 14px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .info-section {
+        background: rgba(0, 122, 255, 0.05);
+        border: 1px solid rgba(0, 122, 255, 0.1);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .info-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    
+    .info-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+        margin-right: 16px;
+    }
+    
+    .info-title {
+        color: var(--ios-blue);
+        font-weight: 600;
+        margin: 0;
+        font-size: 18px;
+    }
+    
+    .info-content {
+        color: var(--ios-text-secondary);
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .requirements-list {
+        list-style: none;
+        padding: 0;
+        margin: 16px 0 0 0;
+    }
+    
+    .requirements-list li {
+        padding: 8px 0;
+        padding-left: 32px;
+        position: relative;
+        color: var(--ios-text-secondary);
+    }
+    
+    .requirements-list li::before {
+        content: '✓';
+        position: absolute;
+        left: 8px;
+        color: var(--ios-green);
+        font-weight: bold;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        margin-top: 32px;
+        flex-wrap: wrap;
+    }
+    
+    .template-download-section {
+        margin-bottom: 24px;
+    }
+    
+    .alert {
+        background: linear-gradient(135deg, #E3F2FD 0%, #F0F8FF 100%);
+        border: 2px solid var(--ios-blue);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 0;
+    }
+    
+    .alert h5 {
+        color: var(--ios-blue);
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .alert p {
+        color: var(--ios-text-secondary);
+        margin-bottom: 16px;
+        line-height: 1.5;
+    }
+    
+    .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        border-radius: 16px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    /* File upload styling */
+    .file-upload-area {
+        border: 2px dashed var(--ios-border);
+        border-radius: 16px;
+        padding: 40px 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: rgba(0, 122, 255, 0.02);
+    }
+    
+    .file-upload-area:hover {
+        border-color: var(--ios-blue);
+        background: rgba(0, 122, 255, 0.05);
+    }
+    
+    .file-upload-icon {
+        font-size: 48px;
+        color: var(--ios-blue);
+        margin-bottom: 16px;
+    }
+    
+    .file-upload-text {
+        color: var(--ios-text-secondary);
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+        }
+        
+        .upload-card,
+        .form-section {
+            padding: 24px;
+        }
+        
+        .upload-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .upload-icon {
+            margin-right: 0;
+            margin-bottom: 20px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div class="flex-grow-1">
+                <h1><i class="fas fa-upload me-3"></i>Complexity Mapping</h1>
+                <p class="page-subtitle">Upload CSV file to bulk update tag complexity settings</p>
+            </div>
+            <div class="mt-3 mt-md-0">
+                <a href="{% url 'tag_list' %}" class="back-btn">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Tags
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Instructions -->
+    <div class="info-section">
+        <div class="info-header">
+            <div class="info-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h4 class="info-title">CSV File Requirements</h4>
+        </div>
+        <div class="info-content">
+            <p>Your CSV file must contain the following columns:</p>
+            <ul class="requirements-list">
+                <li><strong>tag_name:</strong> The exact name of the tag to update</li>
+                <li><strong>complexity:</strong> One of: simple, medium, complex</li>
+            </ul>
+            <p>File size limit: 5MB. Only .csv files are accepted.</p>
+        </div>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="upload-card">
+        <div class="upload-header">
+            <div class="upload-icon">
+                <i class="fas fa-file-csv"></i>
+            </div>
+            <div class="upload-info">
+                <h2>Upload Complexity Mapping</h2>
+                <p>Select a CSV file containing tag names and their complexity levels. This will update the complexity field for matching tags in the database.</p>
+            </div>
+        </div>
+
+        <!-- Sample Template Download -->
+        <div class="template-download-section">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-info-circle me-3" style="font-size: 24px; color: var(--ios-blue);"></i>
+                <div class="flex-grow-1">
+                    <h5 class="mb-1">Need a template?</h5>
+                    <p class="mb-2">Download our sample CSV template with examples for different complexity levels.</p>
+                    <a href="{% load static %}{% static 'tag_manager_component/samples/complexity_mapping_template.csv' %}" class="btn-secondary" download>
+                        <i class="fas fa-file-csv me-2"></i>Download Sample Template
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="complexity-upload-form" id="uploadForm">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.csv_file.id_for_label }}" class="form-label">
+                    <i class="fas fa-file-upload me-2"></i>{{ form.csv_file.label }}
+                </label>
+                
+                <div class="file-upload-area" id="uploadArea">
+                    <div class="file-upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="file-upload-text" id="uploadText">
+                        <strong>Click to select</strong> or drag and drop your CSV file here
+                    </div>
+                    {{ form.csv_file }}
+                </div>
+                
+                {% if form.csv_file.help_text %}
+                    <div class="form-text">{{ form.csv_file.help_text }}</div>
+                {% endif %}
+                
+                {% if form.csv_file.errors %}
+                    <div class="text-danger mt-2">
+                        {% for error in form.csv_file.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="action-buttons">
+                <button type="submit" class="btn-primary" id="submitBtn">
+                    <i class="fas fa-upload me-2"></i>Upload and Process
+                </button>
+                
+                <a href="{% url 'download_complexity_mapping_template' %}" class="btn-success">
+                    <i class="fas fa-download me-2"></i>Download Template
+                </a>
+                
+                <a href="{% url 'tag_list' %}" class="btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sample Data Section -->
+    <div class="form-section">
+        <h4 class="mb-3"><i class="fas fa-table me-2"></i>Sample CSV Format</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead style="background: var(--ios-background);">
+                    <tr>
+                        <th>tag_name</th>
+                        <th>complexity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>helix-button</td>
+                        <td>simple</td>
+                    </tr>
+                    <tr>
+                        <td>helix-navigation</td>
+                        <td>medium</td>
+                    </tr>
+                    <tr>
+                        <td>helix-data-grid</td>
+                        <td>complex</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="text-muted mt-3">
+            <i class="fas fa-lightbulb me-2"></i>
+            <strong>Tip:</strong> Tag names are case-insensitive. The system will find and update all tags that match the provided names.
+        </p>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // File upload area interaction
+    const fileInput = document.querySelector('input[type="file"]');
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadText = document.getElementById('uploadText');
+    const form = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (fileInput && uploadArea) {
+        // Style the file input
+        fileInput.style.opacity = '0';
+        fileInput.style.position = 'relative';
+        fileInput.style.width = '100%';
+        fileInput.style.height = '100%';
+        fileInput.style.cursor = 'pointer';
+        fileInput.style.zIndex = '1';
+        
+        // Handle file selection
+        fileInput.addEventListener('change', function(e) {
+            console.log('File selected:', this.files[0]?.name);
+            const fileName = this.files[0]?.name;
+            if (fileName) {
+                uploadText.innerHTML = `<strong>Selected:</strong> ${fileName}`;
+                uploadArea.style.borderColor = 'var(--ios-green)';
+                uploadArea.style.background = 'rgba(52, 199, 89, 0.05)';
+                
+                // Enable submit button
+                if (submitBtn) {
+                    console.log('1File selected:');
+                    submitBtn.disabled = false;
+                }
+            }
+        });
+        
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('File selected 2:');
+            this.style.borderColor = 'var(--ios-blue)';
+            this.style.background = 'rgba(0, 122, 255, 0.1)';
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            this.style.borderColor = 'var(--ios-border)';
+            this.style.background = 'rgba(0, 122, 255, 0.02)';
+
+            console.log('File selected 3:');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const files = e.dataTransfer.files;
+
+            console.log('File selected 4:');
+            if (files.length > 0) {
+                fileInput.files = files;
+                const fileName = files[0].name;
+                uploadText.innerHTML = `<strong>Selected:</strong> ${fileName}`;
+                this.style.borderColor = 'var(--ios-green)';
+                this.style.background = 'rgba(52, 199, 89, 0.05)';
+                
+                // Trigger change event
+                const changeEvent = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(changeEvent);
+            }
+        });
+    }
+    
+    // Form submission handling
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            console.log('Form submission triggered');
+            
+            // Check if file is selected
+            if (!fileInput.files || fileInput.files.length === 0) {
+                e.preventDefault();
+                alert('Please select a CSV file before uploading.');
+                return false;
+            }
+            
+            // Validate file type
+            const file = fileInput.files[0];
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                e.preventDefault();
+                alert('Please select a CSV file.');
+                return false;
+            }
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            submitBtn.disabled = true;
+            
+            // Allow form to proceed
+            return true;
+        });
+    }
+    
+    // Add click handler to upload area for better UX
+    if (uploadArea && fileInput) {
+        uploadArea.addEventListener('click', function(e) {
+            if (e.target === fileInput) return; // Don't trigger if clicking the actual input
+            fileInput.click();
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'authentication/base.html' %}
+{% block content %}
+<h2>All Tags List</h2>
+<table border="1" cellpadding="5" cellspacing="0">
+  <tr>
+    <th>Name</th>
+    <th>Path</th>
+    <th>Theme Type</th>
+    <th>Details</th>
+    <th>Version</th>
+    <th>Complexity</th>
+    <th>Managed By</th>
+    <th>Tags Extractor</th>
+    <th>Created By</th>
+    <th>Updated By</th>
+    <th>Created At</th>
+    <th>Updated At</th>
+  </tr>
+  {% for tag in tags %}
+  <tr>
+    <td>{{ tag.name }}</td>
+    <td>{{ tag.path }}</td>
+    <td>{{ tag.theme_type }}</td>
+    <td>{{ tag.details }}</td>
+    <td>{{ tag.version }}</td>
+    <td>{{ tag.complexity }}</td>
+    <td>{{ tag.is_managed_by }}</td>
+    <td>{% if tag.tags_extractor %}{{ tag.tags_extractor.id }}{% else %}-{% endif %}</td>
+    <td>{{ tag.created_by }}</td>
+    <td>{{ tag.updated_by }}</td>
+    <td>{{ tag.created_at }}</td>
+    <td>{{ tag.updated_at }}</td>
+  </tr>
+  {% empty %}
+    <tr><td colspan="12">No tags found.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

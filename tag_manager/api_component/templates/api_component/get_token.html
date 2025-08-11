@@ -1,0 +1,43 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Generate API Token{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card ios-card mt-5">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-key me-2 text-primary"></i>Generate API Token
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary ios-button">Generate Token</button>
+                    </form>
+                    {% if token %}
+                        <div class="alert alert-info mt-4" style="border-radius: 12px;">
+                            <strong>Bearer Token:</strong> {{ token }}
+                        </div>
+                    {% endif %}
+                    {% if error %}
+                        <div class="alert alert-danger mt-4" style="border-radius: 12px;">
+                            {{ error }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

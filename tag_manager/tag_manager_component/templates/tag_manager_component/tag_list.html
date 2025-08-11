@@ -1,0 +1,471 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Tag Manager Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-header">
+            <i class="fas fa-tags text-primary"></i> Tag Manager Dashboard
+        </h1>
+    </div>
+
+    <!-- Quick Actions Card -->
+    <div class="card ios-card mb-4">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+            </h5>
+        </div>
+        <div class="card-body">
+            <!-- Primary Actions -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <a href="{% url 'tag_create' %}" class="btn btn-outline-primary w-100 ios-button">
+                        <i class="fas fa-plus me-2"></i>Create New Tag
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'tag_mapper' %}" class="btn btn-outline-info w-100 ios-button">
+                        <i class="fas fa-project-diagram me-2"></i>Tag Mapper
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'complexity_mapping_upload' %}" class="btn btn-outline-warning w-100 ios-button">
+                        <i class="fas fa-upload me-2"></i>Complexity Mapping
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'auto_map_v1_to_v2_tags' %}" class="btn btn-warning ios-button w-100">
+                        <i class="fas fa-magic me-2"></i>Auto Map V1 to V2
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Export Actions -->
+            <div class="border-top pt-3">
+                <h6 class="text-muted mb-3">
+                    <i class="fas fa-file-export me-2"></i>Export Options
+                </h6>
+                <div class="row g-2">
+                    <!-- Basic Exports -->
+                    <div class="col-md-3">
+                        <a href="{% url 'export_v1_tags' %}" class="btn btn-outline-success w-100 ios-button btn-sm">
+                            <i class="fas fa-download me-2"></i>Export V1 Tags
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'export_v2_tags' %}" class="btn btn-outline-success w-100 ios-button btn-sm">
+                            <i class="fas fa-download me-2"></i>Export V2 Tags
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'export_tag_mapper_records' %}" class="btn btn-outline-success w-100 ios-button btn-sm">
+                            <i class="fas fa-download me-2"></i>Mapped Records
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'export_non_tag_mapper_records' %}" class="btn btn-outline-success w-100 ios-button btn-sm">
+                            <i class="fas fa-download me-2"></i>Non-Mapped Records
+                        </a>
+                    </div>
+                    
+                    <!-- Advanced Exports -->
+                    <div class="col-md-4">
+                        <a href="{% url 'export_non_tag_mapper_v1_records' %}" class="btn btn-outline-success w-100 ios-button btn-sm">
+                            <i class="fas fa-download me-2"></i>Non-Mapped V1
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'export_non_tag_mapper_v1_records_with_repo' %}" class="btn btn-outline-success w-100 ios-button btn-sm">
+                            <i class="fas fa-download me-2"></i>V1 with Repo
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{% url 'export_all_tags_with_mapped_attributes_and_repo' %}" class="btn btn-outline-success w-100 ios-button btn-sm">
+                            <i class="fas fa-download me-2"></i>All with Attributes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Filter Buttons -->
+    <div class="card ios-card mb-4">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-zap me-2 text-warning"></i>Quick Filters
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="filterBy('version', 'V1')">
+                        <i class="fas fa-code-branch me-1"></i>V1 Only
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="filterBy('version', 'V2')">
+                        <i class="fas fa-code-branch me-1"></i>V2 Only
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-success btn-sm w-100" onclick="filterBy('complexity', 'simple')">
+                        <i class="fas fa-leaf me-1"></i>Simple
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="filterBy('complexity', 'medium')">
+                        <i class="fas fa-adjust me-1"></i>Medium
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="filterBy('complexity', 'complex')">
+                        <i class="fas fa-cogs me-1"></i>Complex
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-info btn-sm w-100" onclick="filterBy('managed_by', 'automated')">
+                        <i class="fas fa-robot me-1"></i>Automated
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card ios-card mb-4">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-filter me-2 text-primary"></i>Search & Filters
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-4">
+                <!-- Search Box -->
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" name="q" class="form-control border-start-0" 
+                                   placeholder="Search by name, path, theme, details, or version..." 
+                                   value="{{ current_filters.query|default:'' }}" autofocus>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filter Dropdowns -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label for="version" class="form-label">
+                            <i class="fas fa-code-branch me-1 text-primary"></i>Version
+                        </label>
+                        <select name="version" id="version" class="form-select">
+                            <option value="">All Versions</option>
+                            {% for version in versions %}
+                                <option value="{{ version }}" {% if current_filters.version == version %}selected{% endif %}>
+                                    {{ version }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="complexity" class="form-label">
+                            <i class="fas fa-layer-group me-1 text-danger"></i>Complexity
+                        </label>
+                        <select name="complexity" id="complexity" class="form-select">
+                            <option value="">All Complexities</option>
+                            {% for complexity in complexities %}
+                                {% if complexity %}
+                                    <option value="{{ complexity }}" {% if current_filters.complexity == complexity %}selected{% endif %}>
+                                        {{ complexity|title }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="theme_type" class="form-label">
+                            <i class="fas fa-palette me-1 text-success"></i>Theme Type
+                        </label>
+                        <select name="theme_type" id="theme_type" class="form-select">
+                            <option value="">All Theme Types</option>
+                            {% for theme_type in theme_types %}
+                                <option value="{{ theme_type }}" {% if current_filters.theme_type == theme_type %}selected{% endif %}>
+                                    {{ theme_type }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="managed_by" class="form-label">
+                            <i class="fas fa-user-cog me-1 text-muted"></i>Managed By
+                        </label>
+                        <select name="managed_by" id="managed_by" class="form-select">
+                            <option value="">All Types</option>
+                            {% for managed_by in managed_by_options %}
+                                {% if managed_by %}
+                                    <option value="{{ managed_by }}" {% if current_filters.managed_by == managed_by %}selected{% endif %}>
+                                        {{ managed_by|title }}
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary ios-button">
+                        <i class="fas fa-search me-2"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'tag_list' %}" class="btn btn-outline-secondary ios-button">
+                        <i class="fas fa-times me-2"></i>Clear All
+                    </a>
+                </div>
+            </form>
+            
+            <!-- Filter Summary -->
+            <div class="mt-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="badge bg-primary-subtle text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-tags me-2"></i>Total Tags: {{ tags|length }}
+                    </span>
+                    
+                    {% if current_filters.query %}
+                        <span class="badge bg-info-subtle text-info px-3 py-2">
+                            <i class="fas fa-search me-1"></i>Search: "{{ current_filters.query }}"
+                        </span>
+                    {% endif %}
+                    
+                    {% if current_filters.version %}
+                        <span class="badge bg-success-subtle text-success px-3 py-2">
+                            <i class="fas fa-code-branch me-1"></i>Version: {{ current_filters.version }}
+                        </span>
+                    {% endif %}
+                    
+                    {% if current_filters.complexity %}
+                        <span class="badge bg-warning-subtle text-warning px-3 py-2">
+                            <i class="fas fa-layer-group me-1"></i>Complexity: {{ current_filters.complexity|title }}
+                        </span>
+                    {% endif %}
+                    
+                    {% if current_filters.theme_type %}
+                        <span class="badge bg-secondary-subtle text-secondary px-3 py-2">
+                            <i class="fas fa-palette me-1"></i>Theme: {{ current_filters.theme_type }}
+                        </span>
+                    {% endif %}
+                    
+                    {% if current_filters.managed_by %}
+                        <span class="badge bg-dark-subtle text-dark px-3 py-2">
+                            <i class="fas fa-user-cog me-1"></i>Managed: {{ current_filters.managed_by|title }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tags Table -->
+    <div class="card ios-card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 ps-4">#</th>
+                            <th class="border-0">
+                                <i class="fas fa-code-branch me-2 text-primary"></i>Version
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-palette me-2 text-success"></i>Theme Type
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-tag me-2 text-info"></i>Name
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-folder me-2 text-warning"></i>Path
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-info-circle me-2 text-secondary"></i>Details
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-layer-group me-2 text-danger"></i>Complexity
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-user-cog me-2 text-muted"></i>Managed By
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-extract me-2 text-dark"></i>Extractor
+                            </th>
+                            <th class="border-0 text-center pe-4">
+                                <i class="fas fa-cog me-2 text-muted"></i>Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tag in tags %}
+                        <tr class="align-middle">
+                            <td class="ps-4">
+                                <span class="badge bg-secondary text-white">{{ forloop.counter }}</span>
+                            </td>
+                            <td>
+                                {% if tag.version == 'V1' %}
+                                    <span class="badge bg-primary text-white">
+                                        <i class="fas fa-1 me-1"></i>V1
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success text-white">
+                                        <i class="fas fa-2 me-1"></i>V2
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info rounded-pill">
+                                    {{ tag.theme_type|default:"Default" }}
+                                </span>
+                            </td>
+                            <td>
+                                <strong class="text-primary">{{ tag.name }}</strong>
+                            </td>
+                            <td>
+                                <span class="text-muted font-monospace small">{{ tag.path|truncatechars:30 }}</span>
+                            </td>
+                            <td>
+                                <span class="text-truncate d-inline-block" style="max-width: 200px;" 
+                                      title="{{ tag.details }}">
+                                    {{ tag.details|truncatechars:40 }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if tag.complexity == 'simple' %}
+                                    <span class="badge bg-success text-white">
+                                        <i class="fas fa-circle me-1"></i>Simple
+                                    </span>
+                                {% elif tag.complexity == 'medium' %}
+                                    <span class="badge bg-warning text-white">
+                                        <i class="fas fa-adjust me-1"></i>Medium
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger text-white">
+                                        <i class="fas fa-layer-group me-1"></i>Complex
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tag.is_managed_by == 'manual' %}
+                                    <span class="badge bg-warning-subtle text-warning rounded-pill">
+                                        <i class="fas fa-hand-paper me-1"></i>Manual
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-success-subtle text-success rounded-pill">
+                                        <i class="fas fa-robot me-1"></i>Automated
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tag.tags_extractor %}
+                                    <a href="#" class="text-decoration-none">
+                                        <i class="fas fa-link me-1 text-muted"></i>
+                                        <small>{{ tag.tags_extractor }}</small>
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-minus me-1"></i>N/A
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'tag_edit' tag.id %}" 
+                                       class="btn btn-outline-primary btn-sm"
+                                       title="Edit Tag">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'tag_delete' tag.id %}" 
+                                       class="btn btn-outline-danger btn-sm"
+                                       title="Delete Tag"
+                                       onclick="return confirm('Are you sure you want to delete this tag?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-5 text-muted">
+                                <i class="fas fa-tags fa-3x mb-3"></i>
+                                <h5>No tags found</h5>
+                                <p>Start by creating your first tag or importing from a repository.</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced filtering functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filter dropdowns change
+    const filterSelects = document.querySelectorAll('#version, #complexity, #theme_type, #managed_by');
+    
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            // Auto-submit the form when a filter dropdown changes
+            this.closest('form').submit();
+        });
+    });
+    
+    // Add debounced search for text input
+    const searchInput = document.querySelector('input[name="q"]');
+    let searchTimeout;
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                // Only auto-submit if user has typed something substantial
+                if (this.value.length === 0 || this.value.length >= 3) {
+                    this.closest('form').submit();
+                }
+            }, 500); // 500ms delay
+        });
+    }
+    
+    // Add visual feedback for active filters
+    const activeFilters = document.querySelectorAll('select[name]:not([value=""]), input[name="q"]:not([value=""])');
+    activeFilters.forEach(filter => {
+        if (filter.value) {
+            filter.classList.add('border-primary', 'bg-primary-subtle');
+        }
+    });
+});
+
+// Quick filter shortcuts
+function filterBy(field, value) {
+    const form = document.querySelector('form[method="get"]');
+    const input = form.querySelector(`[name="${field}"]`);
+    if (input) {
+        input.value = value;
+        form.submit();
+    }
+}
+
+// Clear all filters function
+function clearAllFilters() {
+    window.location.href = window.location.pathname;
+}
+</script>
+
+{% endblock %}

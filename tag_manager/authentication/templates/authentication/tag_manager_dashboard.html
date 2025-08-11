@@ -1,0 +1,1019 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Tag Manager Dashboard{% endblock %}
+
+{% block content %}
+<style>
+    /* iPhone-style color palette and gradients */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-green: #34C759;
+        --ios-green-dark: #248A3D;
+        --ios-orange: #FF9500;
+        --ios-orange-dark: #CC7700;
+        --ios-red: #FF3B30;
+        --ios-red-dark: #D70015;
+        --ios-purple: #5856D6;
+        --ios-purple-dark: #3634A3;
+        --ios-pink: #FF2D92;
+        --ios-pink-dark: #D70064;
+        --ios-gray: #8E8E93;
+        --ios-gray-dark: #6D6D70;
+        --ios-background: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-border: #E5E5EA;
+    }
+    
+    body {
+        background: var(--ios-background);
+        color: var(--ios-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 36px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dashboard-subtitle {
+        font-size: 18px;
+        opacity: 0.9;
+        margin-bottom: 0;
+        font-weight: 400;
+        line-height: 1.4;
+    }
+    
+    .user-greeting {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 20px 24px;
+        margin-top: 24px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .user-greeting h5 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--ios-pink), var(--ios-orange));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        margin-right: 12px;
+        font-size: 16px;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .stat-card {
+        background: var(--ios-surface);
+        border-radius: 20px;
+        padding: 32px 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--ios-border);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient);
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card.primary::before {
+        --gradient: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+    }
+    
+    .stat-card.success::before {
+        --gradient: linear-gradient(135deg, var(--ios-green), #30D158);
+    }
+    
+    .stat-card.warning::before {
+        --gradient: linear-gradient(135deg, var(--ios-orange), #FF6B35);
+    }
+    
+    .stat-card.info::before {
+        --gradient: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+    }
+    
+    .stat-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 24px;
+        color: white;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-icon.primary {
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+    }
+    
+    .stat-icon.success {
+        background: linear-gradient(135deg, var(--ios-green), #30D158);
+    }
+    
+    .stat-icon.warning {
+        background: linear-gradient(135deg, var(--ios-orange), #FF6B35);
+    }
+    
+    .stat-icon.info {
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+    }
+    
+    .stat-content h6 {
+        color: var(--ios-text-secondary);
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-number {
+        font-size: 42px;
+        font-weight: 800;
+        color: var(--ios-text-primary);
+        margin: 8px 0;
+        line-height: 1;
+        letter-spacing: -1px;
+    }
+    
+    .stat-subtitle {
+        color: var(--ios-text-secondary);
+        font-size: 14px;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .action-card {
+        background: var(--ios-surface);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--ios-border);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 0;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .action-card:hover::before {
+        opacity: 0.05;
+    }
+    
+    .action-card.migration {
+        --gradient-start: var(--ios-blue);
+        --gradient-end: var(--ios-purple);
+    }
+    
+    .action-card.extractor {
+        --gradient-start: var(--ios-green);
+        --gradient-end: #30D158;
+    }
+    
+    .action-card.history {
+        --gradient-start: var(--ios-orange);
+        --gradient-end: #FF6B35;
+    }
+    
+    .action-card.analytics {
+        --gradient-start: var(--ios-purple);
+        --gradient-end: var(--ios-pink);
+    }
+    
+    .action-content {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .action-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .action-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        font-size: 28px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+    
+    .action-icon.migration {
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+    }
+    
+    .action-icon.extractor {
+        background: linear-gradient(135deg, var(--ios-green), #30D158);
+    }
+    
+    .action-icon.history {
+        background: linear-gradient(135deg, var(--ios-orange), #FF6B35);
+    }
+    
+    .action-icon.analytics {
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+    }
+    
+    .action-info h4 {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--ios-text-primary);
+        margin: 0 0 8px 0;
+        letter-spacing: -0.3px;
+    }
+    
+    .action-description {
+        color: var(--ios-text-secondary);
+        font-size: 15px;
+        line-height: 1.5;
+        margin: 0;
+        font-weight: 400;
+    }
+    
+    .action-stats {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--ios-border);
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .action-stat {
+        text-align: center;
+    }
+    
+    .action-stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--ios-text-primary);
+        margin-bottom: 4px;
+    }
+    
+    .action-stat-label {
+        font-size: 12px;
+        color: var(--ios-text-secondary);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .recent-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 32px;
+        margin-bottom: 32px;
+    }
+    
+    .recent-card {
+        background: var(--ios-surface);
+        border-radius: 20px;
+        padding: 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--ios-border);
+        height: fit-content;
+    }
+    
+    .recent-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--ios-border);
+    }
+    
+    .recent-header h5 {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ios-text-primary);
+        margin: 0;
+        flex: 1;
+    }
+    
+    .recent-header i {
+        margin-right: 12px;
+        color: var(--ios-blue);
+        font-size: 18px;
+    }
+    
+    .recent-item {
+        display: flex;
+        align-items: center;
+        padding: 16px 0;
+        border-bottom: 1px solid rgba(142, 142, 147, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .recent-item:last-child {
+        border-bottom: none;
+    }
+    
+    .recent-item:hover {
+        background: rgba(142, 142, 147, 0.05);
+        border-radius: 12px;
+        margin: 0 -8px;
+        padding: 16px 8px;
+    }
+    
+    .recent-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 18px;
+        color: white;
+        flex-shrink: 0;
+    }
+    
+    .recent-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .recent-content h6 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ios-text-primary);
+        margin: 0 0 4px 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .recent-content p {
+        font-size: 14px;
+        color: var(--ios-text-secondary);
+        margin: 0;
+        line-height: 1.4;
+    }
+    
+    .recent-time {
+        font-size: 12px;
+        color: var(--ios-text-secondary);
+        font-weight: 500;
+        flex-shrink: 0;
+        margin-left: 12px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 48px 32px;
+        color: var(--ios-text-secondary);
+    }
+    
+    .empty-state i {
+        font-size: 64px;
+        margin-bottom: 16px;
+        opacity: 0.3;
+    }
+    
+    .empty-state h6 {
+        color: var(--ios-text-primary);
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .logout-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        border-radius: 16px;
+        padding: 12px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+    
+    .logout-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        .quick-actions {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        .recent-section {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        .dashboard-header {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .dashboard-header h1 {
+            font-size: 28px;
+        }
+        
+        .action-card,
+        .stat-card,
+        .recent-card {
+            padding: 24px;
+        }
+    }
+    
+    /* Animation classes */
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    .slide-up {
+        animation: slideUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="dashboard-header fade-in">
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div class="flex-grow-1">
+                <h1><i class="fas fa-rocket me-3"></i>Tag Manager</h1>
+                <p class="dashboard-subtitle">Transform your V1 components to V2 with intelligent migration tools</p>
+                
+                <div class="user-greeting">
+                    <h5>
+                        <div class="user-avatar">{{ user.first_name.0|default:user.username.0|upper }}</div>
+                        Welcome back, {{ user.first_name|default:user.username }}!
+                    </h5>
+                    <p style="margin: 0; font-size: 14px; opacity: 0.8;">Ready to migrate some components today?</p>
+                </div>
+            </div>
+            <div class="mt-3 mt-md-0">
+                <a href="{% url 'logout' %}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="stats-grid slide-up">
+        <div class="stat-card primary">
+            <div class="stat-header">
+                <div class="stat-icon primary">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h6>Total Migrations</h6>
+                </div>
+            </div>
+            <div class="stat-number">{{ total_migrations|default:0 }}</div>
+            <p class="stat-subtitle">Component conversions</p>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-header">
+                <div class="stat-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h6>Success Rate</h6>
+                </div>
+            </div>
+            <div class="stat-number">{{ completion_percentage|default:0 }}%</div>
+            <p class="stat-subtitle">Migration accuracy</p>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-header">
+                <div class="stat-icon warning">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="stat-content">
+                    <h6>Tags Managed</h6>
+                </div>
+            </div>
+            <div class="stat-number">{{ total_tags|default:0 }}</div>
+            <p class="stat-subtitle">Component definitions</p>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-header">
+                <div class="stat-icon info">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="stat-content">
+                    <h6>Extractors</h6>
+                </div>
+            </div>
+            <div class="stat-number">{{ total_extractors|default:0 }}</div>
+            <p class="stat-subtitle">Active scrapers</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions slide-up">
+        <a href="{% url 'data_migration_create' %}" class="action-card migration">
+            <div class="action-content">
+                <div class="action-header">
+                    <div class="action-icon migration">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <div class="action-info">
+                        <h4>New Migration</h4>
+                    </div>
+                </div>
+                <p class="action-description">
+                    Transform V1 components to V2 format with AI-powered conversion. 
+                    Supports HTML, CSS, and JavaScript with intelligent pattern recognition.
+                </p>
+                <div class="action-stats">
+                    <div class="action-stat">
+                        <div class="action-stat-number">{{ successful_migrations|default:0 }}</div>
+                        <div class="action-stat-label">Completed</div>
+                    </div>
+                    <div class="action-stat">
+                        <div class="action-stat-number">{{ completion_percentage|default:0 }}%</div>
+                        <div class="action-stat-label">Success Rate</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{% url 'tags_extractor_list' %}" class="action-card extractor">
+            <div class="action-content">
+                <div class="action-header">
+                    <div class="action-icon extractor">
+                        <i class="fas fa-spider"></i>
+                    </div>
+                    <div class="action-info">
+                        <h4>Tag Extractor</h4>
+                    </div>
+                </div>
+                <p class="action-description">
+                    Automatically scan and extract component definitions from repositories.
+                    Analyze code structure and identify migration candidates.
+                </p>
+                <div class="action-stats">
+                    <div class="action-stat">
+                        <div class="action-stat-number">{{ total_extractors|default:0 }}</div>
+                        <div class="action-stat-label">Extractors</div>
+                    </div>
+                    <div class="action-stat">
+                        <div class="action-stat-number">{{ total_tags|default:0 }}</div>
+                        <div class="action-stat-label">Tags Found</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{% url 'data_migration_list' %}" class="action-card history">
+            <div class="action-content">
+                <div class="action-header">
+                    <div class="action-icon history">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-info">
+                        <h4>Migration History</h4>
+                    </div>
+                </div>
+                <p class="action-description">
+                    Review, edit, and manage all your previous migrations.
+                    Track conversion results and download processed files.
+                </p>
+                <div class="action-stats">
+                    <div class="action-stat">
+                        <div class="action-stat-number">{{ total_migrations|default:0 }}</div>
+                        <div class="action-stat-label">Total</div>
+                    </div>
+                    <div class="action-stat">
+                        <div class="action-stat-number">{{ successful_migrations|default:0 }}</div>
+                        <div class="action-stat-label">Success</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{% url 'tag_list' %}" class="action-card analytics">
+            <div class="action-content">
+                <div class="action-header">
+                    <div class="action-icon analytics">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="action-info">
+                        <h4>Tags List</h4>
+                    </div>
+                </div>
+                <p class="action-description">
+                    Get detailed insights into migration performance, error patterns,
+                    and optimization recommendations for your workflow.
+                </p>
+                <div class="action-stats">
+                    <div class="action-stat">
+                        <div class="action-stat-number">--</div>
+                        <div class="action-stat-label">Coming Soon</div>
+                    </div>
+                    <div class="action-stat">
+                        <div class="action-stat-number">--</div>
+                        <div class="action-stat-label">Beta</div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="recent-section slide-up">
+        <div class="recent-card">
+            <div class="recent-header">
+                <h5><i class="fas fa-clock"></i>Recent Migrations</h5>
+            </div>
+            
+            {% if recent_migrations %}
+                {% for migration in recent_migrations %}
+                <div class="recent-item">
+                    <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="recent-content">
+                        <h6>Migration #{{ migration.pk }}</h6>
+                        <p>{{ migration.get_v1_content_summary }}</p>
+                    </div>
+                    <div class="recent-time">{{ migration.created_at|timesince }} ago</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-exchange-alt"></i>
+                    <h6>No Recent Migrations</h6>
+                    <p>Start your first migration to see activity here</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="recent-card">
+            <div class="recent-header">
+                <h5><i class="fas fa-robot"></i>Recent Extractions</h5>
+            </div>
+            
+            {% if recent_extractors %}
+                {% for extractor in recent_extractors %}
+                <div class="recent-item">
+                    <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-green), #30D158);">
+                        <i class="fas fa-spider"></i>
+                    </div>
+                    <div class="recent-content">
+                        <h6>{{ extractor.repo_url|truncatechars:30 }}</h6>
+                        <p>Version: {{ extractor.get_version_value_display }}</p>
+                    </div>
+                    <div class="recent-time">{{ extractor.created_at|timesince }} ago</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-spider"></i>
+                    <h6>No Recent Extractions</h6>
+                    <p>Create an extractor to analyze repositories</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Tips -->
+    <div class="recent-card slide-up">
+        <div class="recent-header">
+            <h5><i class="fas fa-lightbulb"></i>Pro Tips</h5>
+        </div>
+        
+        <div class="recent-item">
+            <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-green), #30D158);">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="recent-content">
+                <h6>Batch Processing</h6>
+                <p>Use bulk migration for multiple components at once to save time</p>
+            </div>
+        </div>
+        
+        <div class="recent-item">
+            <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-orange), #FF6B35);">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="recent-content">
+                <h6>Backup First</h6>
+                <p>Always backup your V1 components before starting migration</p>
+            </div>
+        </div>
+        
+        <div class="recent-item">
+            <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));">
+                <i class="fas fa-flask"></i>
+            </div>
+            <div class="recent-content">
+                <h6>Test Thoroughly</h6>
+                <p>Validate converted components in staging environment first</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Enhanced Interactions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add staggered animation to cards
+    const cards = document.querySelectorAll('.stat-card, .action-card, .recent-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('fade-in');
+    });
+    
+    // Enhanced hover effects
+    const actionCards = document.querySelectorAll('.action-card');
+    actionCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-12px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Stat cards hover effect
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Add loading animation to stat numbers
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(number => {
+        const target = parseInt(number.textContent);
+        if (!isNaN(target)) {
+            animateNumber(number, 0, target, 1500);
+        }
+    });
+});
+
+function animateNumber(element, start, end, duration) {
+    const range = end - start;
+    const startTime = performance.now();
+    
+    function updateNumber(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const current = Math.floor(start + range * easeOutQuart);
+        
+        element.textContent = current + (element.textContent.includes('%') ? '%' : '');
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateNumber);
+        } else {
+            element.textContent = end + (element.textContent.includes('%') ? '%' : '');
+        }
+    }
+    
+    requestAnimationFrame(updateNumber);
+}
+
+function showComingSoon(feature) {
+    const messages = {
+        'analytics': 'Analytics Dashboard is coming soon! Get detailed insights into your migration performance, error patterns, and optimization recommendations.'
+    };
+    
+    showNotification(messages[feature] || 'This feature is coming soon!', 'info');
+}
+
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelectorAll('.notification-toast');
+    existing.forEach(toast => toast.remove());
+    
+    const toast = document.createElement('div');
+    toast.className = 'notification-toast';
+    toast.style.cssText = `
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        background: white;
+        border-radius: 16px;
+        padding: 20px 24px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--ios-border);
+        max-width: 400px;
+        z-index: 9999;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    `;
+    
+    const iconColors = {
+        'info': 'var(--ios-blue)',
+        'success': 'var(--ios-green)',
+        'warning': 'var(--ios-orange)',
+        'error': 'var(--ios-red)'
+    };
+    
+    const icons = {
+        'info': 'fas fa-info-circle',
+        'success': 'fas fa-check-circle',
+        'warning': 'fas fa-exclamation-triangle',
+        'error': 'fas fa-times-circle'
+    };
+    
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center;">
+            <i class="${icons[type]}" style="color: ${iconColors[type]}; font-size: 20px; margin-right: 12px;"></i>
+            <div style="flex: 1;">
+                <div style="font-weight: 600; color: var(--ios-text-primary); margin-bottom: 4px;">
+                    ${type.charAt(0).toUpperCase() + type.slice(1)}
+                </div>
+                <div style="color: var(--ios-text-secondary); font-size: 14px; line-height: 1.4;">
+                    ${message}
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" style="
+                background: none; 
+                border: none; 
+                color: var(--ios-text-secondary); 
+                font-size: 18px; 
+                cursor: pointer; 
+                padding: 4px;
+                margin-left: 12px;
+                border-radius: 8px;
+                transition: all 0.2s ease;
+            " onmouseover="this.style.background='var(--ios-background)'" onmouseout="this.style.background='none'">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Auto remove after 6 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => toast.remove(), 400);
+        }
+    }, 6000);
+}
+
+// Add subtle parallax effect to header
+window.addEventListener('scroll', function() {
+    const header = document.querySelector('.dashboard-header');
+    const scrolled = window.pageYOffset;
+    const rate = scrolled * -0.5;
+    
+    if (header) {
+        header.style.transform = `translateY(${rate}px)`;
+    }
+});
+</script>
+{% endblock %}

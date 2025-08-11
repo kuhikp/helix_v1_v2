@@ -1,0 +1,223 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Data Migration List{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-header">
+                <i class="fas fa-database text-primary"></i> Migration History
+            </h1>
+            <p class="text-muted mb-0">View all V1 to V2 component migrations</p>
+        </div>
+        <a href="{% url 'data_migration_create' %}" class="btn btn-primary ios-button">
+            <i class="fas fa-plus me-2"></i>New Migration
+        </a>
+    </div>
+
+    <!-- Migration Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card ios-card text-center">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-exchange-alt fa-2x text-primary me-3"></i>
+                        <div>
+                            <h4 class="mb-0">{{ migrations|length }}</h4>
+                            <small class="text-muted">Total Migrations</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card ios-card text-center">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-check-circle fa-2x text-success me-3"></i>
+                        <div>
+                            <h4 class="mb-0">{{ migrations|length }}</h4>
+                            <small class="text-muted">Successful</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card ios-card text-center">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <i class="fas fa-clock fa-2x text-warning me-3"></i>
+                        <div>
+                            <h4 class="mb-0">0</h4>
+                            <small class="text-muted">Pending</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+
+    <!-- Migrations Table -->
+    <div class="card ios-card">
+        <div class="card-header bg-transparent border-0">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2 text-info"></i>Migration Details
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="border-0 ps-4">
+                                <i class="fas fa-sitemap me-2 text-primary"></i>Site Meta Details
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-code me-2 text-success"></i>V1 Body
+                            </th>
+                            <th class="border-0">
+                                <i class="fab fa-css3-alt me-2 text-primary"></i>V1 CSS
+                            </th>
+                            <th class="border-0">
+                                <i class="fab fa-js-square me-2 text-warning"></i>V1 JS
+                            </th>
+                            <th class="border-0">
+                                <i class="fas fa-code me-2 text-info"></i>V2 Body
+                            </th>
+                            <th class="border-0">
+                                <i class="fab fa-css3-alt me-2 text-info"></i>V2 CSS
+                            </th>
+                            <th class="border-0">
+                                <i class="fab fa-js-square me-2 text-info"></i>V2 JS
+                            </th>
+                            <th class="border-0 text-center pe-4">
+                                <i class="fas fa-tools me-2 text-muted"></i>Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for migration in migrations %}
+                        <tr class="align-middle">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-globe text-primary me-2"></i>
+                                    <span class="fw-medium">{{ migration.site_meta_details }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="component-preview" data-full-content="{{ migration.v1_body }}">
+                                    <span class="badge bg-success-subtle text-success rounded-pill">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="component-preview" data-full-content="{{ migration.v1_css }}">
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="component-preview" data-full-content="{{ migration.v1_js }}">
+                                    <span class="badge bg-warning-subtle text-warning rounded-pill">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="component-preview" data-full-content="{{ migration.v2_body }}">
+                                    <span class="badge bg-info-subtle text-info rounded-pill">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="component-preview" data-full-content="{{ migration.v2_css }}">
+                                    <span class="badge bg-info-subtle text-info rounded-pill">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="component-preview" data-full-content="{{ migration.v2_js }}">
+                                    <span class="badge bg-info-subtle text-info rounded-pill">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-center pe-4">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'data_migration_detail' migration.pk %}" 
+                                       class="btn btn-outline-info btn-sm" 
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'data_migration_edit' migration.pk %}" 
+                                       class="btn btn-outline-primary btn-sm"
+                                       title="Edit Migration">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'data_migration_delete' migration.pk %}" 
+                                       class="btn btn-outline-danger btn-sm"
+                                       title="Delete Migration">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="fas fa-database fa-3x mb-3"></i>
+                                <h5>No migrations found</h5>
+                                <p>Start by creating your first V1 to V2 migration.</p>
+                                <a href="{% url 'data_migration_create' %}" class="btn btn-primary ios-button">
+                                    <i class="fas fa-plus me-2"></i>Create Migration
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Component Details Modal -->
+<div class="modal fade" id="componentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content ios-card">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">
+                    <i class="fas fa-code me-2 text-primary"></i>Component Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre class="bg-light p-3 rounded" id="componentContent"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle component preview clicks
+    document.querySelectorAll('.component-preview').forEach(function(element) {
+        element.addEventListener('click', function() {
+            const content = this.getAttribute('data-full-content');
+            const modal = new bootstrap.Modal(document.getElementById('componentModal'));
+            document.getElementById('componentContent').textContent = content;
+            modal.show();
+        });
+    });
+});
+</script>
+{% endblock %}

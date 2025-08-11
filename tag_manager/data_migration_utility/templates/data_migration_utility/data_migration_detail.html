@@ -1,0 +1,160 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Migration Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="page-header">
+                <i class="fas fa-eye text-primary"></i> Migration Details
+            </h1>
+            <p class="text-muted mb-0">View complete migration information</p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'data_migration_list' %}" class="btn btn-outline-secondary ios-button">
+                <i class="fas fa-arrow-left me-2"></i>Back to List
+            </a>
+            <a href="{% url 'data_migration_edit' migration.pk %}" class="btn btn-outline-primary ios-button">
+                <i class="fas fa-edit me-2"></i>Edit
+            </a>
+            <a href="{% url 'data_migration_delete' migration.pk %}" class="btn btn-outline-danger ios-button">
+                <i class="fas fa-trash me-2"></i>Delete
+            </a>
+        </div>
+    </div>
+
+    <!-- Migration Details -->
+    <div class="row g-4">
+        <!-- V1 Components -->
+        <div class="col-lg-6">
+            <div class="card ios-card h-100">
+                <div class="card-header bg-success-subtle border-0">
+                    <h5 class="card-title mb-0 text-success">
+                        <i class="fas fa-cube me-2"></i>V1 Components (Source)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- V1 Body -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-code me-2"></i>Body Content
+                        </h6>
+                        <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                            <pre class="mb-0"><code>{{ migration.v1_body|default:"No content" }}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- V1 CSS -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">
+                            <i class="fab fa-css3-alt me-2"></i>CSS Content
+                        </h6>
+                        <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                            <pre class="mb-0"><code>{{ migration.v1_css|default:"No content" }}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- V1 JS -->
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="fab fa-js-square me-2"></i>JavaScript Content
+                        </h6>
+                        <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                            <pre class="mb-0"><code>{{ migration.v1_js|default:"No content" }}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- V2 Components -->
+        <div class="col-lg-6">
+            <div class="card ios-card h-100">
+                <div class="card-header bg-info-subtle border-0">
+                    <h5 class="card-title mb-0 text-info">
+                        <i class="fas fa-cubes me-2"></i>V2 Components (Converted)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- V2 Body -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-code me-2"></i>Body Content
+                        </h6>
+                        <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                            <pre class="mb-0"><code>{{ migration.v2_body|default:"No content" }}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- V2 CSS -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">
+                            <i class="fab fa-css3-alt me-2"></i>CSS Content
+                        </h6>
+                        <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                            <pre class="mb-0"><code>{{ migration.v2_css|default:"No content" }}</code></pre>
+                        </div>
+                    </div>
+
+                    <!-- V2 JS -->
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="fab fa-js-square me-2"></i>JavaScript Content
+                        </h6>
+                        <div class="border rounded p-3 bg-light" style="max-height: 300px; overflow-y: auto;">
+                            <pre class="mb-0"><code>{{ migration.v2_js|default:"No content" }}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Migration Statistics -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card ios-card">
+                <div class="card-header bg-transparent border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2 text-warning"></i>Migration Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center g-3">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-file-code fa-2x text-primary mb-2"></i>
+                                <h6 class="mb-1">V1 Body</h6>
+                                <small class="text-muted">{{ migration.v1_body|length }} characters</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-paint-brush fa-2x text-success mb-2"></i>
+                                <h6 class="mb-1">V1 CSS</h6>
+                                <small class="text-muted">{{ migration.v1_css|length }} characters</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-code fa-2x text-warning mb-2"></i>
+                                <h6 class="mb-1">V1 JS</h6>
+                                <small class="text-muted">{{ migration.v1_js|length }} characters</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <i class="fas fa-check-circle fa-2x text-info mb-2"></i>
+                                <h6 class="mb-1">Migration Status</h6>
+                                <small class="text-success">Completed</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
