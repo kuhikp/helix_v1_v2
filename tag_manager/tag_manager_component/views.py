@@ -222,7 +222,6 @@ def clone_github_repo(repo_url, branch=None):
     elif clone_result.returncode != 0:
         error_message = f"Git clone failed: {clone_result.stderr}"
         print(error_message)
-        print("PARAG K7")
         # if os.path.exists(temp_dir):
         #     shutil.rmtree(temp_dir, ignore_errors=True)
         return None, False, error_message
@@ -239,7 +238,6 @@ def clone_github_repo(repo_url, branch=None):
     # Verify the clone was successful by checking .git directory
     if not os.path.isdir(os.path.join(temp_dir, '.git')):
         # shutil.rmtree(temp_dir, ignore_errors=True)
-        print("PARAG K8")
         return None, False, "Git repository was not cloned properly"
 
     return temp_dir, True, None
@@ -517,7 +515,6 @@ def process_extractor_pages(request, extractor, start_page=1, update_db=True):
     """
     print("process_extractor_pages")
     print(extractor)
-    print("PARAG HERE")
     message = None
     tags_found = []
     owner, repo = None, None
