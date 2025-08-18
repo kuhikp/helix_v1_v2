@@ -594,4 +594,4 @@ python manage.py collectstatic --noinput
 
 **Last Updated**: August 2025 | **Version**: 2.0.0 | **Maintained By**: Development Team
 
-> Made with ❤️ for the Adobe Helix community
+> Made with ❤️ for Helix Migration
