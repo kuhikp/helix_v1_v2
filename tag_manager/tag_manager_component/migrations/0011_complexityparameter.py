@@ -31,7 +31,6 @@ class Migration(migrations.Migration):
             options={
                 'verbose_name': 'Complexity Parameter Configuration',
                 'verbose_name_plural': 'Complexity Parameter Configuration',
-                'constraints': [models.CheckConstraint(condition=models.Q(('id', 1)), name='single_complexity_config')],
             },
         ),
     ]

@@ -24,6 +24,7 @@
         display: flex;
         align-items: center;
         min-height: 120px;
+        -webkit-text-fill-color: inherit !important;
     }
     .page-header h1 {
         color: white;
@@ -510,7 +511,7 @@
             <form method="post" style="display: inline-block;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-primary btn-lg me-3">
-                    <i class="fas fa-play me-2"></i>Start Analysis
+                    <i class="fas fa-play me-2"></i>Start Analysis MAST
                 </button>
             </form>
             <a href="{% url 'site_manager:website_selection' %}" class="btn btn-secondary btn-lg">
@@ -548,16 +549,16 @@
                     {% for website in websites %}
                     <tr>
                         <td>
-                            <strong style="color: var(--ios-text-primary);">{{ website.name }}</strong>
+                            <strong style="color: var(--ios-text-primary);">{{ website.website_url }}</strong>
                         </td>
                         <td>
-                            <a href="{{ website.url }}" target="_blank" style="color: var(--ios-blue); text-decoration: none; font-weight: 500;">
-                                {{ website.url }}
+                            <a href="{{ website.website_url }}" target="_blank" style="color: var(--ios-blue); text-decoration: none; font-weight: 500;">
+                                {{ website.website_url }}
                                 <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8rem;"></i>
                             </a>
                         </td>
                         <td>
-                            {% if website.is_analyzed %}
+                            {% if website.is_imported %}
                                 <span class="badge bg-success">
                                     <i class="fas fa-check me-1"></i>Analyzed
                                 </span>

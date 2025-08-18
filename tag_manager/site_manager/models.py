@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 class SiteListDetails(models.Model):
     COMPLEXITY_CHOICES = [
@@ -27,6 +28,7 @@ class SiteListDetails(models.Model):
     v2_non_compatible_count = models.IntegerField(default=0)
     custom_component = models.TextField(blank=True, null=True)
     is_imported = models.BooleanField(default=False)
+    last_analyzed = models.DateTimeField(blank=True, null=True, help_text='Date and time when the site was last analyzed')
 
     def __str__(self):
         return self.website_url

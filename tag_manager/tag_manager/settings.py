@@ -27,12 +27,16 @@ GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#=z-@nkaabm#e8l5ei=y_*_oh60&3y00dgjxkta$_d3%fnzsq$'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+
+# Development Settings - Disable Caching
+# Template caching is automatically disabled when DEBUG=True
+# Session and CSRF middleware will use the dummy cache backend defined below
 
 
 # Application definition
@@ -77,6 +81,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            
         },
     },
 ]
@@ -90,11 +95,11 @@ WSGI_APPLICATION = 'tag_manager.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tag_manager_db',
-        'USER': 'root',  # Replace with your MySQL username
-        'PASSWORD': '',  # Replace with your MySQL password
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': os.getenv('DB_NAME'),  # 'tag_manager_db',
+        'USER': os.getenv('DB_USER'),  # 'root',
+        'PASSWORD': os.getenv('DB_PASSWORD'),  # '',
+        'HOST': os.getenv('DB_HOST'),  # 'localhost',
+        'PORT': os.getenv('DB_PORT'),  # '3306',
     }
 }
 
@@ -140,7 +145,38 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = os.getenv('STATIC_URL')
+
+# Static files configuration
+STATICFILES_DIRS = [
+    BASE_DIR / "authentication" / "static",
+    BASE_DIR / "site_manager" / "static",
+    BASE_DIR / "tag_manager_component" / "static",
+    # Add staticfiles directory for development
+    # BASE_DIR / "staticfiles",
+]
+
+# Static root for production
+STATIC_ROOT = BASE_DIR / os.getenv('STATIC_DIR')
+
+# Caching Configuration - Disabled for Development
+# https://docs.djangoproject.com/en/5.2/topics/cache/
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
+
+# Additional Development Settings
+# Disable browser caching for static files during development
+# Note: For complete cache disabling, you may also want to:
+# 1. Use browser dev tools with "Disable cache" option
+# 2. Add cache-busting parameters to static URLs
+# 3. Clear browser cache manually when needed
+
+# Session Configuration - Use database sessions (not cached)
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_CACHE_ALIAS = 'default'  # Uses dummy cache in development
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

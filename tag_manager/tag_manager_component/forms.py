@@ -10,7 +10,7 @@ class TagForm(forms.ModelForm):
 class TagsExtractorForm(forms.ModelForm):
     class Meta:
         model = TagsExtractor
-        fields = ['version_value', 'repo_url', 'total_pages', 'start_page', 'description']
+        fields = ['version_value', 'repo_url', 'extraction_method', 'description']
         widgets = {
             'repo_url': forms.URLInput(attrs={
                 'placeholder': 'https://github.com/user/repository',
@@ -20,13 +20,15 @@ class TagsExtractorForm(forms.ModelForm):
                 'min': 0,
                 'value': 0,
                 'placeholder': '0 for auto-detection',
-                'class': 'form-control'
+                'class': 'form-control',
+                'disabled': 'disabled',
             }),
             'start_page': forms.NumberInput(attrs={
                 'min': 1,
                 'value': 1,
                 'placeholder': '1',
-                'class': 'form-control'
+                'class': 'form-control',
+                'disabled': 'disabled',
             }),
             'description': forms.Textarea(attrs={
                 'rows': 4,
@@ -34,6 +36,9 @@ class TagsExtractorForm(forms.ModelForm):
                 'class': 'form-control'
             }),
             'version_value': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'extraction_method': forms.Select(attrs={
                 'class': 'form-select'
             })
         }

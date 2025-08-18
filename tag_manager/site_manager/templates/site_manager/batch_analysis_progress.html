@@ -40,6 +40,7 @@
         box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
         position: relative;
         overflow: hidden;
+        -webkit-text-fill-color: inherit !important;
     }
     
     .page-header::before {
@@ -391,9 +392,22 @@ let isCompleted = false;
 function updateProgress() {
     if (isCompleted) return;
     
-    fetch('{% url "batch_analysis_progress" %}')
-        .then(response => response.json())
+    fetch('{% url "batch_analysis_progress" %}', {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        credentials: 'same-origin'
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Progress data:', data);
+            
             // Update progress circle
             const progressCircle = document.getElementById('progressCircle');
             const progressPercentage = document.getElementById('progressPercentage');
@@ -501,6 +515,7 @@ function showCompletionActions() {
 
 // Start progress polling
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Starting progress polling');
     updateProgress(); // Initial update
     progressInterval = setInterval(updateProgress, 2000); // Update every 2 seconds
 });

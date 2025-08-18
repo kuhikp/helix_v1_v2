@@ -3,189 +3,635 @@
 {% block title %}Data Migration List{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="page-header">
-                <i class="fas fa-database text-primary"></i> Migration History
-            </h1>
-            <p class="text-muted mb-0">View all V1 to V2 component migrations</p>
+<style>
+    /* Color definitions for text visibility */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-gray: #8E8E93;
+        --ios-gray-light: #C7C7CC;
+        --ios-gray-dark: #636366;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-orange: #FF9500;
+        --ios-orange-dark: #CC7700;
+        --ios-red: #FF3B30;
+        --ios-green: #34C759;
+        --ios-purple: #5856D6;
+        --ios-pink: #FF2D92;
+        --ios-border: #E5E5EA;
+        --ios-light-gray: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-background: #F2F2F7;
+    }
+
+    /* Enhanced iPhone-style design for data migration */
+    .migration-container {
+        min-height: 100vh;
+        /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
+        padding: 20px 0;
+    }
+    
+    body {
+        background: var(--ios-background);
+        color: var(--ios-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-purple) 0%, var(--ios-pink) 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(88, 86, 214, 0.3);
+        position: relative;
+        overflow: hidden;
+        -webkit-text-fill-color: inherit !important;
+    }
+    
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+        50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        font-weight: 400;
+        line-height: 1.4;
+    }
+    
+    .back-btn {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 16px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(10px) !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+    
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.35) !important;
+        color: white !important;
+        text-decoration: none !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    .btn-primary-custom {
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%) !important;
+        border: none !important;
+        border-radius: 16px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        color: white !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3) !important;
+    }
+    
+    .btn-primary-custom:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4) !important;
+        color: white !important;
+        text-decoration: none !important;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 32px 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient);
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card.primary::before {
+        --gradient: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+    }
+    
+    .stat-card.success::before {
+        --gradient: linear-gradient(135deg, var(--ios-green), #30D158);
+    }
+    
+    .stat-card.warning::before {
+        --gradient: linear-gradient(135deg, var(--ios-orange), #FF6B35);
+    }
+    
+    .stat-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 24px;
+        color: white;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-icon.primary {
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+    }
+    
+    .stat-icon.success {
+        background: linear-gradient(135deg, var(--ios-green), #30D158);
+    }
+    
+    .stat-icon.warning {
+        background: linear-gradient(135deg, var(--ios-orange), #FF6B35);
+    }
+    
+    .stat-content h6 {
+        color: var(--ios-text-secondary);
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-number {
+        font-size: 42px;
+        font-weight: 800;
+        color: var(--ios-text-primary);
+        margin: 8px 0;
+        line-height: 1;
+        letter-spacing: -1px;
+    }
+    
+    .stat-subtitle {
+        color: var(--ios-text-secondary);
+        font-size: 14px;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    .migration-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 32px;
+        transition: all 0.3s ease;
+    }
+    
+    .migration-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    }
+    
+    .migration-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 2px solid var(--ios-border);
+    }
+    
+    .migration-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        font-size: 28px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(88, 86, 214, 0.3);
+    }
+    
+    .migration-header h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--ios-text-primary);
+        margin: 0 0 8px 0;
+        letter-spacing: -0.3px;
+    }
+    
+    .migration-header p {
+        color: var(--ios-text-secondary);
+        font-size: 16px;
+        margin: 0;
+        font-weight: 500;
+    }
+    
+    /* Enhanced Table */
+    .table {
+        border-radius: 20px !important;
+        overflow: hidden !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(20px) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .table th {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        font-weight: 600 !important;
+        color: var(--ios-text-secondary) !important;
+        text-transform: uppercase !important;
+        font-size: 12px !important;
+        letter-spacing: 0.5px !important;
+        padding: 16px !important;
+    }
+    
+    .table td {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+        padding: 16px !important;
+        vertical-align: middle !important;
+    }
+    
+    .table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+    
+    .component-preview {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .component-preview:hover {
+        transform: translateY(-2px);
+    }
+    
+    .badge {
+        padding: 8px 16px !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        font-size: 12px !important;
+    }
+    
+    .btn-group .btn {
+        border-radius: 12px !important;
+        margin: 0 2px !important;
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .btn-group .btn:hover {
+        transform: translateY(-2px) !important;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 80px 32px;
+        color: var(--ios-text-secondary);
+    }
+    
+    .empty-state i {
+        font-size: 80px;
+        margin-bottom: 24px;
+        opacity: 0.3;
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .empty-state h5 {
+        color: var(--ios-text-primary);
+        font-weight: 700;
+        margin-bottom: 16px;
+        font-size: 24px;
+    }
+    
+    .empty-state p {
+        font-size: 16px;
+        margin-bottom: 32px;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        .migration-card {
+            padding: 24px;
+        }
+        
+        .migration-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .migration-icon {
+            margin-right: 0;
+            margin-bottom: 16px;
+        }
+    }
+    
+    /* Animation classes */
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    .slide-up {
+        animation: slideUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="container-fluid migration-container">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center" style="position: relative; z-index: 2;">
+            <div>
+                <h1 class="mb-3">
+                    <i class="fas fa-database me-3"></i>Data Migration List
+                </h1>
+                <p class="mb-0">
+                    View and manage all V1 to V2 component migrations
+                </p>
+            </div>
+            <a href="{% url 'tag_manager_dashboard' %}" class="back-btn">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
         </div>
-        <a href="{% url 'data_migration_create' %}" class="btn btn-primary ios-button">
-            <i class="fas fa-plus me-2"></i>New Migration
-        </a>
     </div>
 
-    <!-- Migration Stats -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card ios-card text-center">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-center">
-                        <i class="fas fa-exchange-alt fa-2x text-primary me-3"></i>
-                        <div>
-                            <h4 class="mb-0">{{ migrations|length }}</h4>
-                            <small class="text-muted">Total Migrations</small>
-                        </div>
-                    </div>
+    <!-- Migration Statistics -->
+    <div class="stats-grid slide-up">
+        <div class="stat-card primary">
+            <div class="stat-header">
+                <div class="stat-icon primary">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <h6>Total Migrations</h6>
                 </div>
             </div>
+            <div class="stat-number">{{ migrations|length }}</div>
+            <p class="stat-subtitle">Component conversions</p>
         </div>
-        <div class="col-md-4">
-            <div class="card ios-card text-center">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-center">
-                        <i class="fas fa-check-circle fa-2x text-success me-3"></i>
-                        <div>
-                            <h4 class="mb-0">{{ migrations|length }}</h4>
-                            <small class="text-muted">Successful</small>
-                        </div>
-                    </div>
+        
+        <div class="stat-card success">
+            <div class="stat-header">
+                <div class="stat-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <h6>Successful</h6>
                 </div>
             </div>
+            <div class="stat-number">{{ migrations|length }}</div>
+            <p class="stat-subtitle">Completed migrations</p>
         </div>
-        <div class="col-md-4">
-            <div class="card ios-card text-center">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-center">
-                        <i class="fas fa-clock fa-2x text-warning me-3"></i>
-                        <div>
-                            <h4 class="mb-0">0</h4>
-                            <small class="text-muted">Pending</small>
-                        </div>
-                    </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-header">
+                <div class="stat-icon warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <h6>Pending</h6>
                 </div>
             </div>
+            <div class="stat-number">0</div>
+            <p class="stat-subtitle">Awaiting processing</p>
         </div>
     </div>
 
-   
-
-    <!-- Migrations Table -->
-    <div class="card ios-card">
-        <div class="card-header bg-transparent border-0">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-list me-2 text-info"></i>Migration Details
-            </h5>
+    <!-- Main Migration Card -->
+    <div class="migration-card fade-in">
+        <div class="migration-header">
+            <div class="migration-icon">
+                <i class="fas fa-list"></i>
+            </div>
+            <div>
+                <h2>Migration Details</h2>
+                <p>Comprehensive view of all your component migrations</p>
+            </div>
+            <div class="ms-auto">
+                <a href="{% url 'data_migration_create' %}" class="btn-primary-custom">
+                    <i class="fas fa-plus me-2"></i>New Migration
+                </a>
+            </div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="border-0 ps-4">
-                                <i class="fas fa-sitemap me-2 text-primary"></i>Site Meta Details
-                            </th>
-                            <th class="border-0">
-                                <i class="fas fa-code me-2 text-success"></i>V1 Body
-                            </th>
-                            <th class="border-0">
-                                <i class="fab fa-css3-alt me-2 text-primary"></i>V1 CSS
-                            </th>
-                            <th class="border-0">
-                                <i class="fab fa-js-square me-2 text-warning"></i>V1 JS
-                            </th>
-                            <th class="border-0">
-                                <i class="fas fa-code me-2 text-info"></i>V2 Body
-                            </th>
-                            <th class="border-0">
-                                <i class="fab fa-css3-alt me-2 text-info"></i>V2 CSS
-                            </th>
-                            <th class="border-0">
-                                <i class="fab fa-js-square me-2 text-info"></i>V2 JS
-                            </th>
-                            <th class="border-0 text-center pe-4">
-                                <i class="fas fa-tools me-2 text-muted"></i>Actions
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for migration in migrations %}
-                        <tr class="align-middle">
-                            <td class="ps-4">
-                                <div class="d-flex align-items-center">
-                                    <i class="fas fa-globe text-primary me-2"></i>
-                                    <span class="fw-medium">{{ migration.site_meta_details }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="component-preview" data-full-content="{{ migration.v1_body }}">
-                                    <span class="badge bg-success-subtle text-success rounded-pill">
-                                        <i class="fas fa-eye me-1"></i>View
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="component-preview" data-full-content="{{ migration.v1_css }}">
-                                    <span class="badge bg-primary-subtle text-primary rounded-pill">
-                                        <i class="fas fa-eye me-1"></i>View
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="component-preview" data-full-content="{{ migration.v1_js }}">
-                                    <span class="badge bg-warning-subtle text-warning rounded-pill">
-                                        <i class="fas fa-eye me-1"></i>View
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="component-preview" data-full-content="{{ migration.v2_body }}">
-                                    <span class="badge bg-info-subtle text-info rounded-pill">
-                                        <i class="fas fa-eye me-1"></i>View
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="component-preview" data-full-content="{{ migration.v2_css }}">
-                                    <span class="badge bg-info-subtle text-info rounded-pill">
-                                        <i class="fas fa-eye me-1"></i>View
-                                    </span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="component-preview" data-full-content="{{ migration.v2_js }}">
-                                    <span class="badge bg-info-subtle text-info rounded-pill">
-                                        <i class="fas fa-eye me-1"></i>View
-                                    </span>
-                                </div>
-                            </td>
-                            <td class="text-center pe-4">
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{% url 'data_migration_detail' migration.pk %}" 
-                                       class="btn btn-outline-info btn-sm" 
-                                       title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="{% url 'data_migration_edit' migration.pk %}" 
-                                       class="btn btn-outline-primary btn-sm"
-                                       title="Edit Migration">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="{% url 'data_migration_delete' migration.pk %}" 
-                                       class="btn btn-outline-danger btn-sm"
-                                       title="Delete Migration">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="8" class="text-center py-5 text-muted">
-                                <i class="fas fa-database fa-3x mb-3"></i>
+            </div>
+
+        <!-- Enhanced Table -->
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>
+                            <i class="fas fa-sitemap me-2 text-primary"></i>Site Meta Details
+                        </th>
+                        <th>
+                            <i class="fas fa-code me-2 text-success"></i>V1 Body
+                        </th>
+                        <th>
+                            <i class="fab fa-css3-alt me-2 text-primary"></i>V1 CSS
+                        </th>
+                        <th>
+                            <i class="fab fa-js-square me-2 text-warning"></i>V1 JS
+                        </th>
+                        <th>
+                            <i class="fas fa-code me-2 text-info"></i>V2 Body
+                        </th>
+                        <th>
+                            <i class="fab fa-css3-alt me-2 text-info"></i>V2 CSS
+                        </th>
+                        <th>
+                            <i class="fab fa-js-square me-2 text-info"></i>V2 JS
+                        </th>
+                        <th class="text-center">
+                            <i class="fas fa-tools me-2 text-muted"></i>Actions
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for migration in migrations %}
+                    <tr class="align-middle">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-globe text-primary me-2"></i>
+                                <span class="fw-medium">{{ migration.site_meta_details }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="component-preview" data-full-content="{{ migration.v1_body }}">
+                                <span class="badge bg-success-subtle text-success rounded-pill">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="component-preview" data-full-content="{{ migration.v1_css }}">
+                                <span class="badge bg-primary-subtle text-primary rounded-pill">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="component-preview" data-full-content="{{ migration.v1_js }}">
+                                <span class="badge bg-warning-subtle text-warning rounded-pill">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="component-preview" data-full-content="{{ migration.v2_body }}">
+                                <span class="badge bg-info-subtle text-info rounded-pill">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="component-preview" data-full-content="{{ migration.v2_css }}">
+                                <span class="badge bg-info-subtle text-info rounded-pill">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="component-preview" data-full-content="{{ migration.v2_js }}">
+                                <span class="badge bg-info-subtle text-info rounded-pill">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'data_migration_detail' migration.pk %}" 
+                                   class="btn btn-outline-info btn-sm" 
+                                   title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'data_migration_edit' migration.pk %}" 
+                                   class="btn btn-outline-primary btn-sm"
+                                   title="Edit Migration">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'data_migration_delete' migration.pk %}" 
+                                   class="btn btn-outline-danger btn-sm"
+                                   title="Delete Migration">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <div class="empty-state">
+                                <i class="fas fa-database"></i>
                                 <h5>No migrations found</h5>
-                                <p>Start by creating your first V1 to V2 migration.</p>
-                                <a href="{% url 'data_migration_create' %}" class="btn btn-primary ios-button">
+                                <p>Start by creating your first V1 to V2 migration to see them listed here.</p>
+                                <a href="{% url 'data_migration_create' %}" class="btn-primary-custom">
                                     <i class="fas fa-plus me-2"></i>Create Migration
                                 </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -193,15 +639,15 @@
 <!-- Component Details Modal -->
 <div class="modal fade" id="componentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content ios-card">
-            <div class="modal-header border-0">
-                <h5 class="modal-title">
-                    <i class="fas fa-code me-2 text-primary"></i>Component Details
+        <div class="modal-content" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.2);">
+            <div class="modal-header border-0" style="padding: 32px 32px 0;">
+                <h5 class="modal-title" style="font-weight: 700; color: var(--ios-text-primary);">
+                    <i class="fas fa-code me-2" style="color: var(--ios-purple);"></i>Component Details
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="background: none; border: none; font-size: 24px; color: var(--ios-text-secondary);"></button>
             </div>
-            <div class="modal-body">
-                <pre class="bg-light p-3 rounded" id="componentContent"></pre>
+            <div class="modal-body" style="padding: 0 32px 32px;">
+                <pre class="p-3 rounded" id="componentContent" style="background: var(--ios-light-gray); border-radius: 16px; font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace; font-size: 14px; line-height: 1.5; color: var(--ios-text-primary); max-height: 400px; overflow-y: auto;"></pre>
             </div>
         </div>
     </div>
@@ -218,6 +664,68 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         });
     });
+    
+    // Add staggered animation to cards
+    const cards = document.querySelectorAll('.stat-card, .migration-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('fade-in');
+    });
+    
+    // Enhanced hover effects for buttons
+    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.05)';
+        });
+        
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+    
+    // Add loading animation to stat numbers
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(number => {
+        const target = parseInt(number.textContent);
+        if (!isNaN(target) && target > 0) {
+            animateNumber(number, 0, target, 1500);
+        }
+    });
+});
+
+function animateNumber(element, start, end, duration) {
+    const range = end - start;
+    const startTime = performance.now();
+    
+    function updateNumber(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const current = Math.floor(start + range * easeOutQuart);
+        
+        element.textContent = current;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateNumber);
+        } else {
+            element.textContent = end;
+        }
+    }
+    
+    requestAnimationFrame(updateNumber);
+}
+
+// Add subtle parallax effect to header
+window.addEventListener('scroll', function() {
+    const header = document.querySelector('.page-header');
+    const scrolled = window.pageYOffset;
+    const rate = scrolled * -0.5;
+    
+    if (header) {
+        header.style.transform = `translateY(${rate}px)`;
+    }
 });
 </script>
 {% endblock %}

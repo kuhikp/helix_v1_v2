@@ -4,6 +4,73 @@
 
 {% block content %}
 <style>
+    /* iOS-style variables */
+    :root {
+        --ios-orange: #FF9500;
+        --ios-red: #FF3B30;
+        --ios-blue: #007AFF;
+        --ios-green: #34C759;
+        --ios-purple: #5856D6;
+    }
+
+    /* Container styling */
+    .extractor-listing-container {
+        min-height: 100vh;
+        /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
+        padding: 20px 0;
+    }
+
+    /* Enhanced page header matching batch_analysis_start.html */
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-orange) 0%, var(--ios-red) 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(255, 149, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        -webkit-text-fill-color: inherit !important;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+        50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+    }
+
+    /* Back button styling matching batch_analysis_start.html */
+    .back-btn {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 16px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(10px) !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.35) !important;
+        color: white !important;
+        text-decoration: none !important;
+        transform: translateY(-2px) !important;
+    }
+
     .extractor-header {
         background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
         border-radius: 20px;
@@ -33,18 +100,20 @@
     }
     
     .stat-card {
-        background: white;
-        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
         padding: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.04);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         text-align: center;
         transition: all 0.3s ease;
     }
     
     .stat-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
     }
     
     .stat-icon {
@@ -73,11 +142,20 @@
     }
     
     .actions-container {
-        background: white;
-        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
         padding: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
         margin-bottom: 24px;
+        transition: all 0.3s ease;
+    }
+
+    .actions-container:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
     }
     
     .section-title {
@@ -225,6 +303,15 @@
         color: #007AFF;
     }
     
+    .extraction-badge {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        background: rgba(88, 86, 214, 0.1);
+        color: #5856D6;
+    }
+    
     .status-badge {
         padding: 6px 12px;
         border-radius: 8px;
@@ -324,11 +411,20 @@
     }
     
     .search-container {
-        background: white;
-        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
         padding: 20px;
         margin-bottom: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .search-container:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
     }
     
     .search-input {
@@ -347,21 +443,49 @@
         background: white;
         box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
     }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .extractor-listing-container {
+            padding: 10px 0;
+        }
+        
+        .page-header {
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .page-header .d-flex {
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .stats-container {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        .stat-card, .actions-container, .search-container {
+            margin-bottom: 16px;
+        }
+    }
 </style>
 
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="extractor-header">
-        <div class="d-flex justify-content-between align-items-center">
+<div class="container-fluid extractor-listing-container">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center" style="position: relative; z-index: 2;">
             <div>
-                <h1><i class="fas fa-code-branch me-3"></i>Tags Extractor</h1>
-                <p class="header-subtitle">Extract and manage tags from repositories</p>
+                <h1 class="mb-3" style="font-weight: 800; font-size: 2.5rem;">
+                    <i class="fas fa-code-branch me-3"></i>Tags Extractor
+                </h1>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9;">
+                    Extract and manage tags from repositories with advanced automation
+                </p>
             </div>
-            <div>
-                <a href="{% url 'tags_extractor_create' %}" class="btn btn-light" style="border-radius: 12px; padding: 12px 20px;">
-                    <i class="fas fa-plus me-2"></i>New Extractor
-                </a>
-            </div>
+            <a href="{% url 'tags_extractor_create' %}" class="back-btn">
+                <i class="fas fa-plus me-2"></i>New Extractor
+            </a>
         </div>
     </div>
 
@@ -390,14 +514,6 @@
             <div class="stat-number" id="pendingCount">0</div>
             <div class="stat-label">Pending</div>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #5856D6, #AF52DE);">
-                <i class="fas fa-code"></i>
-            </div>
-            <div class="stat-number" id="totalPages">0</div>
-            <div class="stat-label">Total Pages</div>
-        </div>
     </div>
 
     <!-- Search -->
@@ -411,10 +527,7 @@
         <div class="d-flex gap-3 flex-wrap">
             <a href="{% url 'tags_extractor_create' %}" class="action-button">
                 <i class="fas fa-plus"></i>Add New Extractor
-            </a>
-            <button class="action-button" style="background: linear-gradient(135deg, #FF9500, #FF6B35);" onclick="processPendingAll()">
-                <i class="fas fa-play"></i>Process All Pending
-            </button>
+            </a> 
             <button class="action-button" style="background: linear-gradient(135deg, #5856D6, #AF52DE);" onclick="refreshData()">
                 <i class="fas fa-sync-alt"></i>Refresh Data
             </button>
@@ -436,6 +549,7 @@
                     <tr>
                         <th>Repository</th>
                         <th>Version</th>
+                        <th>Extraction Method</th>
                         <th>Status</th>
                         <th>Progress</th>
                         <th>Created</th>
@@ -464,6 +578,16 @@
                         <td>
                             <span class="version-badge version-{{ info.extractor.version_value|lower }}">
                                 <i class="fas fa-tag me-1"></i>{{ info.extractor.version_value }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="extraction-badge">
+                                <i class="fas {% if info.extractor.extraction_method == 'GITAPI' %}fa-cloud{% else %}fa-code-branch{% endif %} me-1"></i>
+                                {% if info.extractor.extraction_method == 'GITAPI' %}
+                                    GitHub API
+                                {% else %}
+                                    Local Clone
+                                {% endif %}
                             </span>
                         </td>
                         <td>
@@ -502,6 +626,12 @@
                                    title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                <a href="{% url 'tags_extractor_edit' info.extractor.id %}" 
+                                   class="btn-action" 
+                                   style="background: linear-gradient(135deg, #FF9500, #FF6B35); color: white; width: 32px; height: 32px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; margin-right: 8px;" 
+                                   title="Edit Extractor">
+                                    <i class="fas fa-edit"></i>
+                                </a>
                                 {% if info.extractor.start_page < info.total_pages %}
                                     <a href="{% url 'process_pending_items' info.extractor.id %}" 
                                        class="btn-action btn-process" 
@@ -539,7 +669,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const extractorRows = document.querySelectorAll('.extractor-table tbody tr');
     let importedCount = 0;
     let pendingCount = 0;
-    let totalPages = 0;
     
     extractorRows.forEach(row => {
         const statusBadge = row.querySelector('.status-badge');
@@ -548,17 +677,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             pendingCount++;
         }
-        
-        const progressText = row.querySelector('.progress-text').textContent;
-        if (progressText !== 'No data') {
-            const pages = progressText.split('/')[1];
-            totalPages += parseInt(pages) || 0;
-        }
     });
     
     document.getElementById('importedCount').textContent = importedCount;
     document.getElementById('pendingCount').textContent = pendingCount;
-    document.getElementById('totalPages').textContent = totalPages;
     
     // Search functionality
     const searchInput = document.getElementById('extractorSearch');
@@ -579,19 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function processPendingAll() {
-    if (confirm('Are you sure you want to process all pending extractors? This may take some time.')) {
-        // Get all pending extractor IDs
-        const pendingButtons = document.querySelectorAll('.btn-process');
-        if (pendingButtons.length === 0) {
-            showAlert('No pending extractors found.', 'info');
-            return;
-        }
-        
-        showAlert('Processing all pending extractors...', 'info');
-        // You can implement batch processing here
-    }
-}
+ 
 
 function refreshData() {
     showAlert('Refreshing data...', 'info');

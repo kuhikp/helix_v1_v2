@@ -1,11 +1,15 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 class EmailBackend(BaseBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
         User = get_user_model()
         try:
-            user = User.objects.get(email=username)
+            # Try to find user by email first, then by username
+            user = User.objects.get(
+                Q(email=username) | Q(username=username)
+            )
         except User.DoesNotExist:
             return None
 

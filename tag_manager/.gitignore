@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+temp_repos/
 
 # C extensions
 *.so
@@ -20,6 +21,7 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
@@ -49,30 +51,28 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
-cover/
 
 # Translations
 *.mo
 *.pot
 
-# Django specific
+# Django stuff:
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask specific
+# Flask stuff:
 instance/
 .webassets-cache
 
-# Scrapy specific
+# Scrapy stuff:
 .scrapy
 
 # Sphinx documentation
 docs/_build/
 
 # PyBuilder
-.pybuilder/
 target/
 
 # Jupyter Notebook
@@ -83,9 +83,7 @@ profile_default/
 ipython_config.py
 
 # pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+.python-version
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
@@ -94,22 +92,7 @@ ipython_config.py
 #   install all needed dependencies.
 #Pipfile.lock
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/#use-with-ide
-.pdm.toml
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow
 __pypackages__/
 
 # Celery stuff
@@ -120,7 +103,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -146,77 +128,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
-
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be added to the global gitignore or merged into this project gitignore.  For a PyCharm
-#  project, it is typically named 'django.xml'.
-.idea/
-
-# VS Code
+# IDE files
 .vscode/
-*.code-workspace
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Django specific files
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Django migrations (optional - depends on your workflow)
-# migrations/
-
-# Static files (if collected)
-/static/
-/staticfiles/
-/collected_static/
-
-# Media files
-/media/
-
-# Node.js dependencies (if using Node.js for frontend)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Webpack bundles
-/webpack-stats.json
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Secret files
-secrets.json
-.secrets/
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Configuration files with sensitive data
-config.ini
-settings_local.py
-local_config.py
-
-# Backup files
-*.bak
-*.backup
-*.tmp
+.idea/
+*.swp
+*.swo
 *~
 
 # OS generated files
@@ -228,187 +144,32 @@ local_config.py
 ehthumbs.db
 Thumbs.db
 
-# Temporary files
+# Backup files
+*.backup
+*.bak
 *.tmp
-*.temp
-.temporary/
 
-# Logs and databases
+# Log files
 *.log
-*.sql
+
+# Media files (if not needed in repository)
+media/
+
+# Static files (if generated)
+staticfiles/
+static/
+
+# Local development
+.env.local
+.env.development
+.env.production
+
+# Database files
+*.sqlite3
 *.sqlite
+*.db
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
+# Environment files
 .env
-
-# Sass cache
-.sass-cache/
-
-# CSS preprocessor files
-*.scss.map
-*.sass.map
-
-# Compiled CSS and JS
-/static/css/compiled/
-/static/js/compiled/
-
-# Certificate files
-*.pem
-*.key
-*.crt
-*.csr
-
-# Docker files (if you want to ignore them)
-# Dockerfile
-# docker-compose.yml
-
-# Cache directories
-.cache/
-.parcel-cache/
-
-# Build artifacts
-build/
-dist/
-
-# Redis dump file
-dump.rdb
-
-# Memcached dump file
-*.memdump
-
-# Custom application specific files
-uploads/
-downloads/
-temp/
-cache/
-
-# Testing artifacts
-.coverage
-htmlcov/
-.pytest_cache/
-.tox/
-
-# Documentation builds
-docs/_build/
-site/
-
-# Localization
-locale/
-
-# Collected static files
-collected_static/
-
-# Celery beat schedule file
-celerybeat-schedule
-
-# Virtual environment activation scripts
-activate
-activate.bat
-activate.ps1
-deactivate.bat
-
-# Editor swap files
-*.swp
-*.swo
-*~
-
-# JetBrains IDEs
-.idea/
-*.iml
-*.ipr
-*.iws
-
-# Eclipse
-.project
-.pydevproject
-.settings/
-
-# Vim
-*.swp
-*.swo
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# Local development database dumps
-*.dump
-*.sql
-
-# Ansible files
-*.retry
-
-# Terraform files
-*.tfstate
-*.tfstate.*
-.terraform/
-
-# Application specific temp files
-*.tmp.*
-temp_*
-temporary_*
-
-# Error logs
-error.log
-debug.log
-access.log
-
-# Email files
-*.eml
-
-# Compressed files (optional)
-*.zip
-*.tar.gz
-*.rar
-*.7z
-
-# Binary files that might be generated
-*.exe
-*.dll
-*.so
-*.dylib
-
-# macOS specific
-.AppleDouble
-.LSOverride
-Icon?
-
-# Windows specific
-Desktop.ini
-$RECYCLE.BIN/
-
-# Linux specific
-.fuse_hidden*
-.directory
-.Trash-*
-.nfs*
+.env.*
+!.env.example

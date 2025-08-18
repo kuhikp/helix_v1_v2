@@ -427,6 +427,25 @@
         </div>
     </div>
 
+    {% if extractor.imported == False %}
+    <div class="alert alert-warning mb-4" style="border-radius: 12px; padding: 16px 20px;">
+        <div class="d-flex align-items-center">
+            <div style="font-size: 24px; margin-right: 16px;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h5 class="mb-1" style="font-weight: 600;">No Tags Found</h5>
+                <p class="mb-0">No tags have been extracted from this repository. Click the "Re-Process Repository" button below to attempt extraction.</p>
+            </div>
+            <div class="ms-auto">
+                <a href="{% url 'process_pending_items' extractor.id %}" class="btn btn-warning" style="border-radius: 8px;">
+                    <i class="fas fa-sync-alt me-2"></i>Process Now
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Extractor Overview -->
     <div class="extractor-overview">
         <div class="overview-header">
@@ -492,6 +511,24 @@
             <div class="stat-label">Total Tags</div>
         </div>
         
+        {% if tsx_count is not None %}
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4CD964, #34C759);">
+                <i class="fas fa-file-code"></i>
+            </div>
+            <div class="stat-number">{{ tsx_count }}</div>
+            <div class="stat-label">TSX Files Found</div>
+        </div>
+        {% endif %}
+        
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #64D2FF, #5AC8FA);">
+                <i class="fas fa-{% if extraction_method == 'API' %}cloud{% else %}clone{% endif %}"></i>
+            </div>
+            <div class="stat-number">{{ extraction_method }}</div>
+            <div class="stat-label">Extraction Method</div>
+        </div>
+        
         <div class="stat-card">
             <div class="stat-icon" style="background: linear-gradient(135deg, #34C759, #30D158);">
                 <i class="fas fa-percent"></i>
@@ -499,7 +536,7 @@
             <div class="stat-number">{{ completion_percentage }}%</div>
             <div class="stat-label">Completion</div>
         </div>
-        
+        {% if extraction_method == 'API' %}
         <div class="stat-card">
             <div class="stat-icon" style="background: linear-gradient(135deg, #FF9500, #FF6B35);">
                 <i class="fas fa-file-alt"></i>
@@ -515,6 +552,7 @@
             <div class="stat-number">{{ extractor.start_page|default:1 }}</div>
             <div class="stat-label">Current Page</div>
         </div>
+        {% endif %}
     </div>
 
     <!-- Progress Section -->
@@ -549,6 +587,10 @@
         <div class="d-flex justify-content-center gap-3">
             <a href="{% url 'tags_extractor_list' %}" class="btn-action btn-back">
                 <i class="fas fa-arrow-left me-2"></i>Back to List
+            </a>
+            
+            <a href="{% url 'tags_extractor_edit' extractor.id %}" class="btn-action" style="background: linear-gradient(135deg, #FF9500, #FF6B35); color: white;">
+                <i class="fas fa-edit me-2"></i>Edit Extractor
             </a>
             
             {% if has_pending_pages %}
@@ -596,11 +638,9 @@
             <i class="fas fa-tags"></i>
             <h4>No Tags Found</h4>
             <p>No tags have been extracted from this repository yet.</p>
-            {% if has_pending_pages %}
             <a href="{% url 'process_pending_items' extractor.id %}" class="btn-action btn-process mt-3">
-                <i class="fas fa-play me-2"></i>Start Extraction
+                <i class="fas fa-play me-2"></i>{% if has_pending_pages %}Start Extraction{% else %}Re-Process Repository{% endif %}
             </a>
-            {% endif %}
         </div>
         {% endif %}
     </div>

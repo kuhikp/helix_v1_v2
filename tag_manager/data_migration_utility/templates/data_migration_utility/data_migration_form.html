@@ -1,39 +1,48 @@
 {% extends 'authentication/base.html' %}
+{% load static %}
 
-{% block title %}Data Migration Utility{% endblock %}
+{% block title %}{{ title|default:"Data Migration Form" }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="page-header">
-                <i class="fas fa-exchange-alt text-primary"></i> 
-                {% if migration %}Edit{% else %}Create{% endif %} Data Migration
-            </h1>
-            <p class="text-muted mb-0">
-                {% if migration %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    {% if migration %}Edit{% else %}Create{% endif %} Data Migration
+                </h2>
+                <p class="text-muted mb-0">
+                    {% if migration %}
                     Edit existing V1 to V2 component migration
-                {% else %}
+                    {% else %}
                     Convert V1 components to V2 components
-                {% endif %}
-            </p>
-        </div>
-        <a href="{% url 'data_migration_list' %}" class="btn btn-outline-secondary ios-button">
-            <i class="fas fa-list me-2"></i>View Migrations
-        </a>
-    </div>
-
-    <!-- Migration Form -->
-    <div class="card ios-card">
-        <div class="card-header bg-transparent border-0">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-cogs me-2 text-warning"></i>Migration Form
-            </h5>
+                    {% endif %}
+                </p>
+            </div>
+            
+            {% if is_edit %}
+            <div class="status-badge">
+                <span class="badge {% if migration.is_completed %}bg-success{% elif migration.is_processing %}bg-info{% else %}bg-warning{% endif %}">
+                    {{ migration.get_status_display }}
+                </span>
+            </div>
+            {% endif %}
+            
+            <a href="{% url 'data_migration_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list me-2"></i>View Migrations
+            </a>
         </div>
         <div class="card-body">
-            <form method="post">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading">Please correct the errors below:</h5>
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+                
                 <div class="row g-4">
                     <!-- V1 Details Section -->
                     <div class="col-lg-6">
@@ -44,24 +53,36 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="{{ form.v1_body.id_for_label }}" class="form-label">
-                                        <i class="fas fa-code me-2 text-muted"></i>{{ form.v1_body.label }}
-                                    </label>
-                                    {{ form.v1_body }}
-                                </div>
-                                <div class="mb-3">
-                                    <label for="{{ form.v1_css.id_for_label }}" class="form-label">
-                                        <i class="fab fa-css3-alt me-2 text-primary"></i>{{ form.v1_css.label }}
-                                    </label>
-                                    {{ form.v1_css }}
-                                </div>
-                                <div class="mb-3">
-                                    <label for="{{ form.v1_js.id_for_label }}" class="form-label">
-                                        <i class="fab fa-js-square me-2 text-warning"></i>{{ form.v1_js.label }}
-                                    </label>
-                                    {{ form.v1_js }}
-                                </div>
+                                {% for field in form %}
+                                    {% if 'v1_' in field.name %}
+                                        <div class="mb-3">
+                                            <label for="{{ field.id_for_label }}" class="form-label">
+                                                {% if 'body' in field.name %}
+                                                    <i class="fas fa-code me-2 text-muted"></i>
+                                                {% elif 'css' in field.name %}
+                                                    <i class="fab fa-css3-alt me-2 text-primary"></i>
+                                                {% elif 'js' in field.name %}
+                                                    <i class="fab fa-js-square me-2 text-warning"></i>
+                                                {% endif %}
+                                                {{ field.label }}
+                                                {% if field.field.required %}
+                                                    <span class="text-danger">*</span>
+                                                {% endif %}
+                                            </label>
+                                            {{ field }}
+                                            {% if field.help_text %}
+                                                <div class="form-text text-muted small">{{ field.help_text }}</div>
+                                            {% endif %}
+                                            {% if field.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in field.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
@@ -75,24 +96,36 @@
                                 </h6>
                             </div>
                             <div class="card-body">
-                                <div class="mb-3">
-                                    <label for="{{ form.v2_body.id_for_label }}" class="form-label">
-                                        <i class="fas fa-code me-2 text-muted"></i>{{ form.v2_body.label }}
-                                    </label>
-                                    {{ form.v2_body }}
-                                </div>
-                                <div class="mb-3">
-                                    <label for="{{ form.v2_css.id_for_label }}" class="form-label">
-                                        <i class="fab fa-css3-alt me-2 text-primary"></i>{{ form.v2_css.label }}
-                                    </label>
-                                    {{ form.v2_css }}
-                                </div>
-                                <div class="mb-3">
-                                    <label for="{{ form.v2_js.id_for_label }}" class="form-label">
-                                        <i class="fab fa-js-square me-2 text-warning"></i>{{ form.v2_js.label }}
-                                    </label>
-                                    {{ form.v2_js }}
-                                </div>
+                                {% for field in form %}
+                                    {% if 'v2_' in field.name %}
+                                        <div class="mb-3">
+                                            <label for="{{ field.id_for_label }}" class="form-label">
+                                                {% if 'body' in field.name %}
+                                                    <i class="fas fa-code me-2 text-muted"></i>
+                                                {% elif 'css' in field.name %}
+                                                    <i class="fab fa-css3-alt me-2 text-primary"></i>
+                                                {% elif 'js' in field.name %}
+                                                    <i class="fab fa-js-square me-2 text-warning"></i>
+                                                {% endif %}
+                                                {{ field.label }}
+                                                {% if field.field.required %}
+                                                    <span class="text-danger">*</span>
+                                                {% endif %}
+                                            </label>
+                                            {{ field }}
+                                            {% if field.help_text %}
+                                                <div class="form-text text-muted small">{{ field.help_text }}</div>
+                                            {% endif %}
+                                            {% if field.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in field.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
                             </div>
                         </div>
                     </div>
@@ -100,9 +133,15 @@
 
                 <!-- Submit Button -->
                 <div class="text-center mt-4">
-                    <button type="submit" class="btn btn-primary ios-button">
-                        <i class="fas fa-exchange-alt me-2"></i>Start Migration
-                    </button>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>
+                            {% if is_edit %}Save Changes{% else %}Create Migration{% endif %}
+                        </button>
+                        <a href="{% url 'data_migration_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
                 </div>
             </form>
         </div>

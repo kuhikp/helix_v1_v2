@@ -1,0 +1,143 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Confirm Site Data Cleanup{% endblock %}
+
+{% block content %}
+<style>
+    .warning-container {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ffa06b 100%);
+        border-radius: 24px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+    }
+    
+    .warning-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: white;
+    }
+    
+    .stats-container {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-weight: 500;
+    }
+    
+    .stat-value {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-danger {
+        background-color: #ff3b30;
+        border-color: #ff3b30;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        transition: all 0.2s;
+    }
+    
+    .btn-danger:hover {
+        background-color: #e0321c;
+        border-color: #e0321c;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 59, 48, 0.3);
+    }
+    
+    .btn-secondary {
+        background-color: #8e8e93;
+        border-color: #8e8e93;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        transition: all 0.2s;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #7d7d82;
+        border-color: #7d7d82;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(142, 142, 147, 0.3);
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">Confirm Site Data Cleanup</h1>
+            
+            <div class="warning-container text-center">
+                <div class="warning-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2 class="mb-3">Warning: This action cannot be undone!</h2>
+                <p class="mb-0">You are about to delete all site meta details and reset all site analysis data. This will remove all component mappings, complexity calculations, and other analysis results.</p>
+            </div>
+            
+            <div class="stats-container">
+                <h3 class="mb-3">Affected Data</h3>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Total Sites</span>
+                    <span class="stat-value">{{ total_sites }}</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Total Meta Details</span>
+                    <span class="stat-value">{{ total_meta_details }}</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Data To Be Reset</span>
+                    <span class="stat-value">Site Component Mappings, Complexity Scores, Analysis Results</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Sites Will Be Marked</span>
+                    <span class="stat-value">Not Imported</span>
+                </div>
+            </div>
+            
+            <div class="actions">
+                <a href="{% url 'site_list' %}" class="btn btn-secondary">Cancel</a>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Confirm Cleanup
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

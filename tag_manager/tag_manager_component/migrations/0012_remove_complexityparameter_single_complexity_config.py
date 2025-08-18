@@ -10,8 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveConstraint(
-            model_name='complexityparameter',
-            name='single_complexity_config',
-        ),
+        # No-op migration since constraint was never created in 0011
     ]

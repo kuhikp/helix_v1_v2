@@ -1,48 +1,148 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import SiteListDetails, SiteMetaDetails
-from .forms import SiteListDetailsForm, SiteMetaDetailsForm
-import requests
-from bs4 import BeautifulSoup
-import logging
-import xml.etree.ElementTree as ET
-from django.db import models
-import json
-import re
-from tag_manager_component.models import Tag, TagMapper
-from tag_manager_component.views import get_website_complexity
+# Standard library imports
 import csv
-from django.contrib import messages
-from django.http import HttpResponse, JsonResponse
+import json
+import logging
+import re
 import threading
 import time
-from django.contrib.sessions.models import Session
-from django.contrib.sessions.backends.db import SessionStore
-from tag_manager_component.views import get_website_complexity
-from django.utils import timezone
+import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
+
+# Django imports
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.sessions.models import Session
+from django.db import models
+from django.db.models import Sum, Count, Q
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
+
+# Third-party imports
+import requests
 import urllib3
+from bs4 import BeautifulSoup
+
+# Project-specific imports
+from .models import SiteListDetails, SiteMetaDetails
+from .forms import SiteListDetailsForm, SiteMetaDetailsForm
+from tag_manager_component.models import Tag, TagMapper
+from tag_manager_component.views import get_website_complexity
 
 # Disable SSL warnings for sites with certificate issues
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-
 # Configure logging
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 @login_required
 def site_list(request):
+    """
+    Display a list of websites with search and complexity filtering functionality
+    """
     query = request.GET.get('search', '').strip()
-    if query:
-        filtered_sites = SiteListDetails.objects.filter(website_url__icontains=query)
-    else:
-        filtered_sites = SiteListDetails.objects.all()
+    complexity = request.GET.get('complexity', '').strip()
+    
+    # Start with all sites
     sites = SiteListDetails.objects.all()
+    
+    # Initialize filtered_sites with all sites
+    filtered_sites = sites
+    
+    # Apply search filter if provided
+    if query:
+        filtered_sites = filtered_sites.filter(website_url__icontains=query)
+    
+    # Apply complexity filter if provided
+    if complexity:
+        if complexity == 'unidentified':
+            # Handle unidentified sites (empty, null, or not in standard categories)
+            filtered_sites = filtered_sites.filter(
+                Q(complexity__isnull=True) | 
+                Q(complexity='') | 
+                ~Q(complexity__in=['simple', 'medium', 'complex'])
+            )
+        else:
+            # Filter by specific complexity
+            filtered_sites = filtered_sites.filter(complexity=complexity)
+    
+    # Order the results
+    filtered_sites = filtered_sites.order_by('website_url')
+    
+    # Count total sites for each complexity
+    complexity_counts = {
+        'simple': sites.filter(complexity='simple').count(),
+        'medium': sites.filter(complexity='medium').count(),
+        'complex': sites.filter(complexity='complex').count(),
+        'unidentified': sites.filter(
+            Q(complexity__isnull=True) | 
+            Q(complexity='') | 
+            ~Q(complexity__in=['simple', 'medium', 'complex'])
+        ).count(),
+    }
+    
     return render(request, 'site_manager/site_list.html', {
         'sites': sites,
         'filtered_sites': filtered_sites,
         'search': query,
+        'complexity': complexity,
+        'complexity_counts': complexity_counts,
+    })
+
+
+@login_required
+def cleanup_site_data(request):
+    """
+    Clean all site details and site meta details:
+    1. Reset site analysis data (complexity, component counts, etc.)
+    2. Delete all site meta details
+    3. Mark all sites as not imported
+    """
+    if request.method == 'POST':
+        try:
+            # Get counts before cleanup
+            sites_count = SiteListDetails.objects.count()
+            meta_details_count = SiteMetaDetails.objects.count()
+            
+            # Step 1: Reset site analysis data
+            SiteListDetails.objects.update(
+                helix_v1_component=None,
+                helix_v2_compatible_component=None,
+                helix_v2_non_compatible_component=None,
+                custom_component=0,
+                v2_compatible_count=0,
+                v2_non_compatible_count=0,
+                total_pages=0,
+                complexity="",
+                complexity_configuration=None,
+                is_imported=False,
+                last_analyzed=None
+            )
+            
+            # Step 2: Delete all site meta details
+            SiteMetaDetails.objects.all().delete()
+            
+            # Log the cleanup
+            logger.info(f"Cleaned up {sites_count} sites and deleted {meta_details_count} meta details")
+            
+            messages.success(
+                request, 
+                f"Successfully cleaned up {sites_count} sites and deleted {meta_details_count} meta details"
+            )
+        except Exception as e:
+            logger.error(f"Error during cleanup: {str(e)}")
+            messages.error(request, f"Error during cleanup: {str(e)}")
+            
+        return redirect('site_list')
+    
+    # GET request - show confirmation page
+    total_sites = SiteListDetails.objects.count()
+    total_meta_details = SiteMetaDetails.objects.count()
+    
+    return render(request, 'site_manager/cleanup_confirmation.html', {
+        'total_sites': total_sites,
+        'total_meta_details': total_meta_details,
     })
 
 
@@ -51,6 +151,8 @@ def batch_analyze_sitemaps(request):
     """
     Initiate batch analysis with progress tracking
     """
+    logger.info(f"Batch analyze sitemaps called with method: {request.method}")
+    
     if request.method == 'POST':
         # Initialize progress in session
         request.session['batch_analysis_progress'] = {
@@ -63,6 +165,11 @@ def batch_analyze_sitemaps(request):
             'start_time': time.time()
         }
         
+        # Save session explicitly to ensure it's persisted
+        request.session.save()
+        
+        logger.info(f"Starting batch analysis thread with session key: {request.session.session_key}")
+        
         # Start background processing
         thread = threading.Thread(target=process_batch_analysis, args=(request.session.session_key,))
         thread.daemon = True
@@ -72,9 +179,12 @@ def batch_analyze_sitemaps(request):
     
     # GET request - show the batch analysis initiation page
     sites = SiteListDetails.objects.filter(is_imported=False)
+    
+    sites_count = sites.count()
+     
     return render(request, 'site_manager/batch_analysis_start.html', {
-        'sites': sites,
-        'total_sites': sites.count()
+        'websites': sites,
+        'sites_count': sites_count,
     })
 
 @login_required
@@ -82,6 +192,9 @@ def batch_analysis_progress(request):
     """
     AJAX endpoint to get current progress
     """
+    logger.info(f"Progress check requested with session key: {request.session.session_key}")
+    
+    # Get progress data from session
     progress_data = request.session.get('batch_analysis_progress', {
         'status': 'not_started',
         'current': 0,
@@ -91,9 +204,12 @@ def batch_analysis_progress(request):
         'failed_sites': []
     })
     
+    logger.info(f"Current progress data: status={progress_data.get('status')}, "
+               f"current={progress_data.get('current')}, total={progress_data.get('total')}")
+    
     # Calculate percentage
-    if progress_data['total'] > 0:
-        percentage = round((progress_data['current'] / progress_data['total']) * 100, 1)
+    if progress_data.get('total', 0) > 0:
+        percentage = round((progress_data.get('current', 0) / progress_data.get('total')) * 100, 1)
     else:
         percentage = 0
     
@@ -117,15 +233,20 @@ def process_batch_analysis(session_key):
     """
     Background process for batch analysis with progress updates
     """
-    
     try:
-     
+        logger.info(f"Starting batch analysis process with session key: {session_key}")
+        
         # Get session
         session = SessionStore(session_key=session_key)
-        
-        # Get all sites
-        sites = SiteListDetails.objects.all()
+        if not session:
+            logger.error(f"Could not load session with key: {session_key}")
+            return
+            
+        # Get all sites that need analysis
+        sites = SiteListDetails.objects.filter(is_imported=False)
         total_sites = sites.count()
+        
+        logger.info(f"Found {total_sites} sites to analyze")
         
         # Update progress
         progress = session.get('batch_analysis_progress', {})
@@ -136,6 +257,34 @@ def process_batch_analysis(session_key):
         })
         session['batch_analysis_progress'] = progress
         session.save()
+        
+        logger.info("Updated session with initial progress")
+        
+        # Get all tag mappings at once to avoid repeated queries
+        v1_to_v2_map = {}
+        
+        # Get all tag mappings efficiently
+        all_tag_mappings = TagMapper.objects.all()
+        if all_tag_mappings.exists():
+            logger.info(f"Found {all_tag_mappings.count()} tag mappings")
+            
+        # Build mapping dictionary
+        for mapping in all_tag_mappings:
+            v1_name = mapping.v1_component_name
+            if v1_name not in v1_to_v2_map:
+                v1_to_v2_map[v1_name] = []
+            v1_to_v2_map[v1_name].append({
+                'v2_name': mapping.v2_component_name, 
+                'weight': mapping.weight
+            })
+        
+        # Sort all mappings by weight in descending order
+        for v1_name in v1_to_v2_map:
+            v1_to_v2_map[v1_name] = sorted(
+                v1_to_v2_map[v1_name], 
+                key=lambda x: x['weight'], 
+                reverse=True
+            )
         
         completed_sites = []
         failed_sites = []
@@ -153,150 +302,163 @@ def process_batch_analysis(session_key):
                 session.save()
                 
                 # Process the site
+                print("Processing site:", site.website_url)
                 sitemap_urls = fetch_sitemap_urls(site.website_url)
                 if not sitemap_urls:
                     failed_sites.append({'url': site.website_url, 'error': 'No sitemap found'})
                     continue
                 
+                # Prepare for bulk creation of meta details
+                meta_details_to_create = []
+                
                 for sitemap_url in sitemap_urls:
                     soup, page_source, error = fetch_page(sitemap_url)
                     if error:
+                        logger.warning(f"Error fetching {sitemap_url}: {error}")
                         continue
-                    print("URL >>>")
-                    print(sitemap_url)
+                        
                     custom_elements = find_enhanced_custom_class_elements(soup, "custom-block-element")
                     helix_elements = find_enhanced_helix_elements(soup, page_source)
                     
-                    # Get tag mappings
-                    v1_tags = Tag.objects.filter(version='V1').order_by('name')
-                    v2_tags = Tag.objects.filter(version='V2').order_by('name')
-                    v1_to_v2_map = {}
-                    for v1 in v1_tags:
-                        mappings = TagMapper.objects.filter(v1_component_name=v1.name)
-                        v1_to_v2_map[v1.name] = [{'v2_name': m.v2_component_name, 'weight': m.weight} for m in mappings]
-                    
                     # Process compatible components
                     helix_v2_compatible_component_data = []
-                    for v1_component_name in helix_elements:
-                        if v1_component_name in v1_to_v2_map:
-                            sorted_mappings = sorted(v1_to_v2_map[v1_component_name], key=lambda x: x['weight'], reverse=True)
-                            if sorted_mappings:
-                                helix_v2_compatible_component_data.append(sorted_mappings[0]['v2_name'])
-                    
-                    # Process non-compatible components
                     helix_v2_non_compatible_component_data = []
+                    
+                    # Process all v1 components at once
                     for v1_component_name in helix_elements:
-                        if v1_component_name not in v1_to_v2_map or not v1_to_v2_map[v1_component_name]:
+                        if v1_component_name in v1_to_v2_map and v1_to_v2_map[v1_component_name]:
+                            # Get highest weighted v2 component
+                            helix_v2_compatible_component_data.append(v1_to_v2_map[v1_component_name][0]['v2_name'])
+                        else:
+                            # No mapping found
                             helix_v2_non_compatible_component_data.append(v1_component_name)
                     
-                    # Create meta details
-                    SiteMetaDetails.objects.create(
-                        site_list_details=site,
-                        site_url=sitemap_url,
-                        helix_v1_component=json.dumps(list(set(helix_elements))),
-                        helix_v2_compatible_component=json.dumps(list(set(helix_v2_compatible_component_data))),
-                        helix_v2_non_compatible_component=json.dumps(list(set(helix_v2_non_compatible_component_data))),
-                        custom_component=json.dumps(list(set(custom_elements))),
-                        v2_compatible_count=len(helix_v2_compatible_component_data),
-                        v2_non_compatible_count=len(helix_v2_non_compatible_component_data),
-                        custom_component_count=len(custom_elements),
+                    # Create unique, comma-separated strings
+                    helix_v1_component_str = ",".join([e for e in set(helix_elements) if e])
+                    helix_v2_compatible_component_str = ",".join([e for e in set(helix_v2_compatible_component_data) if e])
+                    helix_v2_non_compatible_component_str = ",".join([e for e in set(helix_v2_non_compatible_component_data) if e])
+                    custom_component_str = ",".join([e for e in set(custom_elements) if e])
+                    
+                    # Add to batch for bulk creation
+                    meta_details_to_create.append(
+                        SiteMetaDetails(
+                            site_list_details=site,
+                            site_url=sitemap_url,
+                            helix_v1_component=helix_v1_component_str,
+                            helix_v2_compatible_component=helix_v2_compatible_component_str,
+                            helix_v2_non_compatible_component=helix_v2_non_compatible_component_str,
+                            custom_component=custom_component_str,
+                            v2_compatible_count=len([e for e in helix_v2_compatible_component_data if e]),
+                            v2_non_compatible_count=len([e for e in helix_v2_non_compatible_component_data if e]),
+                            custom_component_count=len([e for e in custom_elements if e]),
+                        )
                     )
                 
                 # Update site details after analysis
-                site.helix_v1_component = json.dumps(
-                    list(
-                        set(
-                            str(value) for value in SiteMetaDetails.objects.filter(
-                                site_list_details=site, helix_v1_component__isnull=False
-                            ).values_list('helix_v1_component', flat=True)
-                        )
-                    )
+                # Remove duplicates and blank values, store as comma-separated string
+                # Bulk create all meta details for this site
+                if meta_details_to_create:
+                    SiteMetaDetails.objects.bulk_create(meta_details_to_create)
+                
+                # Use more efficient queries with annotate and aggregate
+                site_meta_details = SiteMetaDetails.objects.filter(site_list_details=site)
+                
+                # Aggregate all unique v1 components
+                helix_v1_components_raw = site_meta_details.filter(
+                    helix_v1_component__isnull=False
+                ).values_list('helix_v1_component', flat=True)
+
+                unique_v1_components = set()
+                for value in helix_v1_components_raw:
+                    components = [comp.strip() for comp in value.split(',') if comp.strip()]
+                    unique_v1_components.update(components)
+
+                site.helix_v1_component = json.dumps(sorted(unique_v1_components))
+                
+                # Aggregate v2 compatible components
+                helix_v2_compatible_raw = site_meta_details.filter(
+                    helix_v2_compatible_component__isnull=False
+                ).values_list('helix_v2_compatible_component', flat=True)
+                
+                unique_v2_compatible = set()
+                for value in helix_v2_compatible_raw:
+                    components = [comp.strip() for comp in value.split(',') if comp.strip()]
+                    unique_v2_compatible.update(components)
+                
+                site.helix_v2_compatible_component = json.dumps(sorted(unique_v2_compatible))
+                
+                # Aggregate v2 non-compatible components
+                helix_v2_non_compatible_raw = site_meta_details.filter(
+                    helix_v2_non_compatible_component__isnull=False
+                ).values_list('helix_v2_non_compatible_component', flat=True)
+                
+                unique_v2_non_compatible = set()
+                for value in helix_v2_non_compatible_raw:
+                    components = [comp.strip() for comp in value.split(',') if comp.strip()]
+                    unique_v2_non_compatible.update(components)
+                
+                site.helix_v2_non_compatible_component = json.dumps(sorted(unique_v2_non_compatible))
+                
+                # Use single query with aggregation for counts
+                aggregated_counts = site_meta_details.aggregate(
+                    custom_component_count=Sum('custom_component_count'),
+                    v2_compatible_count=Sum('v2_compatible_count'),
+                    v2_non_compatible_count=Sum('v2_non_compatible_count'),
+                    total_pages=Count('id')
                 )
-                site.helix_v2_compatible_component = json.dumps(
-                    list(
-                        set(
-                            str(value) for value in SiteMetaDetails.objects.filter(
-                                site_list_details=site, helix_v2_compatible_component__isnull=False
-                            ).values_list('helix_v2_compatible_component', flat=True)
-                        )
-                    )
-                )
-                site.helix_v2_non_compatible_component = json.dumps(
-                    list(
-                        set(
-                            str(value) for value in SiteMetaDetails.objects.filter(
-                                site_list_details=site, helix_v2_non_compatible_component__isnull=False
-                            ).values_list('helix_v2_non_compatible_component', flat=True)
-                        )
-                    )
-                )
-                site.custom_component = SiteMetaDetails.objects.filter(
-                    site_list_details=site, custom_component_count__isnull=False
-                ).aggregate(total=models.Sum('custom_component_count'))['total'] or 0
-                site.v2_compatible_count = SiteMetaDetails.objects.filter(
-                    site_list_details=site, helix_v2_compatible_component__isnull=False
-                ).aggregate(total=models.Sum('v2_compatible_count'))['total'] or 0
-                site.v2_non_compatible_count = SiteMetaDetails.objects.filter(
-                    site_list_details=site, helix_v2_non_compatible_component__isnull=False
-                ).aggregate(total=models.Sum('v2_non_compatible_count'))['total'] or 0
-                site.total_pages = site.meta_details.count()
+                
+                site.custom_component = aggregated_counts['custom_component_count'] or 0
+                site.v2_compatible_count = aggregated_counts['v2_compatible_count'] or 0
+                site.v2_non_compatible_count = aggregated_counts['v2_non_compatible_count'] or 0
+                site.total_pages = aggregated_counts['total_pages']
                 
                 # Calculate and update complexity based on site data
                 try:
-                    # Calculate component complexity counts by analyzing the components found
-                    simple_count = 0
-                    medium_count = 0
-                    complex_count = 0
-                    
-                    # Get all unique V2 compatible components for this site
-                    site_meta_details = SiteMetaDetails.objects.filter(site_list_details=site)
-                    all_v2_components = []
-                    
-                    for meta in site_meta_details:
-                        if meta.helix_v2_compatible_component:
-                            try:
-                                components = json.loads(meta.helix_v2_compatible_component)
-                                if isinstance(components, list):
-                                    all_v2_components.extend(components)
-                            except (json.JSONDecodeError, TypeError):
-                                pass
-                    
-                    # Remove duplicates
-                    unique_v2_components = list(set(all_v2_components))
-                    
+                    # Use the pre-calculated set of unique v2 components
                     # Count complexity levels based on V2 component complexity
-                    for component_name in unique_v2_components:
-                        tag = Tag.objects.filter(name=component_name, version='V2').first()
-                        if tag and tag.complexity:
-                            print(f"Component: {component_name}, Complexity: {tag.complexity}")
-                            if tag.complexity == 'simple':
-                                simple_count += 1
-                            elif tag.complexity == 'medium':
-                                medium_count += 1
-                            elif tag.complexity == 'complex':
-                                complex_count += 1
+                    complexity_counts = {
+                        'simple': 0,
+                        'medium': 0,
+                        'complex': 0
+                    }
                     
+                    # Get all V2 tags with their complexity in a single query
+                    v2_tags_complexity = {
+                        tag.name: tag.complexity 
+                        for tag in Tag.objects.filter(
+                            version='V2', 
+                            name__in=unique_v2_compatible
+                        ).only('name', 'complexity')
+                    }
+                    
+                    # Count components by complexity
+                    for component_name in unique_v2_compatible:
+                        complexity = v2_tags_complexity.get(component_name)
+                        if complexity in complexity_counts:
+                            complexity_counts[complexity] += 1
+                    
+                    # Prepare site data for complexity calculation
                     site_data = {
                         'number_of_pages': site.total_pages,
                         'number_of_helix_v2_compatible': site.v2_compatible_count,
                         'number_of_helix_v2_non_compatible': site.v2_non_compatible_count,
                         'number_of_custom_components': site.custom_component if isinstance(site.custom_component, int) else 0,
-                        'total_simple_components': simple_count,
-                        'total_medium_components': medium_count,
-                        'total_complex_components': complex_count,
+                        'total_simple_components': complexity_counts['simple'],
+                        'total_medium_components': complexity_counts['medium'],
+                        'total_complex_components': complexity_counts['complex'],
                     }
                     
-                    # Get complexity and configuration data
+                    # Calculate website complexity
                     complexity_result = get_website_complexity(site_data, return_config=True)
+                    
                     if complexity_result and len(complexity_result) == 2:
                         calculated_complexity, config_data = complexity_result
                         
                         if calculated_complexity:
                             site.complexity = calculated_complexity
                             
-                            # Store the configuration data used for this complexity determination
+                            # Store configuration data with audit trail
                             if config_data:
-                                # Add site data to config for complete audit trail
                                 full_config_data = {
                                     'configuration_used': config_data,
                                     'site_data_at_calculation': site_data,
@@ -305,15 +467,19 @@ def process_batch_analysis(session_key):
                                 }
                                 site.complexity_configuration = json.dumps(full_config_data)
                             
-                            print(f"Updated complexity for {site.website_url}: {calculated_complexity} (simple: {simple_count}, medium: {medium_count}, complex: {complex_count})")
+                            logger.info(f"Updated complexity for {site.website_url}: {calculated_complexity} "
+                                        f"(simple: {complexity_counts['simple']}, medium: {complexity_counts['medium']}, "
+                                        f"complex: {complexity_counts['complex']})")
                         else:
-                            print(f"Could not determine complexity for {site.website_url}, keeping default")
+                            logger.info(f"Could not determine complexity for {site.website_url}, keeping default")
                     else:
-                        print(f"Could not determine complexity for {site.website_url}, keeping default")
+                        logger.info(f"Could not determine complexity for {site.website_url}, keeping default")
+                
                 except Exception as complexity_error:
                     logger.warning(f"Error calculating complexity for {site.website_url}: {complexity_error}")
                 
                 site.is_imported = True
+                site.last_analyzed = timezone.now()
                 site.save()
                 
                 completed_sites.append(site.website_url)
@@ -322,31 +488,43 @@ def process_batch_analysis(session_key):
                 logger.warning(f"Error analyzing site {site.website_url}: {e}")
                 failed_sites.append({'url': site.website_url, 'error': str(e)})
             
-            # Update progress after each site
+            # Update progress after each site - refresh session to avoid conflicts
+            try:
+                # Get a fresh session instance to avoid conflicts
+                session = SessionStore(session_key=session_key)
+                progress = session.get('batch_analysis_progress', {})
+                progress.update({
+                    'current': index + 1,
+                    'completed_sites': completed_sites,
+                    'failed_sites': failed_sites
+                })
+                session['batch_analysis_progress'] = progress
+                session.save()
+                logger.info(f"Updated progress: {index + 1}/{total_sites}")
+            except Exception as session_err:
+                logger.error(f"Error updating session: {session_err}")
+        
+        # Mark as completed - get fresh session
+        try:
+            session = SessionStore(session_key=session_key)
             progress = session.get('batch_analysis_progress', {})
             progress.update({
-                'current': index + 1,
-                'completed_sites': completed_sites,
-                'failed_sites': failed_sites
+                'status': 'completed',
+                'current': total_sites,
+                'current_site': '',
+                'end_time': time.time()
             })
             session['batch_analysis_progress'] = progress
             session.save()
-        
-        # Mark as completed
-        progress = session.get('batch_analysis_progress', {})
-        progress.update({
-            'status': 'completed',
-            'current': total_sites,
-            'current_site': '',
-            'end_time': time.time()
-        })
-        session['batch_analysis_progress'] = progress
-        session.save()
+            logger.info(f"Batch analysis completed for {total_sites} sites")
+        except Exception as final_err:
+            logger.error(f"Error updating final progress: {final_err}")
         
     except Exception as e:
         logger.error(f"Error in batch analysis process: {e}")
         # Mark as failed
         try:
+            session = SessionStore(session_key=session_key)
             progress = session.get('batch_analysis_progress', {})
             progress.update({
                 'status': 'failed',
@@ -354,8 +532,9 @@ def process_batch_analysis(session_key):
             })
             session['batch_analysis_progress'] = progress
             session.save()
-        except:
-            pass
+            logger.error(f"Batch analysis failed: {str(e)}")
+        except Exception as err:
+            logger.error(f"Could not update session with failure status: {err}")
 
 
 @login_required
@@ -467,122 +646,168 @@ def site_meta_delete(request, site_id, pk):
 
 @login_required
 def analyze_sitemap(request, site_id):
+    """
+    Analyze sitemap URLs for a specific site and create meta details
+    """
+    # Get the site
     site = get_object_or_404(SiteListDetails, pk=site_id)
+    logger.info(f"Starting sitemap analysis for site: {site.website_url}")
+    
+    # Fetch sitemap URLs
     sitemap_urls = fetch_sitemap_urls(site.website_url)
-
+    
     if not sitemap_urls:
+        logger.warning(f"No sitemap URLs found for site: {site.website_url}")
         return render(request, 'site_manager/error.html', {'error': 'No sitemap URLs found.'})
+
+    # Get all tag mappings for efficiency
+    v1_to_v2_map = {}
+    all_tag_mappings = TagMapper.objects.all()
+    for mapping in all_tag_mappings:
+        v1_name = mapping.v1_component_name
+        if v1_name not in v1_to_v2_map:
+            v1_to_v2_map[v1_name] = []
+        v1_to_v2_map[v1_name].append({'v2_name': mapping.v2_component_name, 'weight': mapping.weight})
+    for v1_name in v1_to_v2_map:
+        v1_to_v2_map[v1_name] = sorted(v1_to_v2_map[v1_name], key=lambda x: x['weight'], reverse=True)
+
+    meta_details_to_create = []
 
     for sitemap_url in sitemap_urls:
         try:
-
             soup, page_source, error = fetch_page(sitemap_url)
             if error:
                 logger.warning(f"Error fetching {sitemap_url}: {error}")
                 continue
-             
+
             custom_elements = find_enhanced_custom_class_elements(soup, "custom-block-element")
             helix_elements = find_enhanced_helix_elements(soup, page_source)
 
-            
-        
-            v1_tags = Tag.objects.filter(version='V1').order_by('name')
-            v2_tags = Tag.objects.filter(version='V2').order_by('name')
-            # Build current mapping: {v1_name: [v2_name, ...]}
-            v1_to_v2_map = {}
-            for v1 in v1_tags:
-                mappings = TagMapper.objects.filter(v1_component_name=v1.name)
-                v1_to_v2_map[v1.name] = [{'v2_name': m.v2_component_name, 'weight': m.weight} for m in mappings]
-
-            # Fetch v2_component_name based on v1_component_name using the updated mapping logic
             helix_v2_compatible_component_data = []
-            for v1_component_name in helix_elements:
-                if v1_component_name in v1_to_v2_map:
-                    # Sort mappings by weight (descending) and pick the highest-weighted v2_name
-                    sorted_mappings = sorted(v1_to_v2_map[v1_component_name], key=lambda x: x['weight'], reverse=True)
-                    if sorted_mappings:
-                        helix_v2_compatible_component_data.append(sorted_mappings[0]['v2_name'])
-                else:
-                    logger.warning(f"No mapping found for v1 component '{v1_component_name}'")
-
-            # Determine non-compatible v2 tags
             helix_v2_non_compatible_component_data = []
+
             for v1_component_name in helix_elements:
-                if v1_component_name not in v1_to_v2_map or not v1_to_v2_map[v1_component_name]:
+                if v1_component_name in v1_to_v2_map and v1_to_v2_map[v1_component_name]:
+                    helix_v2_compatible_component_data.append(v1_to_v2_map[v1_component_name][0]['v2_name'])
+                else:
                     helix_v2_non_compatible_component_data.append(v1_component_name)
-         
-            
-            # print("START DEBUGGING")
-            # print(sitemap_url)
-            # print(type(helix_elements))
-            # print(helix_elements)
-            # print(len(helix_elements))
-            # print(type(helix_v2_compatible_component_data))
-            # print(helix_v2_compatible_component_data)
-            # print(len(helix_v2_compatible_component_data))
-            # print(type(helix_v2_non_compatible_component_data))
-            # print(helix_v2_non_compatible_component_data)
-            # print(len(helix_v2_non_compatible_component_data))
-            # print("END DEBUGGING")
-            SiteMetaDetails.objects.create(
-                site_list_details=site,
-                site_url=sitemap_url,
-                helix_v1_component=json.dumps(list(set(helix_elements))),
-                helix_v2_compatible_component=json.dumps(list(set(helix_v2_compatible_component_data))),
-                helix_v2_non_compatible_component=json.dumps(list(set(helix_v2_non_compatible_component_data))),
-                custom_component=json.dumps(list(set(custom_elements))),
-                v2_compatible_count=len(helix_v2_compatible_component_data),
-                v2_non_compatible_count=len(helix_v2_non_compatible_component_data),
-                custom_component_count=len(custom_elements),
+
+            def explode_and_unique_comma_separated(values):
+                unique = set()
+                for item in values:
+                    if item:
+                        unique.update([v.strip() for v in item.split(',') if v.strip()])
+                return ",".join(sorted(unique))
+
+            meta_details_to_create.append(
+                SiteMetaDetails(
+                    site_list_details=site,
+                    site_url=sitemap_url,
+                    helix_v1_component=explode_and_unique_comma_separated([",".join(helix_elements)]),
+                    helix_v2_compatible_component=explode_and_unique_comma_separated([",".join([e for e in helix_v2_compatible_component_data if e])]),
+                    helix_v2_non_compatible_component=explode_and_unique_comma_separated([",".join([e for e in helix_v2_non_compatible_component_data if e])]),
+                    custom_component=explode_and_unique_comma_separated([",".join([e for e in custom_elements if e])]),
+                    v2_compatible_count=len([e for e in helix_v2_compatible_component_data if e]),
+                    v2_non_compatible_count=len([e for e in helix_v2_non_compatible_component_data if e]),
+                    custom_component_count=len([e for e in custom_elements if e]),
+                )
             )
         except requests.exceptions.RequestException as e:
             return render(request, 'site_manager/error.html', {'error': str(e)})
 
+    if meta_details_to_create:
+        SiteMetaDetails.objects.bulk_create(meta_details_to_create)
 
-    site.helix_v1_component = json.dumps(
-        list(
-            set(
-                str(value) for value in SiteMetaDetails.objects.filter(
-                    site_list_details=site, helix_v1_component__isnull=False
-                ).values_list('helix_v1_component', flat=True)
-            )
-        )
-    )
-    site.helix_v2_compatible_component = json.dumps(
-        list(
-            set(
-                str(value) for value in SiteMetaDetails.objects.filter(
-                    site_list_details=site, helix_v2_compatible_component__isnull=False
-                ).values_list('helix_v2_compatible_component', flat=True)
-            )
-        )
-    )
-    site.helix_v2_non_compatible_component = json.dumps(
-        list(
-            set(
-                str(value) for value in SiteMetaDetails.objects.filter(
-                    site_list_details=site, helix_v2_non_compatible_component__isnull=False
-                ).values_list('helix_v2_non_compatible_component', flat=True)
-            )
-        )
-    )
+    def explode_and_unique_comma_separated_list(values):
+        unique = set()
+        for item in values:
+            if item:
+                unique.update([v.strip() for v in item.split(',') if v.strip()])
+        return sorted(unique)
 
-    site.custom_component = SiteMetaDetails.objects.filter(
-        site_list_details=site, custom_component_count__isnull=False
-    ).aggregate(total=models.Sum('custom_component_count'))['total'] or 0
+    helix_v1_components_raw = SiteMetaDetails.objects.filter(
+        site_list_details=site, helix_v1_component__isnull=False
+    ).values_list('helix_v1_component', flat=True)
+    site.helix_v1_component = json.dumps(explode_and_unique_comma_separated_list(helix_v1_components_raw))
 
-    # Update total_pages count
-    site.v2_compatible_count = SiteMetaDetails.objects.filter(
+    helix_v2_compatible_raw = SiteMetaDetails.objects.filter(
         site_list_details=site, helix_v2_compatible_component__isnull=False
-    ).aggregate(total=models.Sum('v2_compatible_count'))['total'] or 0
-    
-    site.v2_non_compatible_count = SiteMetaDetails.objects.filter(
-        site_list_details=site, helix_v2_non_compatible_component__isnull=False
-    ).aggregate(total=models.Sum('v2_non_compatible_count'))['total'] or 0
+    ).values_list('helix_v2_compatible_component', flat=True)
+    site.helix_v2_compatible_component = json.dumps(explode_and_unique_comma_separated_list(helix_v2_compatible_raw))
 
-    
-    
-    site.total_pages = site.meta_details.count()
+    helix_v2_non_compatible_raw = SiteMetaDetails.objects.filter(
+        site_list_details=site, helix_v2_non_compatible_component__isnull=False
+    ).values_list('helix_v2_non_compatible_component', flat=True)
+    site.helix_v2_non_compatible_component = json.dumps(explode_and_unique_comma_separated_list(helix_v2_non_compatible_raw))
+
+    aggregated_counts = SiteMetaDetails.objects.filter(site_list_details=site).aggregate(
+        custom_component_count=models.Sum('custom_component_count'),
+        v2_compatible_count=models.Sum('v2_compatible_count'),
+        v2_non_compatible_count=models.Sum('v2_non_compatible_count'),
+        total_pages=models.Count('id')
+    )
+    site.custom_component = aggregated_counts['custom_component_count'] or 0
+    site.v2_compatible_count = aggregated_counts['v2_compatible_count'] or 0
+    site.v2_non_compatible_count = aggregated_counts['v2_non_compatible_count'] or 0
+    site.total_pages = aggregated_counts['total_pages']
+
+    # Calculate and update complexity based on site data
+    try:
+        # Aggregate all unique v2 compatible components
+        helix_v2_compatible_raw = SiteMetaDetails.objects.filter(
+            site_list_details=site, helix_v2_compatible_component__isnull=False
+        ).values_list('helix_v2_compatible_component', flat=True)
+        unique_v2_compatible = set()
+        for value in helix_v2_compatible_raw:
+            components = [comp.strip() for comp in value.split(',') if comp.strip()]
+            unique_v2_compatible.update(components)
+
+        # Count complexity levels based on V2 component complexity
+        complexity_counts = {
+            'simple': 0,
+            'medium': 0,
+            'complex': 0
+        }
+        v2_tags_complexity = {
+            tag.name: tag.complexity
+            for tag in Tag.objects.filter(
+                version='V2',
+                name__in=unique_v2_compatible
+            ).only('name', 'complexity')
+        }
+        for component_name in unique_v2_compatible:
+            complexity = v2_tags_complexity.get(component_name)
+            if complexity in complexity_counts:
+                complexity_counts[complexity] += 1
+
+        site_data = {
+            'number_of_pages': site.total_pages,
+            'number_of_helix_v2_compatible': site.v2_compatible_count,
+            'number_of_helix_v2_non_compatible': site.v2_non_compatible_count,
+            'number_of_custom_components': site.custom_component if isinstance(site.custom_component, int) else 0,
+            'total_simple_components': complexity_counts['simple'],
+            'total_medium_components': complexity_counts['medium'],
+            'total_complex_components': complexity_counts['complex'],
+        }
+
+        complexity_result = get_website_complexity(site_data, return_config=True)
+        if complexity_result and len(complexity_result) == 2:
+            calculated_complexity, config_data = complexity_result
+            if calculated_complexity:
+                site.complexity = calculated_complexity
+                if config_data:
+                    full_config_data = {
+                        'configuration_used': config_data,
+                        'site_data_at_calculation': site_data,
+                        'calculation_timestamp': timezone.now().isoformat(),
+                        'complexity_determined': calculated_complexity
+                    }
+                    site.complexity_configuration = json.dumps(full_config_data)
+    except Exception as complexity_error:
+        logger.warning(f"Error calculating complexity for {site.website_url}: {complexity_error}")
+
+    site.is_imported = True
+    site.last_analyzed = timezone.now()
     site.save()
 
     return redirect('site_meta_list', site_id=site.id)
@@ -672,6 +897,15 @@ def download_sites_import_template(request):
     return response
 
 
+# Common request headers for all HTTP requests
+DEFAULT_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    'Accept': 'application/xml, text/xml, application/json, text/html, */*',
+    'Accept-Language': 'en-US,en;q=0.9,*;q=0.8',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive'
+}
+
 def fetch_sitemap_urls(base_url):
     """
     Fetch all URLs from sitemap(s) for the given website
@@ -680,25 +914,19 @@ def fetch_sitemap_urls(base_url):
     urls_found = []
 
     try:
-        
         # Common sitemap locations
-        sitemap_urls = [
-            f"{base_url}/sitemap.xml",
-            # f"{base_url}/sitemap_index.xml", 
-            # f"{base_url}/sitemaps.xml",
-            # f"{base_url}/sitemap/sitemap.xml",
-            # f"{base_url}/sitemap1.xml"
-        ]
-
+        sitemap_urls = [f"{base_url}/sitemap.xml"]
+        
         # Check robots.txt for sitemap references
+        robots_url = f"{base_url}/robots.txt"
         try:
-            robots_url = f"{base_url}/robots.txt"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Accept': 'text/plain, */*',
-                'Accept-Language': 'en-US,en;q=0.9,*;q=0.8'
-            }
-            robots_response = requests.get(robots_url, headers=headers, timeout=10, verify=False)
+            robots_response = requests.get(
+                robots_url, 
+                headers=DEFAULT_HEADERS, 
+                timeout=10, 
+                verify=False
+            )
+            
             if robots_response.status_code == 200:
                 robots_content = robots_response.text
                 # Look for sitemap directives
@@ -707,54 +935,41 @@ def fetch_sitemap_urls(base_url):
                         sitemap_url = line.split(':', 1)[1].strip()
                         if sitemap_url not in sitemap_urls:
                             sitemap_urls.append(sitemap_url)
-        except Exception as e:
-            logger.warning(f"Could not fetch robots.txt: {e}")
+                            
+        except requests.RequestException as e:
+            logger.warning(f"Could not fetch robots.txt from {base_url}: {e}")
 
-        # Try each sitemap URL
+        # Process each sitemap URL
         for sitemap_url in sitemap_urls:
             try:
-                print(f"Trying sitemap: {sitemap_url}")
-                # Enhanced headers and SSL handling
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'Accept': 'application/xml, text/xml, */*',
-                    'Accept-Language': 'en-US,en;q=0.9,*;q=0.8',
-                    'Cache-Control': 'no-cache',
-                    'Connection': 'keep-alive'
-                }
+                logger.info(f"Fetching sitemap: {sitemap_url}")
                 
-                # Disable SSL verification to handle self-signed certificates
-                response = requests.get(sitemap_url, headers=headers, timeout=15, verify=False)
-                print(f"Response for {sitemap_url}: {response.status_code}")
+                response = requests.get(
+                    sitemap_url, 
+                    headers=DEFAULT_HEADERS, 
+                    timeout=15, 
+                    verify=False
+                )
+                
                 if response.status_code == 200:
-                    #print(f"Sitemap content: {response.text[:500]}...")  # Log first 500 characters
                     urls_from_sitemap = parse_sitemap(response.content, base_url)
                     urls_found.extend(urls_from_sitemap)
-                    #print(f"Found {len(urls_from_sitemap)} URLs in {sitemap_url}")
+                    logger.info(f"Found {len(urls_from_sitemap)} URLs in {sitemap_url}")
                 else:
-                    print(f"Sitemap {sitemap_url} returned status code {response.status_code}")
                     logger.warning(f"Sitemap {sitemap_url} returned status code {response.status_code}")
 
-            except Exception as e:
-                print(f"Error fetching sitemap {sitemap_url}: {e}")
+            except requests.RequestException as e:
                 logger.warning(f"Error fetching sitemap {sitemap_url}: {e}")
                 continue
-
-       
-        unique_urls = list(set(urls_found))
-        valid_urls = []
-
-        #print(unique_urls)
-        for url in unique_urls:
-            #print(f"Validating URL: {url}")
-            if url.startswith(('http://', 'https://')):
-                valid_urls.append(url)
-
+        
+        # Filter for unique, valid URLs
+        valid_urls = list({url for url in urls_found if url.startswith(('http://', 'https://'))})
+        
         logger.info(f"Total unique valid URLs found: {len(valid_urls)}")
         return valid_urls
 
     except Exception as e:
-        logger.error(f"Error fetching sitemap URLs: {e}")
+        logger.error(f"Error in sitemap processing for {base_url}: {e}")
         return []
 
 
@@ -762,102 +977,102 @@ def parse_sitemap(sitemap_content, base_url):
     """
     Parse sitemap XML content and extract URLs
     Handles both regular sitemaps and sitemap index files
-    Enhanced to handle multi-language URLs and various sitemap formats
     """
     urls = []
     
     try:
-        # Try to decode if it's bytes
+        # Decode content if needed
         if isinstance(sitemap_content, bytes):
             try:
                 sitemap_content = sitemap_content.decode('utf-8')
             except UnicodeDecodeError:
                 sitemap_content = sitemap_content.decode('utf-8', errors='ignore')
         
+        # Parse the XML
         root = ET.fromstring(sitemap_content)
         
-        # Store original namespace mapping for proper handling
+        # Handle namespaces properly
         namespaces = {}
-        for prefix, uri in ET._namespace_map.items():
-            if uri in str(root.tag):
-                namespaces[prefix] = uri
-        
-        # Also extract namespace from root element
+        # Extract namespace from root element
         if root.tag.startswith('{'):
             namespace_uri = root.tag[1:root.tag.find('}')]
-            namespaces[''] = namespace_uri
+            namespaces['ns'] = namespace_uri
         
-        # Remove namespace prefixes to simplify parsing but preserve structure
-        for elem in root.iter():
-            if '}' in str(elem.tag):
-                elem.tag = elem.tag.split('}', 1)[1]
+        # Use a more consistent approach to find elements with or without namespaces
+        def find_elements_with_tag(root, tag_name):
+            # Try with namespace
+            if namespaces:
+                try:
+                    return root.findall(f'.//{{*}}{tag_name}')
+                except:
+                    pass
+            
+            # Try without namespace
+            try:
+                return root.findall(f'.//{tag_name}')
+            except:
+                pass
+            
+            # Try with local-name function as last resort
+            try:
+                return root.findall(f'.//*[local-name()="{tag_name}"]')
+            except:
+                return []
         
-        # Check if this is a sitemap index (contains other sitemaps)
-        sitemap_elements = root.findall('.//sitemap')
+        # Check if this is a sitemap index
+        sitemap_elements = find_elements_with_tag(root, 'sitemap')
+        
         if sitemap_elements:
-            print(f"Found sitemap index with {len(sitemap_elements)} sub-sitemaps...")
+            logger.info(f"Found sitemap index with {len(sitemap_elements)} sub-sitemaps")
+            
             for sitemap_elem in sitemap_elements:
-                loc_elem = sitemap_elem.find('loc')
-                if loc_elem is not None and loc_elem.text:
-                    sub_sitemap_url = loc_elem.text.strip()
-                    print(f"Processing sub-sitemap: {sub_sitemap_url}")
+                # Find location element
+                loc_elems = find_elements_with_tag(sitemap_elem, 'loc')
+                
+                if loc_elems and loc_elems[0].text:
+                    sub_sitemap_url = loc_elems[0].text.strip()
+                    logger.info(f"Processing sub-sitemap: {sub_sitemap_url}")
+                    
                     try:
                         # Fetch the sub-sitemap
-                        headers = {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                            'Accept': 'application/xml, text/xml, */*',
-                            'Accept-Language': 'en-US,en;q=0.9,*;q=0.8'
-                        }
-                        sub_response = requests.get(sub_sitemap_url, headers=headers, timeout=15, verify=False)
+                        sub_response = requests.get(
+                            sub_sitemap_url, 
+                            headers=DEFAULT_HEADERS, 
+                            timeout=15, 
+                            verify=False
+                        )
+                        
                         if sub_response.status_code == 200:
+                            # Process recursively
                             sub_urls = parse_sitemap(sub_response.content, base_url)
                             urls.extend(sub_urls)
-                            print(f"Found {len(sub_urls)} URLs in sub-sitemap: {sub_sitemap_url}")
+                            logger.info(f"Found {len(sub_urls)} URLs in sub-sitemap")
                         else:
-                            print(f"Sub-sitemap {sub_sitemap_url} returned status {sub_response.status_code}")
-                    except Exception as e:
-                        logger.warning(f"Error fetching sub-sitemap {sub_sitemap_url}: {e}")
+                            logger.warning(f"Sub-sitemap returned status {sub_response.status_code}")
+                            
+                    except requests.RequestException as e:
+                        logger.warning(f"Error fetching sub-sitemap: {e}")
         
-        # Parse URL elements - try multiple patterns to catch all variations
-        url_patterns = ['.//url', './/URL', './/*[local-name()="url"]']
-        url_elements = []
+        # Find URL elements in regular sitemap
+        url_elements = find_elements_with_tag(root, 'url')
         
-        for pattern in url_patterns:
-            try:
-                elements = root.findall(pattern)
-                if elements:
-                    url_elements.extend(elements)
-                    break  # Use the first pattern that works
-            except:
-                continue
-        
-        print(f"Found {len(url_elements)} URL elements to process")
-        
+        # Process each URL element
         for url_elem in url_elements:
-            # Try multiple ways to find the location element
-            loc_elem = None
-            for loc_pattern in ['loc', 'LOC', './/*[local-name()="loc"]']:
-                try:
-                    loc_elem = url_elem.find(loc_pattern)
-                    if loc_elem is not None:
-                        break
-                except:
-                    continue
+            loc_elems = find_elements_with_tag(url_elem, 'loc')
             
-            if loc_elem is not None and loc_elem.text:
-                url = loc_elem.text.strip()
+            if loc_elems and loc_elems[0].text:
+                url = loc_elems[0].text.strip()
                 
-                # Validate and clean the URL
+                # Validate URL
                 if url and is_valid_url(url, base_url):
                     urls.append(url)
-                    print(f"Added URL: {url}")
         
-        print(f"Total URLs extracted from sitemap: {len(urls)}")
-        return list(set(urls))  # Remove duplicates
+        # Return unique URLs
+        return list(set(urls))
         
     except ET.ParseError as e:
         logger.warning(f"Error parsing sitemap XML: {e}")
-        # Try to extract URLs using regex as fallback
+        # Use regex fallback
         return extract_urls_with_regex(sitemap_content, base_url)
     except Exception as e:
         logger.error(f"Unexpected error parsing sitemap: {e}")
@@ -866,216 +1081,365 @@ def parse_sitemap(sitemap_content, base_url):
 
 def is_valid_url(url, base_url):
     """
-    Validate if URL is properly formatted and relevant
-    Enhanced to handle multi-language URLs
+    Validate if URL is properly formatted and belongs to the same domain or subdomain
     """
-    if not url:
+    if not url or not isinstance(url, str):
         return False
     
     # Basic URL validation
     if not url.startswith(('http://', 'https://')):
         return False
     
-    # Parse base URL to get domain
+    # Parse URLs to compare domains
     try:
         base_parsed = urlparse(base_url)
         url_parsed = urlparse(url)
         
-        # Allow URLs from same domain or subdomains
+        # Normalize domains (remove www. prefix)
         base_domain = base_parsed.netloc.lower()
         url_domain = url_parsed.netloc.lower()
         
-        # Handle cases like www.example.com vs example.com
         if base_domain.startswith('www.'):
             base_domain = base_domain[4:]
         if url_domain.startswith('www.'):
             url_domain = url_domain[4:]
         
-        # Allow exact match or subdomain
-        if url_domain == base_domain or url_domain.endswith('.' + base_domain):
-            return True
+        # Allow domain or subdomain matches
+        return url_domain == base_domain or url_domain.endswith('.' + base_domain)
             
     except Exception as e:
         logger.warning(f"Error validating URL {url}: {e}")
-    
-    return False
+        return False
 
 
 def extract_urls_with_regex(content, base_url):
     """
-    Fallback method to extract URLs using regex when XML parsing fails
+    Extract URLs using regex as fallback when XML parsing fails
     """
     urls = []
     
     try:
+        # Ensure content is string
         if isinstance(content, bytes):
             content = content.decode('utf-8', errors='ignore')
         
-        # Look for URLs in <loc> tags
-        import re
-        url_pattern = r'<loc[^>]*>(.*?)</loc>'
-        matches = re.findall(url_pattern, content, re.IGNORECASE | re.DOTALL)
+        # Use more comprehensive pattern for different sitemap formats
+        loc_patterns = [
+            r'<loc[^>]*>(.*?)</loc>',  # Standard format
+            r'<link[^>]*>(.*?)</link>', # Alternative format
+            r'href=["\']([^"\']+)["\']' # HTML links
+        ]
         
-        for match in matches:
-            url = match.strip()
-            if is_valid_url(url, base_url):
-                urls.append(url)
+        for pattern in loc_patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE | re.DOTALL)
+            
+            for match in matches:
+                url = match.strip()
+                if is_valid_url(url, base_url):
+                    urls.append(url)
         
-        print(f"Regex fallback found {len(urls)} URLs")
+        logger.info(f"Regex fallback found {len(urls)} URLs")
         
     except Exception as e:
         logger.error(f"Error in regex URL extraction: {e}")
     
-    return urls
+    return list(set(urls))  # Return unique URLs
 
 
 def find_enhanced_custom_class_elements(soup, class_filter="custom-block-element"):
     """
-    Enhanced Custom Class Elements finder with detailed analysis
-    Focus on PRIMARY elements only, excluding child helix elements
-    """
-    custom_elements = []
+    Find HTML elements with custom block classes
     
-    # Find all elements with the target class
-    all_elements = soup.find_all(attrs={"class": True})
-    
-    for element in all_elements:
-        classes = element.get('class', [])
-        class_string = ' '.join(classes)
+    Args:
+        soup: BeautifulSoup object representing the parsed HTML
+        class_filter: String to filter class names
         
-        if class_filter.lower() in class_string.lower():
-            custom_elements.append(element.name)
+    Returns:
+        List of element tag names with the specified class
+    """
+    # Create a more efficient CSS selector
+    class_selector = f'[class*="{class_filter.lower()}"]'
     
-    return custom_elements
+    try:
+        # Find all elements with the target class in one operation
+        elements = soup.select(class_selector)
+        
+        # Extract tag names
+        return [element.name for element in elements if element.name]
+    except Exception as e:
+        logger.warning(f"Error finding custom elements: {e}")
+        return []
 
 
 def find_enhanced_helix_elements(soup, page_source):
-    """Enhanced Helix Elements finder with detailed analysis"""
-    helix_elements = []
+    """
+    Find Helix-specific elements in the HTML
     
-    # Method 1: Parse HTML for helix tags
-    helix_tags = soup.find_all(lambda tag: tag.name and tag.name.startswith('helix'))
-    
-    for tag in helix_tags:
-        helix_elements.append(tag.name)
-    
-    return helix_elements
+    Args:
+        soup: BeautifulSoup object representing the parsed HTML
+        page_source: Raw HTML source (used for regex fallbacks if needed)
+        
+    Returns:
+        List of Helix element names
+    """
+    try:
+        # More efficient selector for helix tags
+        helix_elements = set()
+        
+        # Method 1: Use CSS selector for element names starting with "helix"
+        try:
+            # Note: Not all parsers support this type of CSS selector
+            helix_tags = soup.select('[tag^="helix"], [name^="helix"]')
+            for tag in helix_tags:
+                if tag.name.startswith('helix'):
+                    helix_elements.add(tag.name)
+        except:
+            pass
+            
+        # Method 2: Use find_all with lambda (more compatible but slower)
+        if not helix_elements:
+            helix_tags = soup.find_all(lambda tag: tag.name and tag.name.startswith('helix'))
+            for tag in helix_tags:
+                helix_elements.add(tag.name)
+                
+        # Method 3: Regex fallback if needed
+        if not helix_elements and page_source:
+            import re
+            helix_pattern = r'<(helix-[a-zA-Z0-9-]+)'
+            matches = re.findall(helix_pattern, page_source)
+            helix_elements.update(matches)
+            
+        return list(helix_elements)
+        
+    except Exception as e:
+        logger.warning(f"Error finding helix elements: {e}")
+        return []
 
 
 
 def fetch_page(url):
-    """Fetch webpage content using requests"""
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9,*;q=0.8',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        }
+    """
+    Fetch webpage content using requests with optimized error handling
+    
+    Args:
+        url: The URL to fetch
         
-        # Disable SSL verification to handle self-signed certificates
+    Returns:
+        tuple: (BeautifulSoup object, page source text, error message)
+    """
+    try:
+        # Use our predefined headers with HTML-specific Accept header
+        headers = DEFAULT_HEADERS.copy()
+        headers.update({
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate',
+            'Upgrade-Insecure-Requests': '1'
+        })
+        
+        # Set a reasonable timeout to avoid hanging
         response = requests.get(url, headers=headers, timeout=30, verify=False)
         response.raise_for_status()
         
+        # Use html.parser for better compatibility and performance
         soup = BeautifulSoup(response.content, 'html.parser')
         return soup, response.text, None
         
+    except requests.exceptions.Timeout:
+        logger.error(f"Timeout fetching {url}")
+        return None, None, "Request timed out"
+    except requests.exceptions.TooManyRedirects:
+        logger.error(f"Too many redirects for {url}")
+        return None, None, "Too many redirects"
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"HTTP error fetching {url}: {e}")
+        return None, None, f"HTTP error: {e}"
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request error fetching {url}: {e}")
+        return None, None, f"Request error: {e}"
     except Exception as e:
-        logger.error(f"Error fetching page: {e}")
-        return None, None, str(e)
+        logger.error(f"Unexpected error fetching {url}: {e}")
+        return None, None, f"Unexpected error: {e}"
 
+
+# Block category keywords for efficient classification
+BLOCK_CATEGORIES = {
+    'Navigation/Header': ['header', 'navigation', 'menu', 'nav'],
+    'Hero/Banner': ['hero', 'banner', 'jumbotron', 'showcase'],
+    'Footer': ['footer', 'site-footer', 'page-footer'],
+    'Content Block': ['content', 'article', 'post', 'entry'],
+    'Sidebar': ['sidebar', 'aside', 'widget-area'],
+    'Form Element': ['form', 'input', 'contact', 'subscribe'],
+    'Media Block': ['media', 'image', 'video', 'gallery', 'slider'],
+    'Card/Tile': ['card', 'tile', 'panel', 'box'],
+    'Layout/Grid': ['list', 'grid', 'row', 'column', 'layout']
+}
 
 def determine_block_category(element, classes):
-    """Determine the category of the custom block"""
-    class_string = ' '.join(classes).lower()
+    """
+    Determine the category of a custom block based on its classes
     
-    if 'header' in class_string or 'navigation' in class_string or 'menu' in class_string:
-        return 'Navigation/Header'
-    elif 'hero' in class_string or 'banner' in class_string:
-        return 'Hero/Banner'
-    elif 'footer' in class_string:
-        return 'Footer'
-    elif 'content' in class_string or 'article' in class_string:
-        return 'Content Block'
-    elif 'sidebar' in class_string or 'aside' in class_string:
-        return 'Sidebar'
-    elif 'form' in class_string or 'input' in class_string:
-        return 'Form Element'
-    elif 'media' in class_string or 'image' in class_string or 'video' in class_string:
-        return 'Media Block'
-    elif 'card' in class_string or 'tile' in class_string:
-        return 'Card/Tile'
-    elif 'list' in class_string or 'grid' in class_string:
-        return 'Layout/Grid'
-    else:
-        return 'Generic Block'
+    Args:
+        element: HTML element
+        classes: List of class names
+        
+    Returns:
+        String representing the category of the block
+    """
+    class_string = ' '.join(classes).lower() if classes else ''
     
+    # Use predefined keywords for more efficient categorization
+    for category, keywords in BLOCK_CATEGORIES.items():
+        if any(keyword in class_string for keyword in keywords):
+            return category
+            
+    return 'Generic Block'
 
 
 def generate_enhanced_label(element, classes, helix_children):
-    """Generate an enhanced, descriptive label for the block"""
+    """
+    Generate a descriptive label for an HTML block
+    
+    Args:
+        element: HTML element
+        classes: List of class names
+        helix_children: List of child helix elements
+        
+    Returns:
+        String with formatted description of the element
+    """
+    if not element:
+        return "Unknown Element"
+        
     tag = element.name.upper()
     element_id = element.get('id', 'no-id')
     
-    # Get meaningful text content (first 50 chars)
-    text_content = element.get_text(strip=True)[:50]
-    text_preview = f" - '{text_content}...'" if len(text_content) > 47 else f" - '{text_content}'" if text_content else " - (no text)"
+    # Get a preview of text content
+    text_content = element.get_text(strip=True, separator=' ')[:50]
+    if len(text_content) > 47:
+        text_preview = f" - '{text_content}...'"
+    elif text_content:
+        text_preview = f" - '{text_content}'"
+    else:
+        text_preview = " - (no text)"
     
-    # Include helix information if present
+    # Add helix child information if present
     helix_info = ""
     if helix_children:
-        helix_types = list(set([child.name for child in helix_children]))
-        helix_info = f" [Contains: {', '.join(helix_types)}]"
+        # Use set comprehension for efficiency
+        helix_types = {child.name for child in helix_children if hasattr(child, 'name')}
+        if helix_types:
+            helix_info = f" [Contains: {', '.join(sorted(helix_types))}]"
     
     return f"{tag}#{element_id}{text_preview}{helix_info}"
 
 
 def calculate_content_metrics(element):
-    """Calculate detailed content metrics"""
-    text_content = element.get_text(strip=True)
+    """
+    Calculate metrics about the content of an HTML element
+    
+    Args:
+        element: HTML element to analyze
+        
+    Returns:
+        Dictionary of content metrics
+    """
+    if not element:
+        return {}
+        
+    # Get text content once
+    text_content = element.get_text(strip=True, separator=' ')
+    word_count = len(text_content.split()) if text_content else 0
+    
+    # Use CSS selectors for more efficient element finding
+    images = element.select('img')
+    links = element.select('a')
+    form_elements = element.select('form, input, textarea, select')
     
     return {
         'total_text_length': len(text_content),
-        'word_count': len(text_content.split()) if text_content else 0,
-        'has_images': len(element.find_all('img')) > 0,
-        'image_count': len(element.find_all('img')),
-        'has_links': len(element.find_all('a')) > 0,
-        'link_count': len(element.find_all('a')),
-        'has_forms': len(element.find_all(['form', 'input', 'textarea', 'select'])) > 0,
-        'form_element_count': len(element.find_all(['form', 'input', 'textarea', 'select'])),
+        'word_count': word_count,
+        'image_count': len(images),
+        'has_images': bool(images),
+        'link_count': len(links),
+        'has_links': bool(links),
+        'form_element_count': len(form_elements),
+        'has_forms': bool(form_elements),
         'nesting_depth': calculate_nesting_depth(element)
     }
 
 
-def calculate_nesting_depth(element):
-    """Calculate the maximum nesting depth"""
-    def get_depth(elem, current_depth=0):
-        if not elem.children:
-            return current_depth
-        max_child_depth = current_depth
-        for child in elem.children:
-            if hasattr(child, 'children'):
-                child_depth = get_depth(child, current_depth + 1)
-                max_child_depth = max(max_child_depth, child_depth)
-        return max_child_depth
+def calculate_nesting_depth(element, max_depth=20):
+    """
+    Calculate the maximum nesting depth of an element with limits
     
-    return get_depth(element)
+    Args:
+        element: HTML element to analyze
+        max_depth: Maximum depth to check (prevents stack overflow)
+        
+    Returns:
+        Integer representing the maximum nesting depth
+    """
+    # Use an iterative approach to avoid recursion issues
+    if not element or not hasattr(element, 'descendants'):
+        return 0
+        
+    # Map to track depth of each element
+    depth_map = {element: 0}
+    max_found_depth = 0
+    
+    # Process each descendant
+    for descendant in element.descendants:
+        if not hasattr(descendant, 'parent'):
+            continue
+            
+        parent = descendant.parent
+        if parent in depth_map:
+            current_depth = depth_map[parent] + 1
+            depth_map[descendant] = current_depth
+            max_found_depth = max(max_found_depth, current_depth)
+            
+            # Limit maximum depth to prevent performance issues
+            if max_found_depth >= max_depth:
+                return max_depth
+    
+    return max_found_depth
 
 
 def extract_tag_name_from_match(html_match):
-    """Extract tag name from regex match"""
+    """
+    Extract tag name from a regex match string
+    
+    Args:
+        html_match: HTML string containing a tag
+        
+    Returns:
+        String with the extracted tag name
+    """
+    if not html_match or not isinstance(html_match, str):
+        return 'helix-unknown'
+        
     match = re.match(r'<(helix-[^>\s]+)', html_match, re.IGNORECASE)
     return match.group(1) if match else 'helix-unknown'
 
 
 def extract_text_from_helix_match(html_match):
-    """Extract text content from helix HTML match"""
+    """
+    Extract text content from an HTML string
+    
+    Args:
+        html_match: HTML string
+        
+    Returns:
+        String with extracted text content
+    """
+    if not html_match or not isinstance(html_match, str):
+        return ''
+        
     try:
+        # Use a lightweight parser for better performance
         soup = BeautifulSoup(html_match, 'html.parser')
-        return soup.get_text(strip=True)
-    except:
+        return soup.get_text(strip=True, separator=' ')
+    except Exception:
         return ''
 
 

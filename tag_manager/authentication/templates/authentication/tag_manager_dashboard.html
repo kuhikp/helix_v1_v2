@@ -726,26 +726,91 @@
         
         <a href="{% url 'tag_list' %}" class="action-card analytics">
             <div class="action-content">
+            <div class="action-header">
+                <div class="action-icon analytics">
+                <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="action-info">
+                <h4>Tags List</h4>
+                </div>
+            </div>
+            <p class="action-description">
+                Browse and manage all available component tags. View definitions, usage statistics, and organize tags for efficient migration workflows.
+            </p>
+            <div class="action-stats">
+                <div class="action-stat">
+                    <div class="action-stat-number">{{ total_tags|default:0 }}</div>
+                    <div class="action-stat-label">Tags</div>
+                </div>
+            </div>
+            </div>
+        </a>
+
+        <a href="{% url 'site_list' %}" class="action-card analytics">
+            <div class="action-content">
                 <div class="action-header">
-                    <div class="action-icon analytics">
-                        <i class="fas fa-chart-line"></i>
+                    <div class="action-icon analytics" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));">
+                        <i class="fas fa-globe"></i>
                     </div>
                     <div class="action-info">
-                        <h4>Tags List</h4>
+                        <h4>Sites Listing</h4>
+                        <div class="badge-container" style="margin-top: 8px; display: flex; gap: 8px;">
+                            <span class="badge" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple)); padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;">
+                                <i class="fas fa-globe" style="margin-right: 4px;"></i>{{ total_sites|default:0 }} Sites
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <p class="action-description">
-                    Get detailed insights into migration performance, error patterns,
-                    and optimization recommendations for your workflow.
-                </p>
-                <div class="action-stats">
-                    <div class="action-stat">
-                        <div class="action-stat-number">--</div>
-                        <div class="action-stat-label">Coming Soon</div>
+                
+                <div class="site-complexity-container" style="margin: 24px 0;">
+                    <div style="margin-bottom: 16px;">
+                        <h6 style="color: var(--ios-text-secondary); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                            SITE COMPLEXITY DISTRIBUTION
+                        </h6>
                     </div>
-                    <div class="action-stat">
-                        <div class="action-stat-number">--</div>
-                        <div class="action-stat-label">Beta</div>
+                    
+                    <div class="complexity-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div class="complexity-item" style="background: rgba(52, 199, 89, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(52, 199, 89, 0.2);">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-green); margin-right: 8px;"></div>
+                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Simple</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-green);">{{ simple_sites|default:0 }}</div>
+                        </div>
+                        
+                        <div class="complexity-item" style="background: rgba(255, 149, 0, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 149, 0, 0.2);">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-orange); margin-right: 8px;"></div>
+                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Medium</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-orange);">{{ medium_sites|default:0 }}</div>
+                        </div>
+                        
+                        <div class="complexity-item" style="background: rgba(255, 59, 48, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 59, 48, 0.2);">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-red); margin-right: 8px;"></div>
+                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Complex</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-red);">{{ complex_sites|default:0 }}</div>
+                        </div>
+                        
+                        <div class="complexity-item" style="background: rgba(142, 142, 147, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(142, 142, 147, 0.2);">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-gray); margin-right: 8px;"></div>
+                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Unidentified</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-gray);">{{ unidentified_sites|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--ios-border);">
+                    <p class="action-description" style="margin: 0; font-size: 14px; color: var(--ios-text-secondary);">
+                        Manage and monitor site complexity levels
+                    </p>
+                    <div class="view-all-button" style="display: flex; align-items: center; color: var(--ios-blue); font-weight: 600; font-size: 14px;">
+                        View All 
+                        <i class="fas fa-chevron-right" style="margin-left: 6px; font-size: 12px;"></i>
                     </div>
                 </div>
             </div>
