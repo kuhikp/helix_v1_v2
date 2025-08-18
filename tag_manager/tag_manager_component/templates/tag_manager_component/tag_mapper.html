@@ -5,72 +5,231 @@
 
 {% block content %}
 <style>
-    .mapper-header {
-        background: linear-gradient(135deg, #FF9500 0%, #FF6B35 100%);
-        border-radius: 20px;
+    /* Color definitions for text visibility */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-gray: #8E8E93;
+        --ios-gray-light: #C7C7CC;
+        --ios-gray-dark: #636366;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-orange: #FF9500;
+        --ios-orange-dark: #CC7700;
+        --ios-red: #FF3B30;
+        --ios-green: #34C759;
+        --ios-purple: #5856D6;
+        --ios-pink: #FF2D92;
+        --ios-border: #E5E5EA;
+        --ios-light-gray: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-background: #F2F2F7;
+    }
+
+    /* Enhanced iPhone-style design for tag mapper */
+    .mapper-container {
+        min-height: 100vh;
+        /* background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); */
+        padding: 20px 0;
+    }
+    
+    body {
+        background: var(--ios-background);
+        color: var(--ios-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-orange) 0%, var(--ios-red) 100%);
+        border-radius: 24px;
         color: white;
-        padding: 32px;
-        margin-bottom: 24px;
-        box-shadow: 0 8px 24px rgba(255, 149, 0, 0.3);
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: 0 12px 32px rgba(255, 149, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        -webkit-text-fill-color: inherit !important;
     }
     
-    .mapper-header h1 {
-        font-size: 28px;
-        font-weight: 700;
-        margin-bottom: 8px;
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 4s ease-in-out infinite;
     }
     
-    .header-subtitle {
-        font-size: 16px;
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+        50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+    }
+    
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .page-header p {
+        font-size: 1.1rem;
         opacity: 0.9;
         margin-bottom: 0;
+        font-weight: 400;
+        line-height: 1.4;
     }
     
-    .stats-container {
+    .back-btn {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 16px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(10px) !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+    }
+    
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.35) !important;
+        color: white !important;
+        text-decoration: none !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    .auto-map-btn {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 16px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(10px) !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        margin-left: 12px !important;
+    }
+    
+    .auto-map-btn:hover {
+        background: rgba(255, 255, 255, 0.35) !important;
+        color: white !important;
+        text-decoration: none !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
         margin-bottom: 32px;
     }
     
     .stat-card {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.04);
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 32px 24px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
         text-align: center;
-        transition: all 0.3s ease;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient);
+        border-radius: 20px 20px 0 0;
     }
     
     .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
+    }
+    
+    .stat-card.primary::before {
+        --gradient: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+    }
+    
+    .stat-card.success::before {
+        --gradient: linear-gradient(135deg, var(--ios-green), #30D158);
+    }
+    
+    .stat-card.warning::before {
+        --gradient: linear-gradient(135deg, var(--ios-orange), #FF6B35);
+    }
+    
+    .stat-card.info::before {
+        --gradient: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+    }
+    
+    .stat-card.danger::before {
+        --gradient: linear-gradient(135deg, var(--ios-red), #FF6B6B);
     }
     
     .stat-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 16px;
-        font-size: 20px;
+        font-size: 24px;
         color: white;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-icon.primary {
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+    }
+    
+    .stat-icon.success {
+        background: linear-gradient(135deg, var(--ios-green), #30D158);
+    }
+    
+    .stat-icon.warning {
+        background: linear-gradient(135deg, var(--ios-orange), #FF6B35);
+    }
+    
+    .stat-icon.info {
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+    }
+    
+    .stat-icon.danger {
+        background: linear-gradient(135deg, var(--ios-red), #FF6B6B);
     }
     
     .stat-number {
-        font-size: 32px;
-        font-weight: 700;
-        color: #1C1C1E;
-        margin-bottom: 4px;
+        font-size: 42px;
+        font-weight: 800;
+        color: var(--ios-text-primary);
+        margin: 8px 0;
+        line-height: 1;
+        letter-spacing: -1px;
     }
     
     .stat-label {
-        color: #8E8E93;
+        color: var(--ios-text-secondary);
         font-size: 14px;
         font-weight: 500;
+        margin: 0;
     }
     
     .progress-ring {
@@ -110,30 +269,76 @@
         transform: translate(-50%, -50%);
         font-size: 14px;
         font-weight: 700;
-        color: #1C1C1E;
+        color: var(--ios-text-primary);
     }
     
-    .controls-container {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        margin-bottom: 24px;
+    .mapper-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-bottom: 32px;
+        transition: all 0.3s ease;
+    }
+    
+    .mapper-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    }
+    
+    .mapper-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 2px solid var(--ios-border);
+    }
+    
+    .mapper-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, var(--ios-orange), var(--ios-red));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 20px;
+        font-size: 28px;
+        color: white;
+        box-shadow: 0 8px 24px rgba(255, 149, 0, 0.3);
+    }
+    
+    .mapper-header h2 {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--ios-text-primary);
+        margin: 0 0 8px 0;
+        letter-spacing: -0.3px;
+    }
+    
+    .mapper-header p {
+        color: var(--ios-text-secondary);
+        font-size: 16px;
+        margin: 0;
+        font-weight: 500;
     }
     
     .section-title {
-        color: #1C1C1E;
+        color: var(--ios-text-primary);
         font-weight: 600;
         margin-bottom: 20px;
         padding-bottom: 12px;
-        border-bottom: 2px solid #F2F2F7;
+        border-bottom: 2px solid var(--ios-border);
         display: flex;
         align-items: center;
     }
     
     .section-title i {
         margin-right: 12px;
-        color: #FF9500;
+        color: var(--ios-orange);
     }
     
     .search-container {
@@ -143,17 +348,18 @@
     
     .search-input {
         width: 100%;
-        border: 2px solid #F2F2F7;
-        border-radius: 12px;
+        border: 2px solid var(--ios-border);
+        border-radius: 16px;
         padding: 16px 50px 16px 16px;
         font-size: 16px;
         transition: all 0.3s ease;
-        background: #FAFAFA;
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
     }
     
     .search-input:focus {
         outline: none;
-        border-color: #FF9500;
+        border-color: var(--ios-orange);
         background: white;
         box-shadow: 0 0 0 4px rgba(255, 149, 0, 0.1);
     }
@@ -163,7 +369,7 @@
         right: 16px;
         top: 50%;
         transform: translateY(-50%);
-        color: #8E8E93;
+        color: var(--ios-text-secondary);
         font-size: 16px;
     }
     
@@ -175,9 +381,9 @@
     }
     
     .btn-action {
-        border-radius: 12px;
+        border-radius: 16px;
         font-weight: 600;
-        padding: 12px 20px;
+        padding: 12px 24px;
         transition: all 0.3s ease;
         text-decoration: none;
         display: inline-flex;
@@ -185,12 +391,12 @@
         border: none;
         cursor: pointer;
         font-size: 14px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
     }
     
     .btn-primary-action {
-        background: linear-gradient(135deg, #007AFF, #5856D6);
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
         color: white;
-        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
     }
     
     .btn-primary-action:hover {
@@ -201,9 +407,8 @@
     }
     
     .btn-secondary-action {
-        background: linear-gradient(135deg, #FF9500, #FF6B35);
+        background: linear-gradient(135deg, var(--ios-orange), var(--ios-red));
         color: white;
-        box-shadow: 0 4px 16px rgba(255, 149, 0, 0.3);
     }
     
     .btn-secondary-action:hover {
@@ -217,68 +422,41 @@
         margin-right: 8px;
     }
     
-    .mapping-table-container {
-        background: white;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.04);
-    }
-    
-    .table-header {
-        background: #F2F2F7;
-        padding: 20px 24px;
-        border-bottom: 1px solid #E5E5EA;
-    }
-    
-    .table-title {
-        color: #1C1C1E;
-        font-weight: 600;
+    /* Enhanced Table */
+    .table {
+        border-radius: 20px !important;
+        overflow: hidden !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(20px) !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
         margin: 0;
-        display: flex;
-        align-items: center;
-    }
-    
-    .table-title i {
-        margin-right: 12px;
-        color: #FF9500;
-    }
-    
-    .table-responsive {
-        border-radius: 0 0 16px 16px;
-        max-height: 600px;
-        overflow-y: auto;
-    }
-    
-    .mapping-table {
-        margin: 0;
-        border: none;
     }
     
     .mapping-table th {
-        background: #FAFAFA;
-        color: #1C1C1E;
-        font-weight: 600;
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 16px;
-        border: none;
-        border-bottom: 2px solid #F2F2F7;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        font-weight: 600 !important;
+        color: var(--ios-text-secondary) !important;
+        text-transform: uppercase !important;
+        font-size: 12px !important;
+        letter-spacing: 0.5px !important;
+        padding: 16px !important;
         position: sticky;
         top: 0;
         z-index: 10;
+        border: none;
     }
     
     .mapping-table td {
         padding: 20px 16px;
         border: none;
-        border-bottom: 1px solid #F2F2F7;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         vertical-align: middle;
     }
     
     .mapping-table tbody tr:hover {
-        background: #FAFAFA;
+        background: rgba(255, 255, 255, 0.05);
     }
     
     .v1-tag-cell {
@@ -524,21 +702,116 @@
     
     .filter-select:focus {
         outline: none;
-        border-color: #FF9500;
+        border-color: var(--ios-orange);
         background: white;
+    }
+    
+    /* Enhanced Messages Section */
+    .message-container {
+        background: rgba(52, 199, 89, 0.1);
+        border: 2px solid rgba(52, 199, 89, 0.2);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 24px;
+        backdrop-filter: blur(20px);
+        border-left: 4px solid var(--ios-green);
+    }
+    
+    .message-success {
+        color: var(--ios-green);
+    }
+    
+    .message-icon {
+        font-size: 18px;
+        margin-right: 12px;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .page-header h1 {
+            font-size: 28px;
+        }
+        
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        .mapper-card {
+            padding: 24px;
+        }
+        
+        .mapper-header {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .mapper-icon {
+            margin-right: 0;
+            margin-bottom: 16px;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn-action {
+            justify-content: center;
+        }
+    }
+    
+    /* Animation classes */
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    .slide-up {
+        animation: slideUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="mapper-header">
-        <div class="d-flex justify-content-between align-items-center">
+<div class="container-fluid mapper-container">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center" style="position: relative; z-index: 2;">
             <div>
-                <h1><i class="fas fa-exchange-alt me-3"></i>Tag Mapper</h1>
-                <p class="header-subtitle">Map Version 1 tags to Version 2 components</p>
+                <h1 class="mb-3">
+                    <i class="fas fa-exchange-alt me-3"></i>Tag Mapper
+                </h1>
+                <p class="mb-0">
+                    Map Version 1 tags to Version 2 components with intelligent mapping tools
+                </p>
             </div>
-            <div>
-                <a href="{% url 'auto_map_v1_to_v2_tags' %}" class="btn btn-light" style="border-radius: 12px; padding: 12px 20px;">
+            <div class="d-flex">
+                <a href="{% url 'auto_map_v1_to_v2_tags' %}" class="auto-map-btn">
                     <i class="fas fa-magic me-2"></i>Auto Map V1 to V2
                 </a>
             </div>
@@ -548,7 +821,7 @@
     <!-- Success Message -->
     {% if messages %}
         {% for message in messages %}
-        <div class="message-container message-success">
+        <div class="message-container message-success fade-in">
             <div class="d-flex align-items-center">
                 <i class="fas fa-check-circle message-icon"></i>
                 <div>{{ message }}</div>
@@ -558,24 +831,32 @@
     {% endif %}
 
     <!-- Statistics -->
-    <div class="stats-container">
-        <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #007AFF, #5856D6);">
+    <div class="stats-grid slide-up">
+        <div class="stat-card primary">
+            <div class="stat-icon primary">
                 <i class="fas fa-tags"></i>
             </div>
             <div class="stat-number">{{ total_v1_tags }}</div>
             <div class="stat-label">V1 Tags</div>
         </div>
         
-        <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #34C759, #30D158);">
+        <div class="stat-card success">
+            <div class="stat-icon success">
                 <i class="fas fa-link"></i>
             </div>
             <div class="stat-number">{{ total_mappings }}</div>
             <div class="stat-label">Total Mappings</div>
         </div>
         
-        <div class="stat-card">
+        <div class="stat-card warning">
+            <div class="stat-icon warning">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-number">{{ pending_mappings }}</div>
+            <div class="stat-label">Pending Mappings</div>
+        </div>
+        
+        <div class="stat-card info">
             <div class="progress-ring">
                 <svg>
                     <circle class="progress-ring-circle progress-ring-bg" cx="30" cy="30" r="25"></circle>
@@ -585,21 +866,19 @@
             </div>
             <div class="stat-label">Mapped Progress</div>
         </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #5856D6, #AF52DE);">
-                <i class="fas fa-code"></i>
-            </div>
-            <div class="stat-number" id="unmappedCount">0</div>
-            <div class="stat-label">Unmapped Tags</div>
-        </div>
     </div>
 
     <!-- Controls -->
-    <div class="controls-container">
-        <h5 class="section-title">
-            <i class="fas fa-cog"></i>Mapping Controls
-        </h5>
+    <div class="mapper-card fade-in">
+        <div class="mapper-header">
+            <div class="mapper-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <div>
+                <h2>Mapping Controls</h2>
+                <p>Search, filter, and manage your tag mappings</p>
+            </div>
+        </div>
         
         <div class="search-container">
             <input type="text" class="search-input" id="searchInput" placeholder="Search V1 tags..." onkeyup="filterTags()">
@@ -613,39 +892,57 @@
                 <option value="unmapped">Unmapped Only</option>
             </select>
             
+            <select class="filter-select" id="sortFilter" onchange="location = this.value;">
+                {% for option in sort_options %}
+                    <option value="?sort_by={{ option.value }}" {% if current_filters.sort_by == option.value %}selected{% endif %}>
+                        Sort by: {{ option.label }}
+                    </option>
+                {% endfor %}
+            </select>
+            
             <div class="batch-actions">
-                <button class="btn-batch" onclick="clearAllMappings()" title="Clear all mappings">
+                <button class="btn-batch" onclick="clearAllMappings()" title="Clear all mappings" type="button">
                     <i class="fas fa-eraser me-1"></i>Clear All
                 </button>
-                <button class="btn-batch" onclick="exportMappings()" title="Export current mappings">
+                <button class="btn-batch" onclick="exportMappings()" title="Export current mappings" type="button">
                     <i class="fas fa-download me-1"></i>Export
                 </button>
-                <button class="btn-batch" onclick="importMappings()" title="Import mappings">
+                <button class="btn-batch" onclick="importMappings()" title="Import mappings" type="button">
                     <i class="fas fa-upload me-1"></i>Import
                 </button>
+                <a href="{% url 'update_usage_counts' %}" class="btn-batch" title="Update component usage counts">
+                    <i class="fas fa-sync-alt me-1"></i>Update Usage Counts
+                </a>
             </div>
         </div>
         
-        <div class="action-buttons">
+        <!-- <div class="action-buttons">
             <button type="button" class="btn-action btn-primary-action" onclick="validateMappings()">
                 <i class="fas fa-check-double"></i>Validate Mappings
             </button>
             <button type="button" class="btn-action btn-secondary-action" onclick="previewMappings()">
                 <i class="fas fa-eye"></i>Preview Changes
             </button>
-        </div>
+        </div> -->
     </div>
 
     <!-- Mapping Table -->
+    <div class="mapper-card fade-in">
+        <div class="mapper-header">
+            <div class="mapper-icon">
+                <i class="fas fa-table"></i>
+            </div>
+            <div>
+                <h2>Tag Mappings</h2>
+                <p>Map Version 1 tags to Version 2 components</p>
+            </div>
+            <div class="ms-auto">
+                <span class="badge-count">{{ v1_tags|length }} tags</span>
+            </div>
+        </div>
+        
     <form method="post" id="mappingForm">
         {% csrf_token %}
-        
-        <div class="mapping-table-container">
-            <div class="table-header">
-                <h5 class="table-title">
-                    <i class="fas fa-table"></i>Tag Mappings
-                </h5>
-            </div>
             
             {% if v1_tags %}
             <div class="table-responsive">
@@ -655,6 +952,7 @@
                             <th>V1 Tag</th>
                             <th>V2 Component Names</th>
                             <th>Weight</th>
+                            <th>Usage Count</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -696,6 +994,50 @@
                                     title="Weight is automatically set to 1"
                                 >
                             </td>
+                            <td class="usage-count-cell">
+                                {% with v1_to_v2_map|get_item:v1_tag.name as mapped_values %}
+                                {% if mapped_values %}
+                                    {% with mapped_values.0.used_in_website as usage_count %}
+                                    {% if usage_count > 0 %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                <div class="progress-bar 
+                                                    {% if usage_count > 30 %}bg-success
+                                                    {% elif usage_count > 10 %}bg-info
+                                                    {% else %}bg-primary{% endif %} 
+                                                    usage-bar" role="progressbar" data-value="{{ usage_count }}"></div>
+                                            </div>
+                                            <span class="badge 
+                                                {% if usage_count > 30 %}bg-success
+                                                {% elif usage_count > 10 %}bg-info
+                                                {% else %}bg-primary{% endif %} 
+                                                text-white fw-bold rounded-pill">
+                                                <i class="fas fa-globe me-1"></i>{{ usage_count }}
+                                            </span>
+                                        </div>
+                                    {% else %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%"></div>
+                                            </div>
+                                            <span class="badge bg-secondary-subtle text-secondary fw-bold rounded-pill">
+                                                <i class="fas fa-times me-1"></i>0
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%"></div>
+                                        </div>
+                                        <span class="badge bg-secondary-subtle text-secondary fw-bold rounded-pill">
+                                            <i class="fas fa-times me-1"></i>0
+                                        </span>
+                                    </div>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
                             <td>
                                 <span class="mapping-status status-unmapped" data-status="unmapped">
                                     <i class="fas fa-times me-1"></i>Unmapped
@@ -726,6 +1068,7 @@
             </button>
         </div>
     </form>
+    </div>
 </div>
 
 <!-- Loading Overlay -->
@@ -799,13 +1142,11 @@ function updateMappingStatus(input) {
 function updateStatistics() {
     const totalTags = document.querySelectorAll('.v2-input').length;
     const mappedTags = document.querySelectorAll('.status-mapped').length;
-    const unmappedTags = totalTags - mappedTags;
     const percentage = totalTags > 0 ? Math.round((mappedTags / totalTags) * 100) : 0;
     
     // Update progress ring
     const progressCircle = document.getElementById('progressCircle');
     const progressPercentage = document.getElementById('progressPercentage');
-    const unmappedCount = document.getElementById('unmappedCount');
     
     if (progressCircle && progressPercentage) {
         const circumference = 157; // 2 * π * r (r=25)
@@ -813,10 +1154,6 @@ function updateStatistics() {
         
         progressCircle.style.strokeDashoffset = offset;
         progressPercentage.textContent = percentage + '%';
-    }
-    
-    if (unmappedCount) {
-        unmappedCount.textContent = unmappedTags;
     }
 }
 
@@ -929,5 +1266,19 @@ function showAlert(message, type = 'info') {
         }
     }, 5000);
 }
+
+// Initialize usage count progress bars
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.usage-bar').forEach(bar => {
+        const value = parseInt(bar.dataset.value);
+        // Calculate width with a max of 100% and a better visual scale
+        const maxValue = 100; // Adjust based on your actual max usage
+        const width = Math.min(100, (value / maxValue) * 100);
+        bar.style.width = width + '%';
+        bar.setAttribute('aria-valuenow', value);
+        bar.setAttribute('aria-valuemin', '0');
+        bar.setAttribute('aria-valuemax', maxValue);
+    });
+});
 </script>
 {% endblock %}

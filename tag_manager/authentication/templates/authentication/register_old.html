@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Helix Tag Manager</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --ios-blue: #007AFF;
+            --ios-gray: #8E8E93;
+            --ios-light-gray: #F2F2F7;
+            --ios-dark-gray: #1C1C1E;
+            --ios-white: #FFFFFF;
+            --ios-green: #34C759;
+            --ios-red: #FF3B30;
+            --ios-orange: #FF9500;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .signup-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 480px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .logo-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo-icon {
+            background: linear-gradient(135deg, var(--ios-green), #30D158);
+            border-radius: 20px;
+            width: 80px;
+            height: 80px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(52, 199, 89, 0.3);
+        }
+        
+        .logo-icon i {
+            color: white;
+            font-size: 36px;
+        }
+        
+        .welcome-text {
+            color: var(--ios-dark-gray);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: var(--ios-gray);
+            font-size: 16px;
+            font-weight: 400;
+        }
+        
+        .form-floating {
+            margin-bottom: 20px;
+        }
+        
+        .form-control {
+            border: 2px solid rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            padding: 16px 20px;
+            font-size: 16px;
+            background-color: var(--ios-light-gray);
+            transition: all 0.3s ease;
+            height: 60px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--ios-green);
+            box-shadow: 0 0 0 0.25rem rgba(52, 199, 89, 0.1);
+            background-color: var(--ios-white);
+            transform: translateY(-2px);
+        }
+        
+        .form-floating > label {
+            color: var(--ios-gray);
+            font-weight: 500;
+            padding: 16px 20px;
+        }
+        
+        .btn-signup {
+            background: linear-gradient(135deg, var(--ios-green), #30D158);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            padding: 16px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+            margin-top: 8px;
+        }
+        
+        .btn-signup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+            background: linear-gradient(135deg, #2FB344, #28C946);
+        }
+        
+        .btn-signup:active {
+            transform: translateY(0);
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+        
+        .alert-danger {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--ios-red);
+        }
+        
+        .alert-success {
+            background: rgba(52, 199, 89, 0.1);
+            color: var(--ios-green);
+        }
+        
+        .terms-section {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--ios-gray);
+        }
+        
+        .terms-section a {
+            color: var(--ios-blue);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .terms-section a:hover {
+            text-decoration: underline;
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 32px 0;
+            position: relative;
+            color: var(--ios-gray);
+            font-size: 14px;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+        
+        .divider span {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0 16px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 24px;
+        }
+        
+        .login-link a {
+            color: var(--ios-blue);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+        }
+        
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .password-strength {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, 0.1);
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .strength-weak { background: var(--ios-red); width: 25%; }
+        .strength-fair { background: var(--ios-orange); width: 50%; }
+        .strength-good { background: var(--ios-blue); width: 75%; }
+        .strength-strong { background: var(--ios-green); width: 100%; }
+        
+        @media (max-width: 480px) {
+            .signup-container {
+                padding: 32px 24px;
+                margin: 20px;
+                border-radius: 20px;
+            }
+            
+            .welcome-text {
+                font-size: 24px;
+            }
+            
+            .logo-icon {
+                width: 64px;
+                height: 64px;
+            }
+            
+            .logo-icon i {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <div class="logo-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h1 class="welcome-text">Create Account</h1>
+            <p class="subtitle">Join Helix Tag Manager today</p>
+        </div>
+
+        <!-- Error Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Signup Form -->
+        <form method="post" novalidate id="signupForm">
+            {% csrf_token %}
+            
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" 
+                               class="form-control" 
+                               id="firstName" 
+                               name="first_name" 
+                               placeholder="First Name"
+                               required
+                               autocomplete="given-name">
+                        <label for="firstName">
+                            <i class="fas fa-user me-2"></i>First Name
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-floating">
+                        <input type="text" 
+                               class="form-control" 
+                               id="lastName" 
+                               name="last_name" 
+                               placeholder="Last Name"
+                               required
+                               autocomplete="family-name">
+                        <label for="lastName">
+                            <i class="fas fa-user me-2"></i>Last Name
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-floating">
+                <input type="email" 
+                       class="form-control" 
+                       id="email" 
+                       name="email" 
+                       placeholder="Enter your email"
+                       required
+                       autocomplete="email">
+                <label for="email">
+                    <i class="fas fa-envelope me-2"></i>Email Address
+                </label>
+            </div>
+
+            <div class="form-floating">
+                <input type="password" 
+                       class="form-control" 
+                       id="password" 
+                       name="password" 
+                       placeholder="Create a password"
+                       required
+                       autocomplete="new-password">
+                <label for="password">
+                    <i class="fas fa-lock me-2"></i>Password
+                </label>
+                <div class="password-strength" id="passwordStrength" style="display: none;">
+                    <div class="strength-bar">
+                        <div class="strength-fill" id="strengthFill"></div>
+                    </div>
+                    <div class="strength-text mt-1" id="strengthText"></div>
+                </div>
+            </div>
+
+            <div class="form-floating">
+                <input type="password" 
+                       class="form-control" 
+                       id="confirmPassword" 
+                       name="confirm_password" 
+                       placeholder="Confirm your password"
+                       required
+                       autocomplete="new-password">
+                <label for="confirmPassword">
+                    <i class="fas fa-lock me-2"></i>Confirm Password
+                </label>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                <label class="form-check-label" for="terms">
+                    I agree to the <a href="#" onclick="showTerms()">Terms of Service</a> and <a href="#" onclick="showPrivacy()">Privacy Policy</a>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-signup">
+                <i class="fas fa-user-plus me-2"></i>
+                Create Account
+            </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="divider">
+            <span>Already have an account?</span>
+        </div>
+
+        <!-- Login Link -->
+        <div class="login-link">
+            <a href="{% url 'login' %}">
+                <i class="fas fa-sign-in-alt me-2"></i>
+                Sign In Instead
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('signupForm');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const strengthIndicator = document.getElementById('passwordStrength');
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+
+            // Password strength checker
+            passwordInput.addEventListener('input', function() {
+                const password = this.value;
+                const strength = calculatePasswordStrength(password);
+                
+                if (password.length > 0) {
+                    strengthIndicator.style.display = 'block';
+                    updateStrengthIndicator(strength);
+                } else {
+                    strengthIndicator.style.display = 'none';
+                }
+            });
+
+            // Form validation
+            form.addEventListener('submit', function(e) {
+                const firstName = document.getElementById('firstName').value;
+                const lastName = document.getElementById('lastName').value;
+                const email = document.getElementById('email').value;
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                const terms = document.getElementById('terms').checked;
+
+                // Validation checks
+                if (!firstName || !lastName || !email || !password || !confirmPassword) {
+                    e.preventDefault();
+                    showAlert('Please fill in all fields', 'danger');
+                    return;
+                }
+
+                if (!isValidEmail(email)) {
+                    e.preventDefault();
+                    showAlert('Please enter a valid email address', 'danger');
+                    return;
+                }
+
+                if (password.length < 8) {
+                    e.preventDefault();
+                    showAlert('Password must be at least 8 characters long', 'danger');
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    e.preventDefault();
+                    showAlert('Passwords do not match', 'danger');
+                    return;
+                }
+
+                if (!terms) {
+                    e.preventDefault();
+                    showAlert('Please accept the Terms of Service and Privacy Policy', 'danger');
+                    return;
+                }
+            });
+
+            // Confirm password validation
+            confirmPasswordInput.addEventListener('input', function() {
+                if (this.value && this.value !== passwordInput.value) {
+                    this.setCustomValidity('Passwords do not match');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        });
+
+        function calculatePasswordStrength(password) {
+            let score = 0;
+            if (password.length >= 8) score++;
+            if (password.match(/[a-z]/)) score++;
+            if (password.match(/[A-Z]/)) score++;
+            if (password.match(/[0-9]/)) score++;
+            if (password.match(/[^a-zA-Z0-9]/)) score++;
+            return score;
+        }
+
+        function updateStrengthIndicator(strength) {
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+            
+            strengthFill.className = 'strength-fill';
+            
+            switch(strength) {
+                case 0:
+                case 1:
+                    strengthFill.classList.add('strength-weak');
+                    strengthText.textContent = 'Weak password';
+                    strengthText.style.color = '#FF3B30';
+                    break;
+                case 2:
+                    strengthFill.classList.add('strength-fair');
+                    strengthText.textContent = 'Fair password';
+                    strengthText.style.color = '#FF9500';
+                    break;
+                case 3:
+                case 4:
+                    strengthFill.classList.add('strength-good');
+                    strengthText.textContent = 'Good password';
+                    strengthText.style.color = '#007AFF';
+                    break;
+                case 5:
+                    strengthFill.classList.add('strength-strong');
+                    strengthText.textContent = 'Strong password';
+                    strengthText.style.color = '#34C759';
+                    break;
+            }
+        }
+
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function showAlert(message, type) {
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>${message}`;
+            
+            const form = document.querySelector('form');
+            form.parentNode.insertBefore(alert, form);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function showTerms() {
+            showAlert('Terms of Service will be available soon!', 'info');
+        }
+
+        function showPrivacy() {
+            showAlert('Privacy Policy will be available soon!', 'info');
+        }
+    </script>
+</body>
+</html>

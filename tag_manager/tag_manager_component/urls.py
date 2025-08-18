@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from .views import export_tag_mapper_records, export_non_tag_mapper_records, export_non_tag_mapper_v1_records, export_non_tag_mapper_v1_records_with_repo, export_all_tags_with_mapped_attributes_and_repo
+from .update_counts import update_usage_counts
 
 urlpatterns = [
     path('', views.tag_list, name='tag_list'),
@@ -11,6 +12,7 @@ urlpatterns = [
     path('tags-extractor/', views.tags_extractor_list, name='tags_extractor_list'),
     path('tags-extractor/create/', views.tags_extractor_create, name='tags_extractor_create'),
     path('tags-extractor/<int:extractor_id>/', views.tags_extractor_detail, name='tags_extractor_detail'),
+    path('tags-extractor/<int:extractor_id>/edit/', views.tags_extractor_edit, name='tags_extractor_edit'),
     path('tags-extractor/process/<int:extractor_id>/', views.process_pending_items, name='process_pending_items'),
     path('tag-mapper/', views.tag_mapper, name='tag_mapper'),
     path('export-v1-tags/', views.export_v1_tags, name='export_v1_tags'),
@@ -28,4 +30,7 @@ urlpatterns = [
     
     # Complexity Parameter Configuration URLs
     path('complexity-parameter-config/', views.complexity_parameter_config, name='complexity_parameter_config'),
+    
+    # Update tag usage counts
+    path('update-usage-counts/', update_usage_counts, name='update_usage_counts'),
 ]

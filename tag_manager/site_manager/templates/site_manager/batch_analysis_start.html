@@ -38,6 +38,7 @@
         box-shadow: 0 12px 32px rgba(255, 149, 0, 0.3);
         position: relative;
         overflow: hidden;
+        -webkit-text-fill-color: inherit !important;
     }
     
     .page-header::before {
@@ -472,14 +473,6 @@
                 <div class="stat-number">{{ sites_count }}</div>
                 <div class="stat-label">Websites Selected</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ estimated_pages }}</div>
-                <div class="stat-label">Estimated Pages</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">~{{ estimated_time }}m</div>
-                <div class="stat-label">Estimated Time</div>
-            </div>
         </div>
 
         <!-- Warning Section -->
@@ -539,16 +532,16 @@
                     {% for website in websites %}
                     <tr>
                         <td>
-                            <strong style="color: #1C1C1E;">{{ website.name }}</strong>
+                            <strong style="color: #1C1C1E;">{{ website.website_url }}</strong>
                         </td>
                         <td>
-                            <a href="{{ website.url }}" target="_blank" style="color: #007AFF; text-decoration: none; font-weight: 500;">
-                                {{ website.url }}
+                            <a href="{{ website.website_url }}" target="_blank" style="color: #007AFF; text-decoration: none; font-weight: 500;">
+                                {{ website.website_url }}
                                 <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8rem;"></i>
                             </a>
                         </td>
                         <td>
-                            {% if website.is_analyzed %}
+                            {% if website.is_imported %}
                                 <span class="badge bg-success">
                                     <i class="fas fa-check me-1"></i>Analyzed
                                 </span>

@@ -9,380 +9,82 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <style>
-        :root {
-            --ios-blue: #007AFF;
-            --ios-gray: #8E8E93;
-            --ios-light-gray: #F2F2F7;
-            --ios-dark-gray: #1C1C1E;
-            --ios-white: #FFFFFF;
-            --ios-green: #34C759;
-            --ios-red: #FF3B30;
-            --ios-orange: #FF9500;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            padding: 48px 40px;
-            width: 100%;
-            max-width: 420px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .logo-section {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .logo-icon {
-            background: linear-gradient(135deg, var(--ios-blue), #5856D6);
-            border-radius: 20px;
-            width: 80px;
-            height: 80px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 16px;
-            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
-        }
-        
-        .logo-icon i {
-            color: white;
-            font-size: 36px;
-        }
-        
-        .welcome-text {
-            color: var(--ios-dark-gray);
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        
-        .subtitle {
-            color: var(--ios-gray);
-            font-size: 16px;
-            font-weight: 400;
-        }
-        
-        .form-floating {
-            margin-bottom: 20px;
-        }
-        
-        .form-control {
-            border: 2px solid rgba(0, 0, 0, 0.06);
-            border-radius: 16px;
-            padding: 16px 20px;
-            font-size: 16px;
-            background-color: var(--ios-light-gray);
-            transition: all 0.3s ease;
-            height: 60px;
-        }
-        
-        .form-control:focus {
-            border-color: var(--ios-blue);
-            box-shadow: 0 0 0 0.25rem rgba(0, 122, 255, 0.1);
-            background-color: var(--ios-white);
-            transform: translateY(-2px);
-        }
-        
-        .form-floating > label {
-            color: var(--ios-gray);
-            font-weight: 500;
-            padding: 16px 20px;
-        }
-        
-        .btn-login {
-            background: linear-gradient(135deg, var(--ios-blue), #5856D6);
-            border: none;
-            border-radius: 16px;
-            color: white;
-            font-size: 17px;
-            font-weight: 600;
-            padding: 16px;
-            width: 100%;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
-            margin-top: 8px;
-        }
-        
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
-            background: linear-gradient(135deg, #0056B3, #4C46B6);
-        }
-        
-        .btn-login:active {
-            transform: translateY(0);
-        }
-        
-        .alert {
-            border: none;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 24px;
-            font-weight: 500;
-        }
-        
-        .alert-danger {
-            background: rgba(255, 59, 48, 0.1);
-            color: var(--ios-red);
-        }
-        
-        .forgot-password {
-            text-align: center;
-            margin-top: 24px;
-        }
-        
-        .forgot-password a {
-            color: var(--ios-blue);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 15px;
-        }
-        
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-        
-        .divider {
-            text-align: center;
-            margin: 32px 0;
-            position: relative;
-            color: var(--ios-gray);
-            font-size: 14px;
-        }
-        
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: rgba(0, 0, 0, 0.1);
-            z-index: 1;
-        }
-        
-        .divider span {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 0 16px;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .social-login {
-            margin-top: 24px;
-        }
-        
-        .btn-social {
-            border: 2px solid rgba(0, 0, 0, 0.06);
-            border-radius: 16px;
-            background: var(--ios-white);
-            color: var(--ios-dark-gray);
-            font-weight: 500;
-            padding: 14px;
-            width: 100%;
-            transition: all 0.3s ease;
-            margin-bottom: 12px;
-        }
-        
-        .btn-social:hover {
-            background: var(--ios-light-gray);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        
-        .input-group-text {
-            background: transparent;
-            border: none;
-            color: var(--ios-gray);
-        }
-        
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 32px 24px;
-                margin: 20px;
-                border-radius: 20px;
-            }
-            
-            .welcome-text {
-                font-size: 24px;
-            }
-            
-            .logo-icon {
-                width: 64px;
-                height: 64px;
-            }
-            
-            .logo-icon i {
-                font-size: 28px;
-            }
-        }
-    </style>
+    <!-- Helix Authentication Styles -->
+    {% load static %}
+    <link href="{% static 'css/base.css' %}" rel="stylesheet">
+    <link href="{% static 'css/auth.css' %}" rel="stylesheet">
+    <link href="{% static 'css/animated-background.css' %}" rel="stylesheet">
+    
+    <!-- Helix Authentication JavaScript -->
+    <script src="{% static 'js/base.js' %}" defer></script>
+    <script src="{% static 'js/auth.js' %}" defer></script>
+    <script src="{% static 'js/animated-background.js' %}" defer></script>
 </head>
 <body>
-    <div class="login-container">
-        <!-- Logo Section -->
-        <div class="logo-section">
-            <div class="logo-icon">
-                <i class="fas fa-code"></i>
-            </div>
-            <h1 class="welcome-text">Welcome Back</h1>
-            <p class="subtitle">Sign in to your account</p>
-        </div>
+    <!-- Animated Background -->
+    <div class="animated-background"></div>
+    <div class="pattern-overlay"></div>
+    <div class="particles"></div>
+    
+    <div class="container-fluid vh-100">
+        <div class="row justify-content-center align-items-center h-100">
+            <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+                <div class="login-container shadow-lg">
+                    <!-- Logo Section -->
+                    <div class="logo-section text-center">
+                        <div class="logo-icon mx-auto">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <h1 class="welcome-text">Welcome Back</h1>
+                        <p class="subtitle">Sign in to your account</p>
+                    </div>
 
-        <!-- Error Messages -->
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    {{ message }}
+                    <!-- Error Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} text-center">
+                                <i class="fas fa-exclamation-circle me-2"></i>{{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Login Form -->
+                    <form method="post" id="loginForm" class="auth-form">
+                        {% csrf_token %}
+                        
+                        <!-- Email Input -->
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="email" name="username" placeholder="name@example.com" required>
+                            <label for="email"><i class="fas fa-envelope me-2"></i>Email</label>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                            <label for="password"><i class="fas fa-lock me-2"></i>Password</label>
+                        </div>
+
+                        <!-- Remember Me & Forgot Password -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">
+                                    Remember me
+                                </label>
+                            </div>
+                            
+                        </div>
+
+                        <!-- Sign In Button -->
+                        <button type="submit" class="btn btn-auth btn-sign-in w-100 mb-3">
+                            <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                        </button>
+
+                        
+                    </form>
                 </div>
-            {% endfor %}
-        {% endif %}
-
-        <!-- Login Form -->
-        <form method="post" novalidate>
-            {% csrf_token %}
-            
-            <div class="form-floating">
-                <input type="email" 
-                       class="form-control" 
-                       id="email" 
-                       name="email" 
-                       placeholder="Enter your email"
-                       required
-                       autocomplete="email">
-                <label for="email">
-                    <i class="fas fa-envelope me-2"></i>Email Address
-                </label>
             </div>
-
-            <div class="form-floating">
-                <input type="password" 
-                       class="form-control" 
-                       id="password" 
-                       name="password" 
-                       placeholder="Enter your password"
-                       required
-                       autocomplete="current-password">
-                <label for="password">
-                    <i class="fas fa-lock me-2"></i>Password
-                </label>
-            </div>
-
-            <button type="submit" class="btn btn-login">
-                <i class="fas fa-sign-in-alt me-2"></i>
-                Sign In
-            </button>
-        </form>
-
-        <!-- Forgot Password -->
-        <div class="forgot-password">
-            <a href="#" onclick="showForgotPassword()">
-                Forgot your password?
-            </a>
-        </div>
-
-        <!-- Divider -->
-        <div class="divider">
-            <span>or continue with</span>
-        </div>
-
-        <!-- Social Login Options -->
-        <div class="social-login">
-            <button type="button" class="btn btn-social" onclick="showFeatureComingSoon()">
-                <i class="fab fa-google me-2"></i>
-                Continue with Google
-            </button>
-            <button type="button" class="btn btn-social" onclick="showFeatureComingSoon()">
-                <i class="fab fa-microsoft me-2"></i>
-                Continue with Microsoft
-            </button>
         </div>
     </div>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // Add some interactive features
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add focus animation to form inputs
-            const inputs = document.querySelectorAll('.form-control');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.parentElement.style.transform = 'translateY(-2px)';
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.parentElement.style.transform = 'translateY(0)';
-                });
-            });
-
-            // Form validation
-            const form = document.querySelector('form');
-            form.addEventListener('submit', function(e) {
-                const email = document.getElementById('email');
-                const password = document.getElementById('password');
-                
-                // Basic validation
-                if (!email.value || !password.value) {
-                    e.preventDefault();
-                    showAlert('Please fill in all fields', 'danger');
-                    return;
-                }
-                
-                if (!isValidEmail(email.value)) {
-                    e.preventDefault();
-                    showAlert('Please enter a valid email address', 'danger');
-                    return;
-                }
-            });
-        });
-
-        function isValidEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
-
-        function showAlert(message, type) {
-            const existingAlert = document.querySelector('.alert');
-            if (existingAlert) {
-                existingAlert.remove();
-            }
-            
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.innerHTML = `<i class="fas fa-exclamation-circle me-2"></i>${message}`;
-            
-            const form = document.querySelector('form');
-            form.parentNode.insertBefore(alert, form);
-            
-            setTimeout(() => {
-                alert.remove();
-            }, 5000);
-        }
-
-        function showForgotPassword() {
-            showAlert('Password reset feature coming soon!', 'info');
-        }
-
-        function showFeatureComingSoon() {
-            showAlert('Social login coming soon!', 'info');
-        }
-    </script>
 </body>
 </html>

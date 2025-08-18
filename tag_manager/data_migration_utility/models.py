@@ -40,3 +40,31 @@ class DataMigrationUtility(models.Model):
         if self.v1_js:
             content_types.append(f"JS ({len(self.v1_js)} chars)")
         return ", ".join(content_types) if content_types else "No content"
+
+    def get_v2_content_summary(self):
+        content_types = []
+        if self.v2_body:
+            content_types.append(f"Body ({len(self.v2_body)} chars)")
+        if self.v2_css:
+            content_types.append(f"CSS ({len(self.v2_css)} chars)")
+        if self.v2_js:
+            content_types.append(f"JS ({len(self.v2_js)} chars)")
+        return ", ".join(content_types) if content_types else "No content"
+
+    def get_status(self):
+        if not self.has_v1_content():
+            return 'empty'
+        if not self.has_v2_content():
+            return 'pending'
+        if self.updated_at and self.created_at != self.updated_at:
+            return 'modified'
+        return 'completed'
+
+    def get_status_display(self):
+        status = self.get_status()
+        return {
+            'empty': 'Empty',
+            'pending': 'Pending',
+            'modified': 'Modified',
+            'completed': 'Completed'
+        }.get(status, 'Unknown')

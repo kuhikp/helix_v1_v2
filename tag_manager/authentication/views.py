@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse
+from django.db.models import Q
 from tag_manager_component.models import Tag
 from user_management.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -67,7 +68,7 @@ class CustomUserCreationForm(forms.ModelForm):
 # Create your views here.
 def user_login(request):
     if request.method == 'POST':
-        email = request.POST.get('email')
+        email = request.POST.get('username')  # Form sends 'username' field
         password = request.POST.get('password')
         user = authenticate(request, username=email, password=password)
         if user is not None:
@@ -77,7 +78,7 @@ def user_login(request):
             elif user.role == 'tag_manager':
                 return redirect('tag_manager_dashboard')
         else:
-            return HttpResponse('Invalid credentials')
+            messages.error(request, 'Invalid email or password. Please try again.')
     return render(request, 'authentication/login.html')
 
 @login_required
@@ -121,7 +122,8 @@ def tag_manager_dashboard(request):
     
     # Get context data for dashboard
     from data_migration_utility.models import DataMigrationUtility
-    from tag_manager_component.models import TagsExtractor, Tag
+    from tag_manager_component.models import TagsExtractor, Tag, TagMapper
+    from site_manager.models import SiteListDetails
     
     total_migrations = DataMigrationUtility.objects.count()
     # Since DataMigrationUtility doesn't have a status field, we'll consider complete migrations
@@ -133,6 +135,20 @@ def tag_manager_dashboard(request):
     total_extractors = TagsExtractor.objects.count()
     recent_migrations = DataMigrationUtility.objects.order_by('-created_at')[:5]
     recent_extractors = TagsExtractor.objects.order_by('-created_at')[:3]
+    
+    # Get counts for sites and tag mapper blocks
+    total_sites = SiteListDetails.objects.count()
+    total_tag_mapper_blocks = TagMapper.objects.count()
+    
+    # Get complexity counts
+    simple_sites = SiteListDetails.objects.filter(complexity='simple').count()
+    medium_sites = SiteListDetails.objects.filter(complexity='medium').count()
+    complex_sites = SiteListDetails.objects.filter(complexity='complex').count()
+    unidentified_sites = SiteListDetails.objects.filter(
+        Q(complexity__isnull=True) | 
+        Q(complexity='') | 
+        ~Q(complexity__in=['simple', 'medium', 'complex'])
+    ).count()
     
     # Calculate completion percentage
     completion_percentage = 0
@@ -148,6 +164,12 @@ def tag_manager_dashboard(request):
         'recent_migrations': recent_migrations,
         'recent_extractors': recent_extractors,
         'user': request.user,
+        'total_sites': total_sites,
+        'total_tag_mapper_blocks': total_tag_mapper_blocks,
+        'unidentified_sites': unidentified_sites,
+        'simple_sites': simple_sites,
+        'medium_sites': medium_sites,
+        'complex_sites': complex_sites,
     }
     
     return render(request, 'authentication/tag_manager_dashboard.html', context)

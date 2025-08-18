@@ -1,0 +1,172 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Update Tag Usage Counts{% endblock %}
+
+{% block content %}
+<style>
+    .ios-card {
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: none;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+    
+    .ios-card:hover {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+    
+    .stats-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        flex: 1;
+        min-width: 200px;
+        padding: 1.5rem;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        height: 60px;
+        width: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        transition: all 0.2s;
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+    }
+    
+    .warning-text {
+        color: #dc3545;
+        font-weight: 500;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="mb-4">Update Tag Usage Counts</h1>
+            
+            <div class="card ios-card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">
+                        <i class="fas fa-info-circle me-2 text-info"></i>
+                        About This Operation
+                    </h4>
+                    <p class="mb-0">
+                        This operation will analyze all sites and their pages to update the <code>used_in_website</code> count 
+                        for each Tag and TagMapper. This count represents how many websites are using each component.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="stats-container">
+                <div class="card stat-card">
+                    <div class="stat-icon bg-primary-subtle">
+                        <i class="fas fa-tags text-primary"></i>
+                    </div>
+                    <div class="stat-value">{{ total_tags }}</div>
+                    <div class="stat-label">Total Tags</div>
+                </div>
+                
+                <div class="card stat-card">
+                    <div class="stat-icon bg-success-subtle">
+                        <i class="fas fa-exchange-alt text-success"></i>
+                    </div>
+                    <div class="stat-value">{{ total_mappers }}</div>
+                    <div class="stat-label">Tag Mappers</div>
+                </div>
+                
+                <div class="card stat-card">
+                    <div class="stat-icon bg-info-subtle">
+                        <i class="fas fa-globe text-info"></i>
+                    </div>
+                    <div class="stat-value">{{ total_sites }}</div>
+                    <div class="stat-label">Sites to Analyze</div>
+                </div>
+            </div>
+            
+            <div class="card ios-card mb-4">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">
+                        <i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+                        Important Note
+                    </h4>
+                    <p>
+                        This process may take some time depending on the number of sites and pages to analyze. 
+                        The page will reload once the operation is complete.
+                    </p>
+                    <p class="warning-text mb-0">
+                        <strong>Note:</strong> This operation will reset all existing usage counts before calculating new values.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="{% url 'tag_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Cancel
+                </a>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sync-alt me-2"></i>Update Usage Counts
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

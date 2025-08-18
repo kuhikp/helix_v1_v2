@@ -4,11 +4,21 @@
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="page-header">
-            <i class="fas fa-globe text-primary"></i> Site Management
-        </h1>
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center" style="position: relative; z-index: 2;">
+            <div>
+                <h1 class="mb-3" style="font-weight: 800; font-size: 2.5rem;">
+                    <i class="fas fa-globe me-3"></i>Site Management
+                </h1>
+                <p class="mb-0" style="font-size: 1.1rem; opacity: 0.9;">
+                    Manage and analyze your website collection with comprehensive tools
+                </p>
+            </div>
+            <a href="{% url 'batch_analyze_sitemaps' %}" class="back-btn">
+                <i class="fas fa-cogs me-2"></i>Batch Analyze
+            </a>
+        </div>
     </div>
 
     <!-- Quick Actions Card -->
@@ -28,11 +38,6 @@
                 <div class="col-md-3">
                     <a href="{% url 'site_create' %}" class="btn btn-outline-primary w-100 ios-button">
                         <i class="fas fa-plus me-2"></i>Add Site
-                    </a>
-                </div>
-                <div class="col-md-3">
-                    <a href="{% url 'batch_analyze_sitemaps' %}" class="btn btn-outline-warning w-100 ios-button">
-                        <i class="fas fa-cogs me-2"></i>Batch Analyze
                     </a>
                 </div>
                 <!-- <div class="col-md-3">
@@ -85,33 +90,102 @@
     <!-- Search and Stats -->
     <div class="card ios-card mb-4">
         <div class="card-body">
-            <form method="get" action="" class="d-flex align-items-center gap-3">
+                        <form class="d-flex gap-3" method="get">
                 <div class="flex-grow-1">
-                    <div class="input-group">
-                        <span class="input-group-text bg-transparent border-end-0">
-                            <i class="fas fa-search text-muted"></i>
-                        </span>
-                        <input type="text" name="search" class="form-control border-start-0" 
-                               placeholder="Search websites..." value="{{ request.GET.search }}">
+                    <div class="d-flex gap-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" class="form-control ps-0 border-start-0" name="search" 
+                                   placeholder="Search websites..." value="{{ request.GET.search }}">
+                        </div>
+                        <select name="complexity" class="form-select" style="max-width: 200px;" onchange="this.form.submit()">
+                            <option value="" {% if not request.GET.complexity %}selected{% endif %}>All Complexities</option>
+                            <option value="simple" {% if request.GET.complexity == 'simple' %}selected{% endif %}>
+                                <i class="fas fa-circle text-success"></i> Simple
+                            </option>
+                            <option value="medium" {% if request.GET.complexity == 'medium' %}selected{% endif %}>
+                                <i class="fas fa-circle text-warning"></i> Medium
+                            </option>
+                            <option value="complex" {% if request.GET.complexity == 'complex' %}selected{% endif %}>
+                                <i class="fas fa-circle text-danger"></i> Complex
+                            </option>
+                            <option value="unidentified" {% if request.GET.complexity == 'unidentified' %}selected{% endif %}>
+                                <i class="fas fa-circle text-secondary"></i> Unidentified
+                            </option>
+                        </select>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-secondary ios-button">
                     <i class="fas fa-search me-2"></i>Search
                 </button>
             </form>
-            <div class="mt-3 d-flex gap-3">
-                <span class="badge bg-info-subtle text-info fs-6 px-3 py-2">
-                    <i class="fas fa-filter me-2"></i>Filtered: {{ filtered_sites|length }}
-                </span>
-                <span class="badge bg-primary-subtle text-primary fs-6 px-3 py-2">
-                    <i class="fas fa-globe me-2"></i>Total: {{ sites|length }}
-                </span>
+            
+            <style>
+                .form-select option {
+                    padding: 8px 12px;
+                }
+                .form-select {
+                    background-color: white;
+                    border-color: var(--ios-border);
+                    border-radius: 10px;
+                    padding: 8px 16px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                .form-select:hover {
+                    border-color: var(--ios-blue);
+                }
+                .form-select:focus {
+                    border-color: var(--ios-blue);
+                    box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+                }
+            </style>
+            <div class="mt-3">
+                <div class="d-flex gap-3 mb-2">
+                    <span class="badge bg-info-subtle text-info fs-6 px-3 py-2">
+                        <i class="fas fa-filter me-2"></i>Filtered: {{ filtered_sites|length }}
+                    </span>
+                    <span class="badge bg-primary-subtle text-primary fs-6 px-3 py-2">
+                        <i class="fas fa-globe me-2"></i>Total: {{ sites|length }}
+                    </span>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}complexity=simple" 
+                       class="badge {% if complexity == 'simple' %}bg-success{% else %}bg-success-subtle text-success{% endif %} px-3 py-2 text-decoration-none">
+                        <i class="fas fa-circle me-1"></i>Simple: {{ complexity_counts.simple }}
+                    </a>
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}complexity=medium"
+                       class="badge {% if complexity == 'medium' %}bg-warning{% else %}bg-warning-subtle text-warning{% endif %} px-3 py-2 text-decoration-none">
+                        <i class="fas fa-circle me-1"></i>Medium: {{ complexity_counts.medium }}
+                    </a>
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}complexity=complex"
+                       class="badge {% if complexity == 'complex' %}bg-danger{% else %}bg-danger-subtle text-danger{% endif %} px-3 py-2 text-decoration-none">
+                        <i class="fas fa-circle me-1"></i>Complex: {{ complexity_counts.complex }}
+                    </a>
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}complexity=unidentified"
+                       class="badge {% if complexity == 'unidentified' %}bg-secondary{% else %}bg-secondary-subtle text-secondary{% endif %} px-3 py-2 text-decoration-none">
+                        <i class="fas fa-circle me-1"></i>Unidentified: {{ complexity_counts.unidentified }}
+                    </a>
+                    {% if complexity %}
+                    <a href="?{% if request.GET.search %}search={{ request.GET.search }}{% endif %}"
+                       class="badge bg-light text-dark px-3 py-2 text-decoration-none">
+                        <i class="fas fa-times me-1"></i>Clear Filter
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Export Button -->
-    <div class="d-flex justify-content-end mb-4">
+    <!-- Export and Cleanup Buttons -->
+    <div class="d-flex justify-content-end mb-4 gap-3">
+        <a href="{% url 'cleanup_site_data' %}" class="btn btn-outline-danger ios-button">
+            <i class="fas fa-eraser me-2"></i>Clean All Site Data
+        </a>
         <a href="{% url 'export_sites_csv' %}" class="btn btn-outline-success ios-button">
             <i class="fas fa-file-csv me-2"></i>Export CSV
         </a>
@@ -282,16 +356,64 @@
         </div>
     </div>
 
-    <!-- Export Button -->
-    <div class="d-flex justify-content-end mb-4">
-        <a href="{% url 'export_sites_csv' %}" class="btn btn-outline-success ios-button">
-            <i class="fas fa-file-csv me-2"></i>Export CSV
-        </a>
-    </div>
 </div>
 
 <style>
-/* Complexity badge enhancements */
+/* iOS-style variables */
+:root {
+    --ios-orange: #FF9500;
+    --ios-red: #FF3B30;
+}
+
+.page-header {
+    background: linear-gradient(135deg, var(--ios-orange) 0%, var(--ios-red) 100%);
+    border-radius: 24px;
+    color: white;
+    padding: 40px;
+    margin-bottom: 32px;
+    box-shadow: 0 12px 32px rgba(255, 149, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    -webkit-text-fill-color: inherit !important;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+    50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+}
+
+.back-btn {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+    border-radius: 16px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    backdrop-filter: blur(10px) !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.35) !important;
+    color: white !important;
+    text-decoration: none !important;
+    transform: translateY(-2px) !important;
+}
+
 .text-purple {
     color: #6f42c1 !important;
 }
@@ -340,6 +462,19 @@
 .table-hover tbody tr:hover {
     background-color: rgba(0, 123, 255, 0.05);
     transition: background-color 0.15s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header {
+        padding: 24px;
+        text-align: center;
+    }
+    
+    .page-header .d-flex {
+        flex-direction: column;
+        gap: 20px;
+    }
 }
 </style>
 {% endblock %}

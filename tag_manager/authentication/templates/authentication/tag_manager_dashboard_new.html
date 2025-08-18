@@ -1,0 +1,301 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Tag Manager Dashboard{% endblock %}
+
+{% block content %}
+{% load static %}
+<link href="{% static 'css/shared-dashboard.css' %}" rel="stylesheet">
+
+<div class="dashboard-container">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="header-title">
+                <h1><i class="fas fa-tags"></i>Tag Manager Dashboard</h1>
+                <p class="header-subtitle">Transform your V1 components to V2 with intelligent migration tools</p>
+            </div>
+            <div class="user-profile">
+                <div class="user-avatar">
+                    {{ user.first_name.0|default:user.username.0|upper }}
+                </div>
+                <div class="user-info">
+                    <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                    <span class="user-role">{% if user.is_superuser %}Administrator{% elif user.is_staff %}Staff Member{% else %}User{% endif %}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Statistics Cards -->
+        <div class="grid-section">
+            <div class="stat-cards">
+                <div class="stat-card primary">
+                    <div class="stat-icon">
+                        <i class="fas fa-exchange-alt"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-value">{{ total_migrations|default:0 }}</span>
+                        <span class="stat-label">Total Migrations</span>
+                    </div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-value">{{ completion_percentage|default:0 }}%</span>
+                        <span class="stat-label">Success Rate</span>
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-value">{{ total_tags|default:0 }}</span>
+                        <span class="stat-label">Tags Managed</span>
+                    </div>
+                </div>
+                <div class="stat-card info">
+                    <div class="stat-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="stat-details">
+                        <span class="stat-value">{{ total_extractors|default:0 }}</span>
+                        <span class="stat-label">Active Extractors</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid-section">
+            <div class="action-grid">
+                <a href="{% url 'tags_extractor_list' %}" class="action-card">
+                    <div class="action-icon success">
+                        <i class="fas fa-spider"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>Tag Extractor</h3>
+                        <p>Scan and extract component definitions from repositories</p>
+                        <div class="action-metrics">
+                            <div class="metric">
+                                <span class="metric-value">{{ total_extractors|default:0 }}</span>
+                                <span class="metric-label">Extractors</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">{{ total_tags|default:0 }}</span>
+                                <span class="metric-label">Tags Found</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{% url 'tag_list' %}" class="action-card">
+                    <div class="action-icon info">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>Tag List</h3>
+                        <p>Browse and manage all extracted component definitions</p>
+                        <div class="action-metrics">
+                            <div class="metric">
+                                <span class="metric-value">{{ total_tags|default:0 }}</span>
+                                <span class="metric-label">Total Tags</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{% url 'data_migration_list' %}" class="action-card">
+                    <div class="action-icon warning">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>Migration History</h3>
+                        <p>Track and manage your component migrations</p>
+                        <div class="action-metrics">
+                            <div class="metric">
+                                <span class="metric-value">{{ total_migrations|default:0 }}</span>
+                                <span class="metric-label">Total</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-value">{{ successful_migrations|default:0 }}</span>
+                                <span class="metric-label">Successful</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{% url 'site_list' %}" class="action-card">
+                    <div class="action-icon primary">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>Sites</h3>
+                        <p>Manage registered sites and their repositories</p>
+                        <div class="action-metrics">
+                            <div class="metric">
+                                <span class="metric-value">{{ total_sites|default:0 }}</span>
+                                <span class="metric-label">Sites</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{% url 'tag_mapper' %}" class="action-card">
+                    <div class="action-icon info">
+                        <i class="fas fa-th"></i>
+                    </div>
+                    <div class="action-content">
+                        <h3>Tag Mapper</h3>
+                        <p>Configure and manage tag mapping blocks</p>
+                        <div class="action-metrics">
+                            <div class="metric">
+                                <span class="metric-value">{{ total_tag_mapper_blocks|default:0 }}</span>
+                                <span class="metric-label">Blocks</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Activity Section -->
+        <div class="grid-section">
+            <div class="activity-grid">
+                <div class="activity-card">
+                    <h3 class="card-title"><i class="fas fa-clock"></i>Recent Migrations</h3>
+                    {% if recent_migrations %}
+                        <div class="activity-list">
+                            {% for migration in recent_migrations %}
+                                <div class="activity-item">
+                                    <div class="activity-icon primary">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </div>
+                                    <div class="activity-details">
+                                        <span class="activity-title">Migration #{{ migration.pk }}</span>
+                                        <span class="activity-desc">{{ migration.get_v1_content_summary }}</span>
+                                        <span class="activity-time">{{ migration.created_at|timesince }} ago</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-exchange-alt"></i>
+                            <p>No recent migrations</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="activity-card">
+                    <h3 class="card-title"><i class="fas fa-robot"></i>Recent Extractions</h3>
+                    {% if recent_extractors %}
+                        <div class="activity-list">
+                            {% for extractor in recent_extractors %}
+                                <div class="activity-item">
+                                    <div class="activity-icon success">
+                                        <i class="fas fa-spider"></i>
+                                    </div>
+                                    <div class="activity-details">
+                                        <span class="activity-title">{{ extractor.repo_url|truncatechars:30 }}</span>
+                                        <span class="activity-desc">Version: {{ extractor.get_version_value_display }}</span>
+                                        <span class="activity-time">{{ extractor.created_at|timesince }} ago</span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-spider"></i>
+                            <p>No recent extractions</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="grid-section">
+            <div class="tips-card">
+                <h3 class="card-title"><i class="fas fa-lightbulb"></i>Pro Tips</h3>
+                <div class="tips-list">
+                    <div class="tip-item">
+                        <div class="tip-icon success">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h4>Batch Processing</h4>
+                            <p>Use bulk migration for multiple components at once</p>
+                        </div>
+                    </div>
+                    <div class="tip-item">
+                        <div class="tip-icon warning">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h4>Backup First</h4>
+                            <p>Always backup your V1 components before migration</p>
+                        </div>
+                    </div>
+                    <div class="tip-item">
+                        <div class="tip-icon info">
+                            <i class="fas fa-flask"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h4>Test Thoroughly</h4>
+                            <p>Validate converted components in staging environment</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add animation classes to elements
+    const animatedElements = document.querySelectorAll('.stat-card, .action-card, .activity-card, .tips-card');
+    animatedElements.forEach((element, index) => {
+        element.style.animationDelay = `${index * 0.1}s`;
+        element.classList.add('fade-in');
+    });
+
+    // Animate stat numbers
+    const statValues = document.querySelectorAll('.stat-value');
+    statValues.forEach(value => {
+        const finalValue = value.textContent;
+        const isPercentage = finalValue.includes('%');
+        const numericValue = parseInt(finalValue);
+        
+        if (!isNaN(numericValue)) {
+            animateNumber(value, 0, numericValue, 1500, isPercentage);
+        }
+    });
+});
+
+function animateNumber(element, start, end, duration, isPercentage) {
+    const range = end - start;
+    const startTime = performance.now();
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+        const current = Math.floor(start + range * easeOutQuart);
+        
+        element.textContent = current + (isPercentage ? '%' : '');
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
+</script>
+{% endblock %}
