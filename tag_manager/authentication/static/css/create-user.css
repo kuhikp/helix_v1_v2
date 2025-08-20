@@ -1,0 +1,273 @@
+/* Create User Page Styles */
+
+.create-user-header {
+    background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+    border-radius: 20px;
+    color: white;
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 24px rgba(52, 199, 89, 0.3);
+}
+
+.create-user-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.header-subtitle {
+    font-size: 16px;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.btn-back-dashboard {
+    border-radius: 12px !important;
+    padding: 12px 20px !important;
+}
+
+.form-container {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.form-section {
+    margin-bottom: 32px;
+}
+
+.form-section h5 {
+    color: #1C1C1E;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #F2F2F7;
+}
+
+.form-floating {
+    margin-bottom: 20px;
+}
+
+.form-control, .form-select {
+    border: 2px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 16px;
+    background-color: #F9F9FB;
+    transition: all 0.3s ease;
+    height: 60px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #34C759;
+    box-shadow: 0 0 0 0.25rem rgba(52, 199, 89, 0.1);
+    background-color: white;
+    transform: translateY(-2px);
+}
+
+.form-floating > label {
+    color: #8E8E93;
+    font-weight: 500;
+    padding: 16px 20px;
+}
+
+.btn-create {
+    background: linear-gradient(135deg, #34C759, #30D158);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 17px;
+    font-weight: 600;
+    padding: 16px 32px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+}
+
+.btn-create:hover {
+    background: linear-gradient(135deg, #2FB344, #28C946);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(52, 199, 89, 0.4);
+    color: white;
+}
+
+.btn-cancel {
+    background: #F2F2F7;
+    border: none;
+    border-radius: 12px;
+    color: #8E8E93;
+    font-size: 17px;
+    font-weight: 600;
+    padding: 16px 32px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    margin-right: 16px;
+    display: inline-block;
+}
+
+.btn-cancel:hover {
+    background: #E5E5EA;
+    color: #1C1C1E;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.role-info {
+    background: rgba(0, 122, 255, 0.05);
+    border: 1px solid rgba(0, 122, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.role-info h6 {
+    color: #007AFF;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.role-info ul {
+    margin-bottom: 0;
+    padding-left: 20px;
+}
+
+.role-info li {
+    color: #8E8E93;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.alert {
+    border: none;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-weight: 500;
+}
+
+.password-requirements {
+    background: rgba(255, 149, 0, 0.05);
+    border: 1px solid rgba(255, 149, 0, 0.1);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.password-requirements h6 {
+    color: #FF9500;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.password-requirements ul {
+    margin-bottom: 0;
+    padding-left: 20px;
+}
+
+.password-requirements li {
+    color: #8E8E93;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+.form-actions {
+    background: #F9F9FB;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 32px;
+    text-align: right;
+}
+
+/* Animation states */
+.form-floating.focused {
+    transform: translateY(-2px);
+}
+
+.validation-error {
+    border-color: #FF3B30 !important;
+    box-shadow: 0 0 0 0.25rem rgba(255, 59, 48, 0.1) !important;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+    .create-user-header {
+        padding: 24px;
+        text-align: center;
+    }
+    
+    .create-user-header .d-flex {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .form-container {
+        padding: 24px;
+        margin: 0 16px;
+    }
+    
+    .form-actions {
+        text-align: center;
+    }
+    
+    .btn-cancel {
+        margin-right: 0;
+        margin-bottom: 12px;
+        display: block;
+        width: 100%;
+    }
+    
+    .btn-create {
+        width: 100%;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .form-container {
+        background: rgba(28, 28, 30, 0.95);
+        color: var(--ios-white);
+        border-color: #48484a;
+    }
+    
+    .form-section h5 {
+        color: var(--ios-white);
+        border-bottom-color: #48484a;
+    }
+    
+    .form-control, .form-select {
+        background-color: rgba(44, 44, 46, 0.9);
+        border-color: #48484a;
+        color: var(--ios-white);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: rgba(58, 58, 60, 0.9);
+    }
+    
+    .form-floating > label {
+        color: #AEAEB2;
+    }
+    
+    .form-actions {
+        background: rgba(44, 44, 46, 0.5);
+    }
+    
+    .role-info {
+        background: rgba(0, 122, 255, 0.1);
+        border-color: rgba(0, 122, 255, 0.2);
+    }
+    
+    .role-info li {
+        color: #AEAEB2;
+    }
+    
+    .password-requirements {
+        background: rgba(255, 149, 0, 0.1);
+        border-color: rgba(255, 149, 0, 0.2);
+    }
+    
+    .password-requirements li {
+        color: #AEAEB2;
+    }
+}

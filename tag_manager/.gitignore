@@ -157,7 +157,6 @@ media/
 
 # Static files (if generated)
 staticfiles/
-static/
 
 # Local development
 .env.local

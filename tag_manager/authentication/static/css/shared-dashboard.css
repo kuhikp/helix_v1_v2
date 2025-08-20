@@ -1,0 +1,160 @@
+/**
+ * Helix Tag Manager - Dashboard Styles
+ * Shared dashboard styles for both admin and tag manager
+ */
+
+/* Dashboard variables */
+:root {
+    --dashboard-orange: #FF9500;
+    --dashboard-red: #FF3B30;
+    --dashboard-blue: #007AFF;
+    --dashboard-green: #34C759;
+    --dashboard-purple: #5856D6;
+    --dashboard-pink: #FF2D92;
+    --surface-glass: rgba(255, 255, 255, 0.95);
+    --text-primary: #1C1C1E;
+    --text-secondary: #8E8E93;
+    --border-color: #E5E5EA;
+    --background-light: #F2F2F7;
+}
+
+/* Container styling */
+.dashboard-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px 0;
+    margin-top: -80px; /* Offset the body padding for seamless background */
+    padding-top: 100px; /* Add extra padding to account for navbar */
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+}
+
+/* Enhanced page header */
+.page-header {
+    background: linear-gradient(135deg, var(--dashboard-orange) 0%, var(--dashboard-red) 100%);
+    border-radius: 24px;
+    color: white;
+    padding: 40px;
+    margin-bottom: 32px;
+    box-shadow: 0 12px 32px rgba(255, 149, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    -webkit-text-fill-color: inherit !important;
+}
+
+.page-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+}
+
+/* Stats Cards */
+.stats-card {
+    background: var(--surface-glass);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+.stats-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: white;
+    font-size: 24px;
+}
+
+.stats-number {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--dashboard-blue), var(--dashboard-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stats-label {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Animation keyframes */
+@keyframes pulse {
+    0% {
+        opacity: 0.5;
+        transform: translate(0, 0);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-25%, 25%);
+    }
+    100% {
+        opacity: 0.5;
+        transform: translate(0, 0);
+    }
+}
+
+/* Section Cards */
+.section-card {
+    background: var(--surface-glass);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.section-card .title {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+/* Action Buttons */
+.action-button {
+    background: linear-gradient(135deg, var(--dashboard-blue), var(--dashboard-purple));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.action-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 122, 255, 0.3);
+}
+
+/* Status Indicators */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-badge i {
+    margin-right: 6px;
+}

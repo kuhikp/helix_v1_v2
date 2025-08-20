@@ -1,0 +1,425 @@
+/**
+ * Helix Tag Manager - Authentication Specific Styles
+ * Login, Register, and Authentication Form Styles
+ */
+
+/* Login & Register Container Styles */
+.login-container,
+.signup-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 420px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin: 0 auto; /* Center the container */
+}
+
+.signup-container {
+    max-width: 480px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .login-container,
+    .signup-container {
+        padding: 32px 24px;
+        margin: 20px;
+        border-radius: 20px;
+    }
+}
+
+/* Logo Section */
+.logo-section {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.logo-icon {
+    background: linear-gradient(135deg, var(--ios-blue), #5856D6);
+    border-radius: 20px;
+    width: 80px;
+    height: 80px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(0, 122, 255, 0.3);
+}
+
+.logo-icon i {
+    color: white;
+    font-size: 36px;
+}
+
+.welcome-text {
+    color: var(--ios-dark-gray);
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: var(--ios-gray);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+/* Authentication Form Styles */
+.form-floating {
+    margin-bottom: 20px;
+}
+
+.auth-form .form-control {
+    border: 2px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    padding: 16px 20px;
+    font-size: 16px;
+    background-color: var(--ios-light-gray);
+    transition: all 0.3s ease;
+    height: 60px;
+}
+
+.auth-form .form-control:focus {
+    border-color: var(--ios-blue);
+    box-shadow: 0 0 0 0.25rem rgba(0, 122, 255, 0.1);
+    background-color: var(--ios-white);
+    transform: translateY(-2px);
+}
+
+.auth-form .form-floating > label {
+    padding: 16px 20px;
+    color: var(--ios-gray);
+    font-weight: 500;
+}
+
+/* Password Requirements */
+.password-requirements {
+    background: var(--ios-light-gray);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.requirement {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    color: var(--ios-gray);
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.requirement i {
+    margin-right: 8px;
+    font-size: 12px;
+}
+
+.requirement.met {
+    color: var(--ios-green);
+}
+
+.requirement.met i {
+    color: var(--ios-green);
+}
+
+/* Authentication Buttons */
+.btn-auth {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 16px;
+    border: none;
+    transition: all 0.3s ease;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-auth::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.btn-auth:hover::before {
+    left: 100%;
+}
+
+.btn-sign-in {
+    background: linear-gradient(135deg, var(--ios-blue), var(--ios-blue-dark));
+    color: white;
+    box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+}
+
+.btn-sign-in:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(0, 122, 255, 0.4);
+}
+
+.btn-sign-up {
+    background: linear-gradient(135deg, var(--ios-green), var(--ios-green-light));
+    color: white;
+    box-shadow: 0 8px 20px rgba(52, 199, 89, 0.3);
+}
+
+.btn-sign-up:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(52, 199, 89, 0.4);
+}
+
+/* Social Buttons */
+.divider {
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+    color: var(--ios-gray);
+    font-size: 14px;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--ios-gray-light);
+}
+
+.divider span {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0 16px;
+    position: relative;
+}
+
+.social-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.btn-social {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid var(--ios-gray-light);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--ios-gray-dark);
+    font-size: 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-social:hover {
+    background: var(--ios-light-gray);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Links and Additional Info */
+.auth-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.auth-links a {
+    color: var(--ios-blue);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.auth-links a:hover {
+    color: var(--ios-blue-dark);
+    text-decoration: underline;
+}
+
+.forgot-password {
+    text-align: right;
+    margin-bottom: 24px;
+}
+
+.forgot-password a {
+    color: var(--ios-gray);
+    font-size: 14px;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.forgot-password a:hover {
+    color: var(--ios-blue);
+}
+
+/* Progress Indicators */
+.strength-meter {
+    height: 4px;
+    background: var(--ios-gray-light);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.strength-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    width: 0%;
+}
+
+.strength-weak {
+    background: var(--ios-red);
+    width: 25%;
+}
+
+.strength-fair {
+    background: var(--ios-orange);
+    width: 50%;
+}
+
+.strength-good {
+    background: var(--ios-yellow);
+    width: 75%;
+}
+
+.strength-strong {
+    background: var(--ios-green);
+    width: 100%;
+}
+
+/* Input Groups */
+.input-group-text {
+    background: transparent;
+    border: none;
+    color: var(--ios-gray);
+}
+
+/* Error States */
+.form-control.is-invalid {
+    border-color: var(--ios-red);
+    box-shadow: 0 0 0 0.25rem rgba(255, 59, 48, 0.1);
+}
+
+.invalid-feedback {
+    color: var(--ios-red);
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Success States */
+.form-control.is-valid {
+    border-color: var(--ios-green);
+    box-shadow: 0 0 0 0.25rem rgba(52, 199, 89, 0.1);
+}
+
+.valid-feedback {
+    color: var(--ios-green);
+    font-size: 14px;
+    margin-top: 5px;
+    display: block;
+}
+
+/* Loading States */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .login-container,
+    .signup-container {
+        padding: 32px 24px;
+        margin: 20px;
+        border-radius: 20px;
+    }
+    
+    .welcome-text {
+        font-size: 24px;
+    }
+    
+    .logo-icon {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .logo-icon i {
+        font-size: 28px;
+    }
+    
+    .social-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-social {
+        flex: none;
+    }
+}
+
+/* Animation Enhancements */
+.auth-form {
+    animation: slideInUp 0.6s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus Trap for Accessibility */
+.auth-container:focus-within {
+    outline: 2px solid var(--ios-blue);
+    outline-offset: 4px;
+    border-radius: 24px;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .login-container,
+    .signup-container {
+        border: 3px solid var(--ios-dark-gray);
+    }
+    
+    .form-control {
+        border-width: 3px;
+    }
+    
+    .btn-auth {
+        border: 2px solid var(--ios-dark-gray);
+    }
+}
