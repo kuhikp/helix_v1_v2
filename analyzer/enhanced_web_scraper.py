@@ -908,8 +908,15 @@ def analyze_page():
         
         # Use simple analyzer
         analyzer = SimpleHomepageAnalyzer(url)
+
+        print("Setting content for analysis")
         analyzer.set_content(page_source)
+        # Add JS files to findings for later use
         findings = analyzer.analyze_all()
+        print("Analyzing all content")
+        print(analyzer.parser.scripts)
+        findings['scripts'] = [script for script in analyzer.parser.scripts]
+       
         
         if not findings:
             return jsonify({'error': 'Analysis failed'}), 500
@@ -937,16 +944,40 @@ def analyze_page():
         for comp_data in findings['helix_components'].values():
             all_versions.update(comp_data['versions'])
 
-        
 
         if all_versions or summary['theme_info']['theme_system']:
+            print(f"Found Helix component versions: {all_versions}")
+                
             summary['component_versions'] = sorted(all_versions)
             if any(v.startswith('4.') for v in all_versions) or summary['theme_info']['theme_system'] == "helix-core-content":
                 summary['architecture_type'] = 'Modern (4.x series)'
             elif any(v.startswith('3.') for v in all_versions) or summary['theme_info']['theme_system'] == "helix-web-components":
                 summary['architecture_type'] = 'Legacy (3.x series)'
             else:
-                summary['architecture_type'] = 'Unknown'
+                # Enhanced: Check JS files for helix-core-image or helix-image
+                js_files = findings.get('scripts', [])
+                js_helix_version = None
+                for js_url in js_files:
+                    try:
+                        # Only check external JS files (skip inline)
+                        if js_url.startswith(('http://', 'https://')):
+                            resp = requests.get(js_url, timeout=10)
+                            if resp.status_code == 200:
+                                js_content = resp.text
+                                print(js_content)
+                                if "helix-core-image" in js_content:
+                                    js_helix_version = 'Modern (4.x series)'
+                                    break
+                                elif "helix-image" in js_content:
+                                    js_helix_version = 'Legacy (3.x series)'
+                                    # Don't break, prefer V2 if both found
+                    except Exception as e:
+                        logger.warning(f"Could not fetch JS file {js_url}: {e}")
+                        continue
+                if js_helix_version:
+                    summary['architecture_type'] = f"{js_helix_version}"
+                else:
+                    summary['architecture_type'] = 'Unknown'
         else:
             summary['component_versions'] = []
             summary['architecture_type'] = 'No Helix components found'
