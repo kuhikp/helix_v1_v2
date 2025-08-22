@@ -104,8 +104,8 @@ def site_meta_export_config(request, site_id):
             time.sleep(5)
             # Check if 'authorization' is present in the current URL
             if 'authorization' in driver.current_url:
-                driver.find_element(By.ID, "username").send_keys('TAWDEP01')
-                driver.find_element(By.ID, "password").send_keys('Piyucv@303112')
+                driver.find_element(By.ID, "username").send_keys('')
+                driver.find_element(By.ID, "password").send_keys('')
                 driver.find_element(By.ID, "submit_button").click()
                 time.sleep(5)
 
