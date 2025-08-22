@@ -1,0 +1,389 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Server Error - HelixBridge{% endblock %}
+
+{% block content %}
+<style>
+    .error-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+    
+    .error-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 32px;
+        padding: 60px 40px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    .error-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(135deg, var(--ios-red), var(--ios-pink));
+        border-radius: 32px 32px 0 0;
+    }
+    
+    .error-icon {
+        width: 120px;
+        height: 120px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, var(--ios-red), var(--ios-pink));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 32px;
+        font-size: 48px;
+        color: white;
+        box-shadow: 0 12px 32px rgba(255, 59, 48, 0.3);
+        animation: shake 2s ease-in-out infinite;
+    }
+    
+    .error-code {
+        font-size: 72px;
+        font-weight: 900;
+        color: var(--ios-text-primary);
+        margin-bottom: 16px;
+        letter-spacing: -2px;
+        background: linear-gradient(135deg, var(--ios-red), var(--ios-pink));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .error-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--ios-text-primary);
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+    }
+    
+    .error-description {
+        font-size: 18px;
+        color: var(--ios-text-secondary);
+        margin-bottom: 40px;
+        line-height: 1.6;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .error-actions {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 32px;
+    }
+    
+    .error-btn {
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 16px 32px;
+        font-weight: 600;
+        font-size: 16px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    }
+    
+    .error-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .error-btn.secondary {
+        background: rgba(var(--ios-text-secondary), 0.1);
+        color: var(--ios-text-secondary);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .error-btn.secondary:hover {
+        background: rgba(var(--ios-text-secondary), 0.15);
+        color: var(--ios-text-primary);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .error-btn.warning {
+        background: linear-gradient(135deg, var(--ios-orange), var(--ios-red));
+        box-shadow: 0 4px 16px rgba(255, 149, 0, 0.3);
+    }
+    
+    .error-btn.warning:hover {
+        box-shadow: 0 8px 24px rgba(255, 149, 0, 0.4);
+    }
+    
+    .error-btn i {
+        margin-right: 8px;
+    }
+    
+    .error-details {
+        border-top: 1px solid var(--ios-border);
+        padding-top: 24px;
+        margin-top: 24px;
+    }
+    
+    .error-details summary {
+        color: var(--ios-text-secondary);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(var(--ios-text-secondary), 0.05);
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+    }
+    
+    .error-details summary:hover {
+        background: rgba(var(--ios-text-secondary), 0.1);
+        color: var(--ios-text-primary);
+    }
+    
+    .error-details-content {
+        background: rgba(255, 59, 48, 0.05);
+        border: 1px solid rgba(255, 59, 48, 0.1);
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 16px;
+        text-align: left;
+    }
+    
+    .error-details-content h6 {
+        color: var(--ios-red);
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 14px;
+    }
+    
+    .error-details-content ul {
+        margin: 0;
+        padding-left: 20px;
+        color: var(--ios-text-secondary);
+    }
+    
+    .error-details-content li {
+        margin-bottom: 8px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 59, 48, 0.1);
+        color: var(--ios-red);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 24px;
+    }
+    
+    .status-indicator i {
+        animation: blink 1s ease-in-out infinite;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .error-card {
+            padding: 40px 24px;
+            margin: 20px;
+        }
+        
+        .error-code {
+            font-size: 56px;
+        }
+        
+        .error-title {
+            font-size: 24px;
+        }
+        
+        .error-description {
+            font-size: 16px;
+        }
+        
+        .error-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .error-btn {
+            justify-content: center;
+        }
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes shake {
+        0%, 100% {
+            transform: rotate(0deg);
+        }
+        25% {
+            transform: rotate(2deg);
+        }
+        75% {
+            transform: rotate(-2deg);
+        }
+    }
+    
+    @keyframes blink {
+        0%, 50% {
+            opacity: 1;
+        }
+        51%, 100% {
+            opacity: 0.3;
+        }
+    }
+</style>
+
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        
+        <div class="status-indicator">
+            <i class="fas fa-circle"></i>
+            System Error Detected
+        </div>
+        
+        <div class="error-code">500</div>
+        <h1 class="error-title">Internal Server Error</h1>
+        <p class="error-description">
+            Something went wrong on our end. Our engineering team has been notified and is working to resolve the issue. 
+            Please try again in a few moments.
+        </p>
+        
+        <div class="error-actions">
+            <a href="{% url 'tag_manager_dashboard' %}" class="error-btn">
+                <i class="fas fa-home"></i>Back to Dashboard
+            </a>
+            <a href="javascript:location.reload()" class="error-btn warning">
+                <i class="fas fa-redo"></i>Try Again
+            </a>
+            <a href="javascript:history.back()" class="error-btn secondary">
+                <i class="fas fa-arrow-left"></i>Go Back
+            </a>
+        </div>
+        
+        <details class="error-details">
+            <summary>
+                <i class="fas fa-info-circle me-2"></i>
+                Technical Information
+            </summary>
+            <div class="error-details-content">
+                <h6>What you can do:</h6>
+                <ul>
+                    <li>Wait a few minutes and try again</li>
+                    <li>Check if the issue persists across different pages</li>
+                    <li>Clear your browser cache and cookies</li>
+                    <li>Try accessing the site from a different browser or device</li>
+                    <li>Contact support if the problem continues</li>
+                </ul>
+                
+                <h6>Error Reference:</h6>
+                <ul>
+                    <li><strong>Error Code:</strong> 500 - Internal Server Error</li>
+                    <li><strong>Timestamp:</strong> <span id="errorTimestamp"></span></li>
+                    <li><strong>Session ID:</strong> {{ request.session.session_key|default:"N/A" }}</li>
+                    <li><strong>User Agent:</strong> <span id="userAgent"></span></li>
+                </ul>
+            </div>
+        </details>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current timestamp
+    const now = new Date();
+    document.getElementById('errorTimestamp').textContent = now.toLocaleString();
+    
+    // Set user agent (truncated for readability)
+    const userAgent = navigator.userAgent.length > 80 ? 
+        navigator.userAgent.substring(0, 80) + '...' : 
+        navigator.userAgent;
+    document.getElementById('userAgent').textContent = userAgent;
+    
+    // Add some interactive elements
+    const errorIcon = document.querySelector('.error-icon');
+    
+    errorIcon.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.1)';
+        this.style.animationPlayState = 'paused';
+    });
+    
+    errorIcon.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+        this.style.animationPlayState = 'running';
+    });
+    
+    // Add click effect to buttons
+    const buttons = document.querySelectorAll('.error-btn');
+    buttons.forEach(button => {
+        button.addEventListener('mousedown', function() {
+            this.style.transform = 'translateY(-1px) scale(0.98)';
+        });
+        
+        button.addEventListener('mouseup', function() {
+            this.style.transform = 'translateY(-2px) scale(1)';
+        });
+    });
+    
+    // Auto-refresh functionality
+    let refreshTimer;
+    const tryAgainBtn = document.querySelector('.error-btn.warning');
+    
+    if (tryAgainBtn) {
+        tryAgainBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Refreshing...';
+            this.style.pointerEvents = 'none';
+            
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        });
+    }
+    
+    // Report error functionality (optional)
+    function reportError() {
+        // This could send error details to your logging system
+        console.log('Error reported at:', new Date().toISOString());
+    }
+});
+</script>
+{% endblock %}

@@ -39,6 +39,11 @@ urlpatterns = [
 ]
 
 # Serve static and media files during development
-if settings.DEBUG:
-    from django.contrib.staticfiles.urls import staticfiles_urlpatterns
-    urlpatterns += staticfiles_urlpatterns()
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+urlpatterns += staticfiles_urlpatterns()
+
+handler404 = 'tag_manager.views.custom_404_view'
+handler500 = 'tag_manager.views.custom_500_view'
+handler403 = 'tag_manager.views.custom_error_view'
+handler400 = 'tag_manager.views.custom_error_view'
+    

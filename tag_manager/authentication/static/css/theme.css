@@ -1,0 +1,184 @@
+/* HelixBridge Global Theme Styles */
+:root {
+    /* iOS Color Palette */
+    --ios-blue: #007AFF;
+    --ios-blue-dark: #0051D0;
+    --ios-green: #34C759;
+    --ios-green-dark: #248A3D;
+    --ios-orange: #FF9500;
+    --ios-orange-dark: #CC7700;
+    --ios-red: #FF3B30;
+    --ios-red-dark: #D70015;
+    --ios-purple: #5856D6;
+    --ios-purple-dark: #3634A3;
+    --ios-pink: #FF2D92;
+    --ios-pink-dark: #D70064;
+    --ios-gray: #8E8E93;
+    --ios-gray-dark: #6D6D70;
+    --ios-gray-light: #C7C7CC;
+    
+    /* Dynamic Background (can be changed by theme widget) */
+    --ios-background: #F2F2F7;
+    --ios-surface: #FFFFFF;
+    --ios-text-primary: #1C1C1E;
+    --ios-text-secondary: #8E8E93;
+    --ios-border: #E5E5EA;
+    
+    /* Shadow definitions */
+    --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.12);
+    --shadow-heavy: 0 16px 48px rgba(0, 0, 0, 0.2);
+}
+
+/* Global body styling that respects theme changes */
+body {
+    background: var(--ios-background) !important;
+    color: var(--ios-text-primary) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Container styling that adapts to theme */
+/* .container-fluid, .mapper-container, .dashboard-container {
+    background: var(--ios-background) !important;
+    transition: background-color 0.3s ease;
+} */
+
+/* Ensure theme compatibility across different page types */
+.content-wrapper {
+    background: transparent;
+}
+
+/* Dark mode support */
+[data-theme="dark"] {
+    --ios-background: #1C1C1E;
+    --ios-surface: #2C2C2E;
+    --ios-text-primary: #FFFFFF;
+    --ios-text-secondary: #8E8E93;
+    --ios-border: #3A3A3C;
+}
+
+/* Light themes */
+[data-theme="blue"] {
+    --ios-background: #E3F2FD;
+    --ios-surface: #FFFFFF;
+}
+
+[data-theme="purple"] {
+    --ios-background: #F3E5F5;
+    --ios-surface: #FFFFFF;
+}
+
+[data-theme="green"] {
+    --ios-background: #E8F5E8;
+    --ios-surface: #FFFFFF;
+}
+
+[data-theme="orange"] {
+    --ios-background: #FFF3E0;
+    --ios-surface: #FFFFFF;
+}
+
+[data-theme="pink"] {
+    --ios-background: #FFEBEE;
+    --ios-surface: #FFFFFF;
+}
+
+[data-theme="yellow"] {
+    --ios-background: #F9FBE7;
+    --ios-surface: #FFFFFF;
+}
+
+/* Global Button Styles */
+.logout-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 16px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+/* Global Animation Keyframes */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 16px 48px rgba(0, 122, 255, 0.4);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Global Animation Classes */
+.fade-in {
+    animation: fadeIn 0.8s ease-out;
+}
+
+.slide-up {
+    animation: slideUp 0.6s ease-out;
+}
+
+/* Global Responsive Design */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    .recent-section {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    .dashboard-header, .page-header {
+        padding: 24px !important;
+        margin-bottom: 24px !important;
+    }
+    
+    .dashboard-header h1, .page-header h1 {
+        font-size: 28px !important;
+    }
+    
+    .action-card, .stat-card, .recent-card, .mapper-card, .form-container {
+        padding: 24px !important;
+    }
+}

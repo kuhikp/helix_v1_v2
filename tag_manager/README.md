@@ -1,4 +1,4 @@
-# 🚀 Helix Tag Manager
+# 🚀 HelixBridge
 
 > **A powerful Django application for migrating Adobe Helix V1 components to V2**
 
@@ -6,9 +6,9 @@
 [![Django](https://img.shields.io/badge/Django-5.2.4-green.svg)](https://djangoproject.com)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange.svg)](https://mysql.com)
 
-## 📋 What is Helix Tag Manager?
+## 📋 What is HelixBridge?
 
-The Helix Tag Manager is a comprehensive web application that helps developers migrate websites from Adobe Helix V1 to V2. It provides:
+The HelixBridge is a comprehensive web application that helps developers migrate websites from Adobe Helix V1 to V2. It provides:
 
 - 🔍 **Website Analysis**: Scan and analyze existing V1 components
 - 🏷️ **Component Mapping**: Map V1 components to their V2 equivalents  

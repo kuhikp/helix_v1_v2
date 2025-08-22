@@ -1,5 +1,5 @@
 /**
- * Helix Tag Manager - Authentication JavaScript
+ * HelixBridge - Authentication JavaScript
  * Login, Register, and Authentication Form Functionality
  */
 

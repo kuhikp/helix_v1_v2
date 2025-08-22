@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Helix Tag Manager - Developer Setup Script
+# HelixBridge - Developer Setup Script
 # This script sets up sample data for first-time developers
 
 set -e
 
 echo "========================================="
-echo "Helix Tag Manager - Developer Setup"
+echo "HelixBridge - Developer Setup"
 echo "========================================="
 
 # Colors for output

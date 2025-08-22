@@ -4,34 +4,11 @@
 
 {% block content %}
 <style>
-    /* iPhone-style color palette and gradients */
-    :root {
-        --ios-blue: #007AFF;
-        --ios-blue-dark: #0051D0;
-        --ios-green: #34C759;
-        --ios-green-dark: #248A3D;
-        --ios-orange: #FF9500;
-        --ios-orange-dark: #CC7700;
-        --ios-red: #FF3B30;
-        --ios-red-dark: #D70015;
-        --ios-purple: #5856D6;
-        --ios-purple-dark: #3634A3;
-        --ios-pink: #FF2D92;
-        --ios-pink-dark: #D70064;
-        --ios-gray: #8E8E93;
-        --ios-gray-dark: #6D6D70;
-        --ios-background: #F2F2F7;
-        --ios-surface: #FFFFFF;
-        --ios-text-primary: #1C1C1E;
-        --ios-text-secondary: #8E8E93;
-        --ios-border: #E5E5EA;
-    }
-    
-    body {
+    /* body {
         background: var(--ios-background);
         color: var(--ios-text-primary);
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-    }
+    } */
     
     .dashboard-header {
         background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%);
@@ -42,6 +19,7 @@
         box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
         position: relative;
         overflow: hidden;
+        animation: pulse 4s ease-in-out infinite !important;
     }
     
     .dashboard-header::before {
@@ -53,6 +31,7 @@
         height: 200%;
         background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
         pointer-events: none;
+
     }
     
     .dashboard-header h1 {
@@ -477,7 +456,7 @@
         font-weight: 600;
         margin-bottom: 8px;
     }
-    
+
     .logout-btn {
         background: rgba(255, 255, 255, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.3);
@@ -529,37 +508,6 @@
             padding: 24px;
         }
     }
-    
-    /* Animation classes */
-    .fade-in {
-        animation: fadeIn 0.8s ease-out;
-    }
-    
-    .slide-up {
-        animation: slideUp 0.6s ease-out;
-    }
-    
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(40px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
 </style>
 
 <div class="container-fluid">
@@ -567,24 +515,95 @@
     <div class="dashboard-header fade-in">
         <div class="d-flex justify-content-between align-items-start flex-wrap">
             <div class="flex-grow-1">
-                <h1><i class="fas fa-rocket me-3"></i>Tag Manager</h1>
-                <p class="dashboard-subtitle">Transform your V1 components to V2 with intelligent migration tools</p>
+                <h1><i class="fas fa-rocket me-3"></i>HelixBridge</h1>
+                <p class="dashboard-subtitle">Intelligent Bridge to migrate content from Helix V1 to V2 website</p>
                 
                 <div class="user-greeting">
                     <h5>
                         <div class="user-avatar">{{ user.first_name.0|default:user.username.0|upper }}</div>
                         Welcome back, {{ user.first_name|default:user.username }}!
                     </h5>
-                    <p style="margin: 0; font-size: 14px; opacity: 0.8;">Ready to migrate some components today?</p>
+                    <p style="margin: 0; font-size: 14px; opacity: 0.8;">Ready to migrate today?</p>
                 </div>
             </div>
-            <div class="mt-3 mt-md-0">
+            <!-- <div class="mt-3 mt-md-0">
                 <a href="{% url 'logout' %}" class="logout-btn">
                     <i class="fas fa-sign-out-alt me-2"></i>Logout
                 </a>
-            </div>
+            </div> -->
         </div>
     </div>
+    <div class="quick-actions slide-up">
+        <a href="{% url 'site_list' %}" class="action-card analytics">
+            <div class="action-content">
+                <div class="action-header">
+                    <div class="action-icon analytics" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div class="action-info">
+                        <h4>Sites Listing</h4>
+                        <div class="badge-container" style="margin-top: 8px; display: flex; gap: 8px;">
+                            <span class="badge" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple)); padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;">
+                                <i class="fas fa-globe" style="margin-right: 4px;"></i>{{ total_sites|default:0 }} Sites
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="site-complexity-container" style="margin: 24px 0;">
+                    <div style="margin-bottom: 16px;">
+                        <h6 style="color: var(--ios-text-secondary); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                            SITE COMPLEXITY DISTRIBUTION
+                        </h6>
+                    </div>
+                    
+                    <div class="complexity-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                        <div class="complexity-item" style="background: rgba(52, 199, 89, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(52, 199, 89, 0.2);">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-green); margin-right: 8px;"></div>
+                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Simple</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-green);">{{ simple_sites|default:0 }}</div>
+                        </div>
+                        
+                        <div class="complexity-item" style="background: rgba(255, 149, 0, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 149, 0, 0.2);">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-orange); margin-right: 8px;"></div>
+                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Medium</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-orange);">{{ medium_sites|default:0 }}</div>
+                        </div>
+                        
+                        <div class="complexity-item" style="background: rgba(255, 59, 48, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 59, 48, 0.2);">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-red); margin-right: 8px;"></div>
+                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Complex</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-red);">{{ complex_sites|default:0 }}</div>
+                        </div>
+                        
+                        <div class="complexity-item" style="background: rgba(142, 142, 147, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(142, 142, 147, 0.2);">
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-gray); margin-right: 8px;"></div>
+                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Unidentified</span>
+                            </div>
+                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-gray);">{{ unidentified_sites|default:0 }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--ios-border);">
+                    <p class="action-description" style="margin: 0; font-size: 14px; color: var(--ios-text-secondary);">
+                        Manage and monitor site complexity levels
+                    </p>
+                    <div class="view-all-button" style="display: flex; align-items: center; color: var(--ios-blue); font-weight: 600; font-size: 14px;">
+                        View All 
+                        <i class="fas fa-chevron-right" style="margin-left: 6px; font-size: 12px;"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+        </div>
 
     <!-- Statistics Overview -->
     <div class="stats-grid slide-up">
@@ -642,8 +661,9 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="quick-actions slide-up">
-        <a href="{% url 'data_migration_create' %}" class="action-card migration">
+    
+        <div class="quick-actions slide-up">
+        <!-- <a href="{% url 'data_migration_create' %}" class="action-card migration">
             <div class="action-content">
                 <div class="action-header">
                     <div class="action-icon migration">
@@ -668,7 +688,7 @@
                     </div>
                 </div>
             </div>
-        </a>
+        </a> -->
         
         <a href="{% url 'tags_extractor_list' %}" class="action-card extractor">
             <div class="action-content">
@@ -746,75 +766,7 @@
             </div>
         </a>
 
-        <a href="{% url 'site_list' %}" class="action-card analytics">
-            <div class="action-content">
-                <div class="action-header">
-                    <div class="action-icon analytics" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));">
-                        <i class="fas fa-globe"></i>
-                    </div>
-                    <div class="action-info">
-                        <h4>Sites Listing</h4>
-                        <div class="badge-container" style="margin-top: 8px; display: flex; gap: 8px;">
-                            <span class="badge" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple)); padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;">
-                                <i class="fas fa-globe" style="margin-right: 4px;"></i>{{ total_sites|default:0 }} Sites
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="site-complexity-container" style="margin: 24px 0;">
-                    <div style="margin-bottom: 16px;">
-                        <h6 style="color: var(--ios-text-secondary); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
-                            SITE COMPLEXITY DISTRIBUTION
-                        </h6>
-                    </div>
-                    
-                    <div class="complexity-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                        <div class="complexity-item" style="background: rgba(52, 199, 89, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(52, 199, 89, 0.2);">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-green); margin-right: 8px;"></div>
-                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Simple</span>
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-green);">{{ simple_sites|default:0 }}</div>
-                        </div>
-                        
-                        <div class="complexity-item" style="background: rgba(255, 149, 0, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 149, 0, 0.2);">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-orange); margin-right: 8px;"></div>
-                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Medium</span>
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-orange);">{{ medium_sites|default:0 }}</div>
-                        </div>
-                        
-                        <div class="complexity-item" style="background: rgba(255, 59, 48, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 59, 48, 0.2);">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-red); margin-right: 8px;"></div>
-                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Complex</span>
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-red);">{{ complex_sites|default:0 }}</div>
-                        </div>
-                        
-                        <div class="complexity-item" style="background: rgba(142, 142, 147, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(142, 142, 147, 0.2);">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-gray); margin-right: 8px;"></div>
-                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Unidentified</span>
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-gray);">{{ unidentified_sites|default:0 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--ios-border);">
-                    <p class="action-description" style="margin: 0; font-size: 14px; color: var(--ios-text-secondary);">
-                        Manage and monitor site complexity levels
-                    </p>
-                    <div class="view-all-button" style="display: flex; align-items: center; color: var(--ios-blue); font-weight: 600; font-size: 14px;">
-                        View All 
-                        <i class="fas fa-chevron-right" style="margin-left: 6px; font-size: 12px;"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
+        
     </div>
 
     <!-- Recent Activity -->

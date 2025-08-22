@@ -1,5 +1,5 @@
 /**
- * Helix Tag Manager - Admin Dashboard JavaScript
+ * HelixBridge - Admin Dashboard JavaScript
  * Dashboard-specific functionality and interactions
  */
 

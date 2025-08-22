@@ -1,5 +1,5 @@
 /**
- * Helix Tag Manager - Base JavaScript Utilities
+ * HelixBridge - Base JavaScript Utilities
  * Common functionality for authentication module
  */
 
