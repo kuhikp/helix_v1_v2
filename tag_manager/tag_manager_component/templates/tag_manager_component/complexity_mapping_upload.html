@@ -25,11 +25,11 @@
         --ios-border: #E5E5EA;
     }
     
-    body {
+    /* body {
         background: var(--ios-background);
         color: var(--ios-text-primary);
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-    }
+    } */
     
     .page-header {
         background: linear-gradient(135deg, var(--ios-purple) 0%, var(--ios-blue) 100%);
@@ -40,6 +40,7 @@
         box-shadow: 0 12px 32px rgba(88, 86, 214, 0.3);
         position: relative;
         overflow: hidden;
+        -webkit-text-fill-color: inherit !important;
     }
     
     .page-header::before {

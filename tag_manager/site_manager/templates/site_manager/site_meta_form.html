@@ -1,14 +1,843 @@
 {% extends 'authentication/base.html' %}
 
-{% block title %}Site Meta Form{% endblock %}
+{% block title %}{% if form.instance.pk %}Edit Site Meta{% else %}Add Site Meta{% endif %}{% endblock %}
 
 {% block content %}
-<h1>{% if form.instance.pk %}Edit Meta Detail{% else %}Add Meta Detail{% endif %}</h1>
+<style>
+    /* Modern HelixBridge Design System */
+    :root {
+        --helix-primary: #6366F1;
+        --helix-primary-dark: #4F46E5;
+        --helix-secondary: #10B981;
+        --helix-accent: #F59E0B;
+        --helix-danger: #EF4444;
+        --helix-text-primary: #111827;
+        --helix-text-secondary: #6B7280;
+        --helix-text-muted: #9CA3AF;
+        --helix-border: #E5E7EB;
+        --helix-surface: #FFFFFF;
+        --helix-background: #F9FAFB;
+        --helix-card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --helix-card-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --helix-gradient: linear-gradient(135deg, var(--helix-primary) 0%, #8B5CF6 100%);
+    }
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-primary">Save</button>
-    <a href="{% url 'site_meta_list' site.id %}" class="btn btn-secondary">Cancel</a>
-</form>
+    body {
+        background: var(--helix-background);
+        color: var(--helix-text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+
+    .meta-container {
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+
+    /* Header Section */
+    .page-header {
+        background: var(--helix-gradient);
+        border-radius: 20px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: var(--helix-card-shadow-lg);
+        position: relative;
+        overflow: hidden;
+         -webkit-text-fill-color: inherit !important;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: pulse 6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+        50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 2;
+    }
+
+    .page-header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 0;
+        font-weight: 400;
+        line-height: 1.4;
+        position: relative;
+        z-index: 2;
+    }
+
+    .back-btn {
+        background: rgba(255, 255, 255, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+        border-radius: 12px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        backdrop-filter: blur(10px) !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        position: relative;
+        z-index: 2;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.35) !important;
+        color: white !important;
+        text-decoration: none !important;
+        transform: translateY(-2px) !important;
+    }
+
+    /* Site Info Card */
+    .site-info-card {
+        background: var(--helix-surface);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 32px;
+        box-shadow: var(--helix-card-shadow);
+        border: 1px solid var(--helix-border);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .site-info-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--helix-gradient);
+        border-radius: 16px 16px 0 0;
+    }
+
+    .site-info-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .site-icon {
+        width: 48px;
+        height: 48px;
+        background: var(--helix-gradient);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 20px;
+        margin-right: 16px;
+    }
+
+    .site-details h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--helix-text-primary);
+        margin: 0 0 4px 0;
+    }
+
+    .site-url {
+        color: var(--helix-text-secondary);
+        font-size: 0.875rem;
+        word-break: break-all;
+    }
+
+    /* Form Card */
+    .form-card {
+        background: var(--helix-surface);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: var(--helix-card-shadow);
+        border: 1px solid var(--helix-border);
+        margin-bottom: 32px;
+    }
+
+    .form-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 32px;
+        padding-bottom: 24px;
+        border-bottom: 2px solid var(--helix-border);
+    }
+
+    .form-icon {
+        width: 56px;
+        height: 56px;
+        background: var(--helix-gradient);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        margin-right: 20px;
+    }
+
+    .form-header h2 {
+        font-size: 1.875rem;
+        font-weight: 800;
+        color: var(--helix-text-primary);
+        margin: 0 0 8px 0;
+        letter-spacing: -0.3px;
+    }
+
+    .form-header p {
+        color: var(--helix-text-secondary);
+        font-size: 1rem;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    /* Form Sections */
+    .form-section {
+        margin-bottom: 40px;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--helix-text-primary);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--helix-gradient);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 14px;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+    }
+
+    .form-group {
+        position: relative;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: var(--helix-text-primary);
+        margin-bottom: 8px;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        padding: 16px;
+        border: 2px solid var(--helix-border);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--helix-surface);
+        color: var(--helix-text-primary);
+        resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        outline: none;
+        border-color: var(--helix-primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .form-group textarea {
+        min-height: 120px;
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+    }
+
+    .form-group .help-text {
+        font-size: 0.75rem;
+        color: var(--helix-text-muted);
+        margin-top: 8px;
+        line-height: 1.4;
+    }
+
+    /* Component Count Display */
+    .count-display {
+        background: var(--helix-background);
+        border: 2px solid var(--helix-border);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .count-display::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--helix-secondary);
+        border-radius: 12px 12px 0 0;
+    }
+
+    .count-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--helix-secondary);
+        margin-bottom: 4px;
+    }
+
+    .count-label {
+        font-size: 0.75rem;
+        color: var(--helix-text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Action Buttons */
+    .btn-group {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-top: 40px;
+        padding-top: 32px;
+        border-top: 2px solid var(--helix-border);
+    }
+
+    .btn {
+        padding: 16px 32px !important;
+        border: none !important;
+        border-radius: 12px !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+        min-width: 160px !important;
+        justify-content: center !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .btn-primary {
+        background: var(--helix-gradient) !important;
+        color: white !important;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-3px) !important;
+        box-shadow: 0 12px 32px rgba(99, 102, 241, 0.4) !important;
+        color: white !important;
+    }
+
+    .btn-secondary {
+        background: var(--helix-surface) !important;
+        color: var(--helix-text-primary) !important;
+        border: 2px solid var(--helix-border) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-3px) !important;
+        border-color: var(--helix-primary) !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+        color: var(--helix-text-primary) !important;
+    }
+
+    /* Loading State */
+    .btn-loading .btn-spinner {
+        display: inline-flex !important;
+    }
+
+    .btn-loading .btn-text {
+        display: none !important;
+    }
+
+    .btn-spinner {
+        display: none !important;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            font-size: 2rem;
+        }
+
+        .form-card {
+            padding: 24px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .btn-group {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn {
+            width: 100% !important;
+            max-width: 300px !important;
+        }
+    }
+
+    /* Animation Classes */
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="container-fluid meta-container">
+    <!-- Header Section -->
+    <div class="page-header fade-in">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1>
+                    <i class="fas fa-edit me-3"></i>
+                    {% if form.instance.pk %}Edit Site Meta{% else %}Add Site Meta{% endif %}
+                </h1>
+                <p>
+                    {% if form.instance.pk %}
+                        Update metadata and component information for this site page
+                    {% else %}
+                        Add new metadata and component information for a site page
+                    {% endif %}
+                </p>
+            </div>
+            <a href="{% url 'site_meta_list' site.id %}" class="back-btn">
+                <i class="fas fa-arrow-left me-2"></i>Back to Site Meta
+            </a>
+        </div>
+    </div>
+
+    <!-- Site Information Card -->
+    <div class="site-info-card fade-in">
+        <div class="site-info-header">
+            <div class="site-icon">
+                <i class="fas fa-globe"></i>
+            </div>
+            <div class="site-details">
+                <h3>{{ site.website_url|truncatechars:50 }}</h3>
+                <div class="site-url">{{ site.website_url }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Form -->
+    <div class="form-card fade-in">
+        <div class="form-header">
+            <div class="form-icon">
+                <i class="fas fa-code"></i>
+            </div>
+            <div>
+                <h2>Site Metadata Form</h2>
+                <p>Configure component details and migration information</p>
+            </div>
+        </div>
+
+        <form method="post" id="siteMetaForm">
+            {% csrf_token %}
+            
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-info"></i>
+                    </div>
+                    Basic Information
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.site_url.id_for_label }}">{{ form.site_url.label }}</label>
+                        {{ form.site_url }}
+                        {% if form.site_url.help_text %}
+                            <div class="help-text">{{ form.site_url.help_text }}</div>
+                        {% endif %}
+                        {% if form.site_url.errors %}
+                            <div class="text-danger mt-2">{{ form.site_url.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Helix V1 Components Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    Helix V1 Components
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.helix_v1_component.id_for_label }}">{{ form.helix_v1_component.label }}</label>
+                        {{ form.helix_v1_component }}
+                        {% if form.helix_v1_component.help_text %}
+                            <div class="help-text">{{ form.helix_v1_component.help_text }}</div>
+                        {% endif %}
+                        {% if form.helix_v1_component.errors %}
+                            <div class="text-danger mt-2">{{ form.helix_v1_component.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Helix V2 Compatible Components Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-icon" style="background: var(--helix-secondary);">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    Helix V2 Compatible Components
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.helix_v2_compatible_component.id_for_label }}">{{ form.helix_v2_compatible_component.label }}</label>
+                        {{ form.helix_v2_compatible_component }}
+                        {% if form.helix_v2_compatible_component.help_text %}
+                            <div class="help-text">{{ form.helix_v2_compatible_component.help_text }}</div>
+                        {% endif %}
+                        {% if form.helix_v2_compatible_component.errors %}
+                            <div class="text-danger mt-2">{{ form.helix_v2_compatible_component.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.v2_compatible_count.id_for_label }}">{{ form.v2_compatible_count.label }}</label>
+                        <div class="count-display">
+                            <div class="count-number">{{ form.v2_compatible_count.value|default:0 }}</div>
+                            <div class="count-label">Compatible Count</div>
+                        </div>
+                        {{ form.v2_compatible_count }}
+                        {% if form.v2_compatible_count.errors %}
+                            <div class="text-danger mt-2">{{ form.v2_compatible_count.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Helix V2 Non-Compatible Components Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-icon" style="background: var(--helix-danger);">
+                        <i class="fas fa-times"></i>
+                    </div>
+                    Helix V2 Non-Compatible Components
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.helix_v2_non_compatible_component.id_for_label }}">{{ form.helix_v2_non_compatible_component.label }}</label>
+                        {{ form.helix_v2_non_compatible_component }}
+                        {% if form.helix_v2_non_compatible_component.help_text %}
+                            <div class="help-text">{{ form.helix_v2_non_compatible_component.help_text }}</div>
+                        {% endif %}
+                        {% if form.helix_v2_non_compatible_component.errors %}
+                            <div class="text-danger mt-2">{{ form.helix_v2_non_compatible_component.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.v2_non_compatible_count.id_for_label }}">{{ form.v2_non_compatible_count.label }}</label>
+                        <div class="count-display" style="border-color: var(--helix-danger);">
+                            <div class="count-number" style="color: var(--helix-danger);">{{ form.v2_non_compatible_count.value|default:0 }}</div>
+                            <div class="count-label">Non-Compatible Count</div>
+                        </div>
+                        {{ form.v2_non_compatible_count }}
+                        {% if form.v2_non_compatible_count.errors %}
+                            <div class="text-danger mt-2">{{ form.v2_non_compatible_count.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Components Section -->
+            <div class="form-section">
+                <div class="section-title">
+                    <div class="section-icon" style="background: var(--helix-accent);">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    Custom Components
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="{{ form.custom_component.id_for_label }}">{{ form.custom_component.label }}</label>
+                        {{ form.custom_component }}
+                        {% if form.custom_component.help_text %}
+                            <div class="help-text">{{ form.custom_component.help_text }}</div>
+                        {% endif %}
+                        {% if form.custom_component.errors %}
+                            <div class="text-danger mt-2">{{ form.custom_component.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.custom_component_count.id_for_label }}">{{ form.custom_component_count.label }}</label>
+                        <div class="count-display" style="border-color: var(--helix-accent);">
+                            <div class="count-number" style="color: var(--helix-accent);">{{ form.custom_component_count.value|default:0 }}</div>
+                            <div class="count-label">Custom Count</div>
+                        </div>
+                        {{ form.custom_component_count }}
+                        {% if form.custom_component_count.errors %}
+                            <div class="text-danger mt-2">{{ form.custom_component_count.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary" id="saveBtn">
+                    <span class="btn-text">
+                        <i class="fas fa-save me-2"></i>
+                        {% if form.instance.pk %}Update Meta{% else %}Create Meta{% endif %}
+                    </span>
+                    <span class="btn-spinner">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Saving...
+                    </span>
+                </button>
+                <a href="{% url 'site_meta_list' site.id %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('siteMetaForm');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    // Form validation and submission handling
+    form.addEventListener('submit', function(e) {
+        // Show loading state
+        saveBtn.classList.add('btn-loading');
+        saveBtn.disabled = true;
+        
+        // Basic form validation
+        const requiredFields = form.querySelectorAll('input[required], textarea[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.style.borderColor = 'var(--helix-danger)';
+                field.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.1)';
+            } else {
+                field.style.borderColor = 'var(--helix-border)';
+                field.style.boxShadow = '';
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            saveBtn.classList.remove('btn-loading');
+            saveBtn.disabled = false;
+            
+            // Show error notification
+            showNotification('Please fill in all required fields', 'error');
+            
+            // Focus first invalid field
+            const firstInvalid = form.querySelector('input[style*="border-color: var(--helix-danger)"]');
+            if (firstInvalid) {
+                firstInvalid.focus();
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+    
+    // Count fields auto-update based on component text
+    const componentFields = [
+        { textField: 'helix_v2_compatible_component', countField: 'v2_compatible_count' },
+        { textField: 'helix_v2_non_compatible_component', countField: 'v2_non_compatible_count' },
+        { textField: 'custom_component', countField: 'custom_component_count' }
+    ];
+    
+    componentFields.forEach(({ textField, countField }) => {
+        const textElement = document.getElementById(`id_${textField}`);
+        const countElement = document.getElementById(`id_${countField}`);
+        const countDisplay = countElement.parentElement.querySelector('.count-number');
+        
+        if (textElement && countElement && countDisplay) {
+            textElement.addEventListener('input', function() {
+                // Simple component count logic (count comma-separated items)
+                const text = this.value.trim();
+                const count = text ? text.split(',').filter(item => item.trim()).length : 0;
+                
+                countElement.value = count;
+                countDisplay.textContent = count;
+                
+                // Animate count change
+                countDisplay.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    countDisplay.style.transform = 'scale(1)';
+                }, 200);
+            });
+        }
+    });
+    
+    // Real-time form validation
+    const inputs = form.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.hasAttribute('required') && !this.value.trim()) {
+                this.style.borderColor = 'var(--helix-danger)';
+                this.style.boxShadow = '0 0 0 4px rgba(239, 68, 68, 0.1)';
+            } else {
+                this.style.borderColor = 'var(--helix-border)';
+                this.style.boxShadow = '';
+            }
+        });
+        
+        input.addEventListener('focus', function() {
+            this.style.borderColor = 'var(--helix-primary)';
+            this.style.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.1)';
+        });
+    });
+    
+    // Notification system
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <i class="fas ${type === 'error' ? 'fa-exclamation-triangle' : type === 'success' ? 'fa-check-circle' : 'fa-info-circle'} me-2"></i>
+            <span>${message}</span>
+            <button class="notification-close" onclick="this.parentElement.remove()">×</button>
+        `;
+        
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${type === 'error' ? 'var(--helix-danger)' : type === 'success' ? 'var(--helix-secondary)' : 'var(--helix-primary)'};
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: var(--helix-card-shadow-lg);
+            z-index: 1000;
+            max-width: 400px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInRight 0.3s ease-out;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 5000);
+    }
+    
+    // Add staggered animation to form sections
+    const sections = document.querySelectorAll('.form-section, .site-info-card, .form-card');
+    sections.forEach((section, index) => {
+        section.style.animationDelay = `${index * 0.1}s`;
+        section.classList.add('fade-in');
+    });
+});
+
+// Add notification animations
+const additionalStyles = document.createElement('style');
+additionalStyles.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOutRight {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    .notification-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        opacity: 0.8;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: auto;
+    }
+
+    .notification-close:hover {
+        opacity: 1;
+    }
+`;
+document.head.appendChild(additionalStyles);
+</script>
 {% endblock %}

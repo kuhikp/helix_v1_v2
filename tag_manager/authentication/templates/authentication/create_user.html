@@ -1,104 +1,539 @@
 {% extends 'authentication/base.html' %}
 {% load static %}
 
-{% block title %}Create User{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'authentication/css/create-user.css' %}">
-<script src="{% static 'authentication/js/create-user.js' %}" defer></script>
-{% endblock %}
+{% block title %}Create New User - HelixBridge{% endblock %}
 
 {% block content %}
+<style>
+    /* Modern iOS-inspired design */
+    :root {
+        --ios-blue: #007AFF;
+        --ios-blue-dark: #0051D0;
+        --ios-green: #34C759;
+        --ios-green-dark: #248A3D;
+        --ios-orange: #FF9500;
+        --ios-red: #FF3B30;
+        --ios-purple: #5856D6;
+        --ios-pink: #FF2D92;
+        --ios-gray: #8E8E93;
+        --ios-background: #F2F2F7;
+        --ios-surface: #FFFFFF;
+        --ios-text-primary: #1C1C1E;
+        --ios-text-secondary: #8E8E93;
+        --ios-border: #E5E5EA;
+        --shadow-light: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.12);
+        --shadow-heavy: 0 16px 48px rgba(0, 0, 0, 0.2);
+    }
+
+    body {
+        background: var(--ios-background);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--ios-green) 0%, #30D158 100%);
+        border-radius: 24px;
+        color: white;
+        padding: 40px;
+        margin-bottom: 32px;
+        box-shadow: var(--shadow-medium);
+        position: relative;
+        overflow: hidden;
+        -webkit-text-fill-color: inherit !important;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .page-header h1 {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+        font-size: 16px;
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        border-radius: 16px;
+        padding: 12px 20px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    .form-container {
+        background: var(--ios-surface);
+        border-radius: 24px;
+        padding: 48px;
+        box-shadow: var(--shadow-light);
+        border: 1px solid var(--ios-border);
+        margin-bottom: 32px;
+    }
+
+    .form-section {
+        margin-bottom: 40px;
+        position: relative;
+    }
+
+    .form-section:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        bottom: -20px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, var(--ios-border) 50%, transparent 100%);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--ios-background);
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        font-size: 18px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .section-icon.personal {
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+    }
+
+    .section-icon.account {
+        background: linear-gradient(135deg, var(--ios-orange), #FF6B35);
+    }
+
+    .section-icon.role {
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+    }
+
+    .section-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--ios-text-primary);
+        margin: 0;
+        flex: 1;
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 16px 20px;
+        border: 2px solid var(--ios-border);
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--ios-text-primary);
+        background: var(--ios-surface);
+        transition: all 0.3s ease;
+        font-family: inherit;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--ios-blue);
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .form-input::placeholder {
+        color: var(--ios-text-secondary);
+        font-weight: 400;
+    }
+
+    .form-label {
+        position: absolute;
+        top: -12px;
+        left: 16px;
+        background: var(--ios-surface);
+        padding: 0 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--ios-text-secondary);
+        transition: all 0.3s ease;
+    }
+
+    .form-input:focus + .form-label,
+    .form-input:not(:placeholder-shown) + .form-label {
+        color: var(--ios-blue);
+        transform: scale(0.9);
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 16px 20px;
+        border: 2px solid var(--ios-border);
+        border-radius: 16px;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--ios-text-primary);
+        background: var(--ios-surface);
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        background-size: 20px;
+        cursor: pointer;
+    }
+
+    .form-select:focus {
+        outline: none;
+        border-color: var(--ios-blue);
+        box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .error-message {
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: rgba(255, 59, 48, 0.1);
+        border: 1px solid rgba(255, 59, 48, 0.2);
+        border-radius: 8px;
+        color: var(--ios-red);
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+    }
+
+    .error-message i {
+        margin-right: 8px;
+    }
+
+    .password-requirements,
+    .role-info {
+        background: var(--ios-background);
+        border-radius: 16px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid var(--ios-blue);
+    }
+
+    .requirements-title,
+    .info-title {
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ios-text-primary);
+        margin-bottom: 12px;
+    }
+
+    .requirements-title i,
+    .info-title i {
+        margin-right: 8px;
+        color: var(--ios-blue);
+    }
+
+    .requirements-list,
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .requirements-list li,
+    .info-list li {
+        padding: 6px 0;
+        color: var(--ios-text-secondary);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+    }
+
+    .requirements-list li::before {
+        content: '•';
+        color: var(--ios-blue);
+        font-weight: bold;
+        width: 16px;
+        margin-right: 8px;
+    }
+
+    .info-list li strong {
+        color: var(--ios-text-primary);
+        font-weight: 600;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        margin-top: 48px;
+        padding-top: 32px;
+        border-top: 2px solid var(--ios-background);
+    }
+
+    .btn-cancel {
+        background: var(--ios-background);
+        color: var(--ios-text-secondary);
+        border: 2px solid var(--ios-border);
+        border-radius: 16px;
+        padding: 16px 32px;
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-cancel:hover {
+        background: var(--ios-border);
+        color: var(--ios-text-primary);
+        text-decoration: none;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-light);
+    }
+
+    .btn-create {
+        background: linear-gradient(135deg, var(--ios-green), #30D158);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 16px 32px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: var(--shadow-light);
+    }
+
+    .btn-create:hover {
+        background: linear-gradient(135deg, var(--ios-green-dark), var(--ios-green));
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .btn-create:active {
+        transform: translateY(0);
+    }
+
+    .alert {
+        border-radius: 16px;
+        padding: 16px 20px;
+        margin-bottom: 24px;
+        border: none;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+    }
+
+    .alert-danger {
+        background: rgba(255, 59, 48, 0.1);
+        color: var(--ios-red);
+        border-left: 4px solid var(--ios-red);
+    }
+
+    .alert-success {
+        background: rgba(52, 199, 89, 0.1);
+        color: var(--ios-green);
+        border-left: 4px solid var(--ios-green);
+    }
+
+    .fade-in {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 24px;
+        }
+
+        .form-container {
+            padding: 24px;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-cancel,
+        .btn-create {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
 
 <div class="container-fluid">
     <!-- Header -->
-    <div class="create-user-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <div>
+    <div class="page-header fade-in">
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div class="flex-grow-1">
                 <h1><i class="fas fa-user-plus me-3"></i>Create New User</h1>
-                <p class="header-subtitle">Add a new user to the system</p>
+                <p class="page-subtitle">Add a new team member to HelixBridge</p>
             </div>
-            <div>
-                <a href="{% url 'admin_dashboard' %}" class="btn btn-light btn-back-dashboard">
+            <div class="mt-3 mt-md-0">
+                <a href="{% url 'admin_dashboard' %}" class="back-btn">
                     <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Error Messages -->
+    <!-- Messages -->
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">
-                <i class="fas fa-exclamation-circle me-2"></i>
+            <div class="alert alert-{{ message.tags }} fade-in">
+                <i class="fas fa-{% if message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'success' %}check-circle{% else %}info-circle{% endif %} me-2"></i>
                 {{ message }}
             </div>
         {% endfor %}
     {% endif %}
 
     <!-- Form Container -->
-    <div class="form-container">
+    <div class="form-container fade-in">
         <form method="post" novalidate id="createUserForm">
             {% csrf_token %}
             
             <!-- Personal Information Section -->
             <div class="form-section">
-                <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
+                <div class="section-header">
+                    <div class="section-icon personal">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h3 class="section-title">Personal Information</h3>
+                </div>
                 
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="form-floating">
-                            {{ form.first_name }}
-                            <label for="{{ form.first_name.id_for_label }}">
-                                <i class="fas fa-user me-2"></i>First Name
-                            </label>
-                        </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        {{ form.first_name }}
+                        <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                            <i class="fas fa-user me-1"></i>First Name
+                        </label>
                         {% if form.first_name.errors %}
-                            <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.first_name.errors.0 }}
+                            </div>
                         {% endif %}
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-floating">
-                            {{ form.last_name }}
-                            <label for="{{ form.last_name.id_for_label }}">
-                                <i class="fas fa-user me-2"></i>Last Name
-                            </label>
-                        </div>
+                    <div class="form-group">
+                        {{ form.last_name }}
+                        <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                            <i class="fas fa-user me-1"></i>Last Name
+                        </label>
                         {% if form.last_name.errors %}
-                            <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.last_name.errors.0 }}
+                            </div>
                         {% endif %}
                     </div>
                 </div>
                 
-                <div class="form-floating">
+                <div class="form-group">
                     {{ form.email }}
-                    <label for="{{ form.email.id_for_label }}">
-                        <i class="fas fa-envelope me-2"></i>Email Address
+                    <label for="{{ form.email.id_for_label }}" class="form-label">
+                        <i class="fas fa-envelope me-1"></i>Email Address
                     </label>
+                    {% if form.email.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.email.errors.0 }}
+                        </div>
+                    {% endif %}
                 </div>
-                {% if form.email.errors %}
-                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
-                {% endif %}
             </div>
 
             <!-- Account Information Section -->
             <div class="form-section">
-                <h5><i class="fas fa-key me-2"></i>Account Information</h5>
-                
-                <div class="form-floating">
-                    {{ form.username }}
-                    <label for="{{ form.username.id_for_label }}">
-                        <i class="fas fa-at me-2"></i>Username
-                    </label>
+                <div class="section-header">
+                    <div class="section-icon account">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3 class="section-title">Account Information</h3>
                 </div>
-                {% if form.username.errors %}
-                    <div class="text-danger small">{{ form.username.errors.0 }}</div>
-                {% endif %}
+                
+                <div class="form-group">
+                    {{ form.username }}
+                    <label for="{{ form.username.id_for_label }}" class="form-label">
+                        <i class="fas fa-at me-1"></i>Username
+                    </label>
+                    {% if form.username.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.username.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
                 
                 <!-- Password Requirements -->
                 <div class="password-requirements">
-                    <h6><i class="fas fa-shield-alt me-2"></i>Password Requirements</h6>
-                    <ul>
+                    <div class="requirements-title">
+                        <i class="fas fa-shield-alt"></i>Password Requirements
+                    </div>
+                    <ul class="requirements-list">
                         <li>At least 8 characters long</li>
                         <li>Mix of uppercase and lowercase letters</li>
                         <li>Include at least one number</li>
@@ -106,27 +541,29 @@
                     </ul>
                 </div>
                 
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="form-floating">
-                            {{ form.password1 }}
-                            <label for="{{ form.password1.id_for_label }}">
-                                <i class="fas fa-lock me-2"></i>Password
-                            </label>
-                        </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        {{ form.password1 }}
+                        <label for="{{ form.password1.id_for_label }}" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Password
+                        </label>
                         {% if form.password1.errors %}
-                            <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.password1.errors.0 }}
+                            </div>
                         {% endif %}
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-floating">
-                            {{ form.password2 }}
-                            <label for="{{ form.password2.id_for_label }}">
-                                <i class="fas fa-lock me-2"></i>Confirm Password
-                            </label>
-                        </div>
+                    <div class="form-group">
+                        {{ form.password2 }}
+                        <label for="{{ form.password2.id_for_label }}" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Confirm Password
+                        </label>
                         {% if form.password2.errors %}
-                            <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ form.password2.errors.0 }}
+                            </div>
                         {% endif %}
                     </div>
                 </div>
@@ -134,26 +571,36 @@
 
             <!-- Role Assignment Section -->
             <div class="form-section">
-                <h5><i class="fas fa-user-cog me-2"></i>Role Assignment</h5>
+                <div class="section-header">
+                    <div class="section-icon role">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <h3 class="section-title">Role Assignment</h3>
+                </div>
                 
                 <!-- Role Information -->
                 <div class="role-info">
-                    <h6><i class="fas fa-info-circle me-2"></i>Role Permissions</h6>
-                    <ul>
+                    <div class="info-title">
+                        <i class="fas fa-info-circle"></i>Role Permissions
+                    </div>
+                    <ul class="info-list">
                         <li><strong>Admin:</strong> Full system access, user management, and system configuration</li>
                         <li><strong>Tag Manager:</strong> Manage tags, migrations, and component conversions</li>
                     </ul>
                 </div>
                 
-                <div class="form-floating">
+                <div class="form-group">
                     {{ form.role }}
-                    <label for="{{ form.role.id_for_label }}">
-                        <i class="fas fa-user-tag me-2"></i>User Role
+                    <label for="{{ form.role.id_for_label }}" class="form-label">
+                        <i class="fas fa-user-tag me-1"></i>User Role
                     </label>
+                    {% if form.role.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            {{ form.role.errors.0 }}
+                        </div>
+                    {% endif %}
                 </div>
-                {% if form.role.errors %}
-                    <div class="text-danger small">{{ form.role.errors.0 }}</div>
-                {% endif %}
             </div>
 
             <!-- Form Actions -->
@@ -168,5 +615,94 @@
         </form>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add floating label behavior
+    const inputs = document.querySelectorAll('.form-input, .form-select');
+    
+    inputs.forEach(input => {
+        // Set initial state
+        if (input.value) {
+            input.classList.add('has-value');
+        }
+        
+        // Handle input changes
+        input.addEventListener('input', function() {
+            if (this.value) {
+                this.classList.add('has-value');
+            } else {
+                this.classList.remove('has-value');
+            }
+        });
+        
+        input.addEventListener('focus', function() {
+            this.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            this.classList.remove('focused');
+        });
+    });
+    
+    // Enhanced form validation
+    const form = document.getElementById('createUserForm');
+    const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+    const password2 = document.getElementById('{{ form.password2.id_for_label }}');
+    
+    if (password1 && password2) {
+        // Real-time password confirmation validation
+        password2.addEventListener('input', function() {
+            if (password1.value && password2.value) {
+                if (password1.value !== password2.value) {
+                    password2.style.borderColor = 'var(--ios-red)';
+                    password2.style.boxShadow = '0 0 0 4px rgba(255, 59, 48, 0.1)';
+                } else {
+                    password2.style.borderColor = 'var(--ios-green)';
+                    password2.style.boxShadow = '0 0 0 4px rgba(52, 199, 89, 0.1)';
+                }
+            }
+        });
+        
+        // Password strength indicator
+        password1.addEventListener('input', function() {
+            const password = this.value;
+            const requirements = document.querySelectorAll('.requirements-list li');
+            
+            // Check each requirement
+            const checks = [
+                password.length >= 8,
+                /[a-z]/.test(password) && /[A-Z]/.test(password),
+                /\d/.test(password),
+                /[!@#$%^&*(),.?":{}|<>]/.test(password)
+            ];
+            
+            requirements.forEach((req, index) => {
+                if (checks[index]) {
+                    req.style.color = 'var(--ios-green)';
+                    req.style.fontWeight = '600';
+                } else {
+                    req.style.color = 'var(--ios-text-secondary)';
+                    req.style.fontWeight = '400';
+                }
+            });
+        });
+    }
+    
+    // Smooth form submission
+    form.addEventListener('submit', function(e) {
+        const submitBtn = document.querySelector('.btn-create');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating User...';
+        submitBtn.disabled = true;
+    });
+    
+    // Add staggered animation to form sections
+    const sections = document.querySelectorAll('.form-section');
+    sections.forEach((section, index) => {
+        section.style.animationDelay = `${index * 0.1}s`;
+        section.classList.add('fade-in');
+    });
+});
+</script>
 
 {% endblock %}

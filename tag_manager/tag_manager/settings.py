@@ -147,6 +147,7 @@ USE_TZ = True
 
 STATIC_URL = os.getenv('STATIC_URL')
 
+
 # Static files configuration
 STATICFILES_DIRS = [
     BASE_DIR / "authentication" / "static",
@@ -154,6 +155,7 @@ STATICFILES_DIRS = [
     BASE_DIR / "tag_manager_component" / "static",
     # Add staticfiles directory for development
     # BASE_DIR / "staticfiles",
+    os.path.join(BASE_DIR, 'static'),
 ]
 
 # Static root for production

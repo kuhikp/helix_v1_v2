@@ -1,6 +1,6 @@
 # 🎯 Developer Onboarding Guide
 
-Welcome to Helix Tag Manager! This guide will get you up and running in less than 10 minutes.
+Welcome to HelixBridge! This guide will get you up and running in less than 10 minutes.
 
 ## 🚀 Super Quick Start
 

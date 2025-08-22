@@ -1,0 +1,305 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Page Not Found - HelixBridge{% endblock %}
+
+{% block content %}
+<style>
+    .error-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+    
+    .error-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 32px;
+        padding: 60px 40px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    .error-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(135deg, var(--ios-red), var(--ios-orange));
+        border-radius: 32px 32px 0 0;
+    }
+    
+    .error-icon {
+        width: 120px;
+        height: 120px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, var(--ios-red), var(--ios-orange));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 32px;
+        font-size: 48px;
+        color: white;
+        box-shadow: 0 12px 32px rgba(255, 59, 48, 0.3);
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .error-code {
+        font-size: 72px;
+        font-weight: 900;
+        color: var(--ios-text-primary);
+        margin-bottom: 16px;
+        letter-spacing: -2px;
+        background: linear-gradient(135deg, var(--ios-red), var(--ios-orange));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .error-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--ios-text-primary);
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+    }
+    
+    .error-description {
+        font-size: 18px;
+        color: var(--ios-text-secondary);
+        margin-bottom: 40px;
+        line-height: 1.6;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .error-actions {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 32px;
+    }
+    
+    .error-btn {
+        background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));
+        color: white;
+        border: none;
+        border-radius: 16px;
+        padding: 16px 32px;
+        font-weight: 600;
+        font-size: 16px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+    }
+    
+    .error-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .error-btn.secondary {
+        background: rgba(var(--ios-text-secondary), 0.1);
+        color: var(--ios-text-secondary);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+    
+    .error-btn.secondary:hover {
+        background: rgba(var(--ios-text-secondary), 0.15);
+        color: var(--ios-text-primary);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .error-btn i {
+        margin-right: 8px;
+    }
+    
+    .helpful-links {
+        border-top: 1px solid var(--ios-border);
+        padding-top: 24px;
+        margin-top: 24px;
+    }
+    
+    .helpful-links h5 {
+        color: var(--ios-text-primary);
+        font-weight: 600;
+        margin-bottom: 16px;
+        font-size: 16px;
+    }
+    
+    .helpful-links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+    }
+    
+    .helpful-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(var(--ios-text-secondary), 0.05);
+        color: var(--ios-text-secondary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+    
+    .helpful-link:hover {
+        background: rgba(var(--ios-blue), 0.1);
+        color: var(--ios-blue);
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    .helpful-link i {
+        margin-right: 8px;
+        font-size: 12px;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .error-card {
+            padding: 40px 24px;
+            margin: 20px;
+        }
+        
+        .error-code {
+            font-size: 56px;
+        }
+        
+        .error-title {
+            font-size: 24px;
+        }
+        
+        .error-description {
+            font-size: 16px;
+        }
+        
+        .error-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .error-btn {
+            justify-content: center;
+        }
+        
+        .helpful-links-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+    }
+</style>
+
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-icon">
+            <i class="fas fa-search"></i>
+        </div>
+        
+        <div class="error-code">404</div>
+        <h1 class="error-title">Page Not Found</h1>
+        <p class="error-description">
+            Oops! The page you're looking for seems to have wandered off into the digital void. 
+            Don't worry, even the best explorers sometimes take a wrong turn.
+        </p>
+        
+        <div class="error-actions">
+            <a href="{% url 'tag_manager_dashboard' %}" class="error-btn">
+                <i class="fas fa-home"></i>Back to Dashboard
+            </a>
+            <a href="javascript:history.back()" class="error-btn secondary">
+                <i class="fas fa-arrow-left"></i>Go Back
+            </a>
+        </div>
+        
+        <div class="helpful-links">
+            <h5>Quick Navigation</h5>
+            <div class="helpful-links-grid">
+                <a href="{% url 'tag_manager_dashboard' %}" class="helpful-link">
+                    <i class="fas fa-tachometer-alt"></i>Dashboard
+                </a>
+                <a href="{% url 'site_list' %}" class="helpful-link">
+                    <i class="fas fa-globe"></i>Sites
+                </a>
+                <a href="{% url 'tag_list' %}" class="helpful-link">
+                    <i class="fas fa-tags"></i>Tags
+                </a>
+                <a href="{% url 'data_migration_list' %}" class="helpful-link">
+                    <i class="fas fa-exchange-alt"></i>Migrations
+                </a>
+                <a href="{% url 'tags_extractor_list' %}" class="helpful-link">
+                    <i class="fas fa-spider"></i>Extractors
+                </a>
+                <a href="{% url 'tag_mapper' %}" class="helpful-link">
+                    <i class="fas fa-map"></i>Tag Mapper
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add some interactive elements
+    const errorIcon = document.querySelector('.error-icon');
+    
+    errorIcon.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.1) rotate(5deg)';
+    });
+    
+    errorIcon.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1) rotate(0deg)';
+    });
+    
+    // Add click effect to buttons
+    const buttons = document.querySelectorAll('.error-btn');
+    buttons.forEach(button => {
+        button.addEventListener('mousedown', function() {
+            this.style.transform = 'translateY(-1px) scale(0.98)';
+        });
+        
+        button.addEventListener('mouseup', function() {
+            this.style.transform = 'translateY(-2px) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}
