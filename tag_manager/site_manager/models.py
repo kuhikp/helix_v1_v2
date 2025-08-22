@@ -21,6 +21,8 @@ class SiteListDetails(models.Model):
     )
     website_url = models.URLField(unique=True)
     total_pages = models.IntegerField(default=0)
+    helix_site_id = models.IntegerField(default=0)
+
     helix_v1_component = models.TextField(blank=True, null=True)
     helix_v2_compatible_component = models.TextField(blank=True, null=True)
     helix_v2_non_compatible_component = models.TextField(blank=True, null=True)
