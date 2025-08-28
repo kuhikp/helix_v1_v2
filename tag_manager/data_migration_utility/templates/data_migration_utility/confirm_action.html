@@ -1,0 +1,159 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}{{ action_title }}{% endblock %}
+
+{% block content %}
+<style>
+    .confirmation-container {
+        min-height: 100vh;
+        padding: 20px 0;
+        background: var(--ios-background, #F2F2F7);
+    }
+    
+    .confirmation-card {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        margin: 0 auto;
+        border: 1px solid var(--ios-border, #E5E5EA);
+    }
+    
+    .confirmation-header {
+        text-align: center;
+        margin-bottom: 24px;
+    }
+    
+    .confirmation-icon {
+        background: linear-gradient(135deg, #FF9500 0%, #FF6B35 100%);
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+        color: white;
+        font-size: 32px;
+    }
+    
+    .confirmation-title {
+        color: var(--ios-text-primary, #1C1C1E);
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+    
+    .confirmation-description {
+        color: var(--ios-text-secondary, #8E8E93);
+        font-size: 16px;
+        line-height: 1.5;
+        margin-bottom: 24px;
+    }
+    
+    .warning-box {
+        background: rgba(255, 59, 48, 0.1);
+        border: 1px solid var(--ios-red, #FF3B30);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 32px;
+    }
+    
+    .warning-message {
+        color: var(--ios-red, #FF3B30);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .warning-message i {
+        margin-right: 8px;
+        font-size: 18px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+    }
+    
+    .btn-danger-custom {
+        background: linear-gradient(135deg, var(--ios-red, #FF3B30) 0%, #E31E24 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 12px 32px;
+        color: white;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+    }
+    
+    .btn-danger-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(255, 59, 48, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+    
+    .btn-secondary-custom {
+        background: var(--ios-light-gray, #F2F2F7);
+        border: 1px solid var(--ios-border, #E5E5EA);
+        border-radius: 12px;
+        padding: 12px 32px;
+        color: var(--ios-text-primary, #1C1C1E);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-secondary-custom:hover {
+        background: var(--ios-border, #E5E5EA);
+        transform: translateY(-2px);
+        color: var(--ios-text-primary, #1C1C1E);
+        text-decoration: none;
+    }
+</style>
+
+<div class="confirmation-container">
+    <div class="container">
+        <div class="confirmation-card">
+            <div class="confirmation-header">
+                <div class="confirmation-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h2 class="confirmation-title">{{ action_title }}</h2>
+                <p class="confirmation-description">{{ action_description }}</p>
+            </div>
+            
+            {% if warning_message %}
+            <div class="warning-box">
+                <div class="warning-message">
+                    <i class="fas fa-exclamation-circle"></i>
+                    {{ warning_message }}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-danger-custom">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        Confirm Clear Embeddings
+                    </button>
+                </form>
+                <a href="{% url cancel_url %}" class="btn-secondary-custom">
+                    <i class="fas fa-times me-2"></i>
+                    Cancel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

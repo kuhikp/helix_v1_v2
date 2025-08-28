@@ -45,6 +45,16 @@
                         </li>
                         {% endif %}
 
+                        {% can_access_menu 'sites' as show_sites %}
+                        {% if show_sites %}
+                        <li class="nav-item">
+                            <a class="nav-link {% get_menu_class 'sites' %}"
+                               href="{% url 'site_list' %}">
+                                <i class="fas fa-globe"></i> Sites
+                            </a>
+                        </li>
+                        {% endif %}
+
                         {% can_access_menu 'users' as show_users %}
                         {% if show_users %}
                         <li class="nav-item">
@@ -115,18 +125,7 @@
                                 {% endif %}
                             </ul>
                         </li>
-
-                        {% can_access_menu 'sites' as show_sites %}
-                        {% if show_sites %}
-                        <li class="nav-item">
-                            <a class="nav-link {% get_menu_class 'sites' %}" 
-                               href="{% url 'site_list' %}">
-                                <i class="fas fa-globe"></i> Sites
-                            </a>
-                        </li>
                         {% endif %}
-                        {% endif %}
-
                         {% can_access_menu 'api' as show_api %}
                         {% if show_api %}
                         <li class="nav-item dropdown">
