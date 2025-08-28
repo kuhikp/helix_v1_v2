@@ -50,6 +50,51 @@
         -webkit-text-fill-color: inherit !important;
     }
     
+    .ollama-info-section {
+        background: var(--ios-surface);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--ios-border);
+    }
+    .ollama-info-header {
+        color: var(--ios-blue);
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+    }
+    .ollama-info-content {
+        background: var(--ios-light-gray);
+        border-radius: 12px;
+        padding: 16px;
+        font-family: 'SF Mono', Monaco, Consolas, monospace;
+        font-size: 14px;
+        color: var(--ios-text-primary);
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .ollama-list-item {
+        background: var(--ios-surface);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        border: 1px solid var(--ios-border);
+        color: var(--ios-text-primary);
+    }
+    .error-message {
+        background: rgba(255, 59, 48, 0.1);
+        border: 1px solid var(--ios-red);
+        border-radius: 12px;
+        padding: 16px;
+        color: var(--ios-red);
+        font-weight: 500;
+    }
     .page-header::before {
         content: '';
         position: absolute;
@@ -60,12 +105,10 @@
         background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
         animation: pulse 4s ease-in-out infinite;
     }
-    
     @keyframes pulse {
         0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
         50% { transform: scale(1.1) rotate(180deg); opacity: 0.8; }
     }
-    
     .page-header h1 {
         font-size: 2.5rem;
         font-weight: 800;
@@ -73,7 +116,6 @@
         letter-spacing: -0.5px;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
     .page-header p {
         font-size: 1.1rem;
         opacity: 0.9;
@@ -81,7 +123,6 @@
         font-weight: 400;
         line-height: 1.4;
     }
-    
     .back-btn {
         background: rgba(255, 255, 255, 0.25) !important;
         border: 1px solid rgba(255, 255, 255, 0.3) !important;
@@ -95,14 +136,12 @@
         display: inline-flex !important;
         align-items: center !important;
     }
-    
     .back-btn:hover {
         background: rgba(255, 255, 255, 0.35) !important;
         color: white !important;
         text-decoration: none !important;
         transform: translateY(-2px) !important;
     }
-    
     .btn-primary-custom {
         background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%) !important;
         border: none !important;
@@ -116,21 +155,37 @@
         align-items: center !important;
         box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3) !important;
     }
-    
     .btn-primary-custom:hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 8px 24px rgba(0, 122, 255, 0.4) !important;
         color: white !important;
         text-decoration: none !important;
     }
-    
+    .btn-warning-custom {
+        background: linear-gradient(135deg, var(--ios-orange) 0%, var(--ios-orange-dark) 100%) !important;
+        border: none !important;
+        border-radius: 16px !important;
+        padding: 12px 24px !important;
+        font-weight: 600 !important;
+        color: white !important;
+        transition: all 0.3s ease !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        box-shadow: 0 4px 16px rgba(255, 149, 0, 0.3) !important;
+    }
+    .btn-warning-custom:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px rgba(255, 149, 0, 0.4) !important;
+        color: white !important;
+        text-decoration: none !important;
+    }
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
         gap: 24px;
         margin-bottom: 32px;
     }
-    
     .stat-card {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(20px);
@@ -143,7 +198,6 @@
         position: relative;
         overflow: hidden;
     }
-    
     .stat-card::before {
         content: '';
         position: absolute;
@@ -154,7 +208,6 @@
         background: var(--gradient);
         border-radius: 20px 20px 0 0;
     }
-    
     .stat-card:hover {
         transform: translateY(-8px) scale(1.02);
         box-shadow: 0 20px 48px rgba(0, 0, 0, 0.15);
@@ -454,6 +507,66 @@
         </div>
     </div>
 
+    <!-- Ollama Information Section -->
+    <div class="row mb-4" style="display: none;">
+        <div class="col-12">
+            <div class="ollama-info-section slide-up">
+                <div class="ollama-info-header">
+                    <i class="fas fa-robot me-2"></i>Ollama System Information
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-list me-1"></i>Available Models
+                        </h6>
+                        {% if ollama_list %}
+                            {% if ollama_list.models %}
+                                <div class="ollama-info-content">
+                                    {% for model in ollama_list.models %}
+                                        <div class="ollama-list-item">
+                                            <strong>{{ model.name }}</strong><br>
+                                            <small class="text-muted">Size: {{ model.size|default:"Unknown" }}</small>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="ollama-info-content">{{ ollama_list|truncatechars:200 }}</div>
+                            {% endif %}
+                        {% else %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-triangle me-1"></i>No model list available
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-heartbeat me-1"></i>System Status
+                        </h6>
+                        {% if ollama_status %}
+                            <div class="ollama-info-content">{{ ollama_status|truncatechars:300 }}</div>
+                        {% else %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Status unavailable
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-plug me-1"></i>Endpoint Response
+                        </h6>
+                        {% if endpoint_response %}
+                            <div class="ollama-info-content">{{ endpoint_response|truncatechars:300 }}</div>
+                        {% else %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Endpoint unavailable
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Migration Statistics -->
     <div class="stats-grid slide-up">
         <div class="stat-card primary">
@@ -496,6 +609,8 @@
         </div>
     </div>
 
+    
+
     <!-- Main Migration Card -->
     <div class="migration-card fade-in">
         <div class="migration-header">
@@ -507,6 +622,9 @@
                 <p>Comprehensive view of all your component migrations</p>
             </div>
             <div class="ms-auto">
+                <!-- <a href="{% url 'clear_embeddings' %}" class="btn-warning-custom me-3">
+                    <i class="fas fa-trash-alt me-2"></i>Clear Embeddings
+                </a> -->
                 <a href="{% url 'data_migration_create' %}" class="btn-primary-custom">
                     <i class="fas fa-plus me-2"></i>New Migration
                 </a>
