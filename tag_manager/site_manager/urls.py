@@ -8,6 +8,8 @@ urlpatterns = [
     path('<int:pk>/delete/', views.site_delete, name='site_delete'),
     path('<int:site_id>/meta/', views.site_meta_list, name='site_meta_list'),
     path('<int:site_id>/meta/create/', views.site_meta_create, name='site_meta_create'),
+    path('<int:site_id>/meta/export-config/', views.site_meta_export_config, name='site_meta_export_config'),
+
     path('<int:site_id>/meta/<int:pk>/edit/', views.site_meta_edit, name='site_meta_edit'),
     path('<int:site_id>/meta/<int:pk>/delete/', views.site_meta_delete, name='site_meta_delete'),
     path('<int:site_id>/analyze/', views.analyze_sitemap, name='analyze_sitemap'),
@@ -18,5 +20,4 @@ urlpatterns = [
     path('batch-complexity-progress/', views.batch_complexity_progress, name='batch_complexity_progress'),
     path('download-sites-import-template/', views.download_sites_import_template, name='download_sites_import_template'),
     path('export-sites-csv/', views.export_sites_csv, name='export_sites_csv'),
-    path('cleanup-site-data/', views.cleanup_site_data, name='cleanup_site_data'),
 ]
