@@ -19,4 +19,5 @@ urlpatterns = [
     path('download-sites-import-template/', views.download_sites_import_template, name='download_sites_import_template'),
     path('export-sites-csv/', views.export_sites_csv, name='export_sites_csv'),
     path('cleanup-site-data/', views.cleanup_site_data, name='cleanup_site_data'),
+    path('<int:site_id>/meta/create-webbuilder/', views.trigger_webbuilder_site_creation, name='trigger_webbuilder_site_creation'),
 ]

@@ -7,6 +7,8 @@ import threading
 import time
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
+import subprocess
+import sys
 
 # Django imports
 from django.contrib import messages
@@ -18,6 +20,8 @@ from django.db.models import Sum, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.db import connection
 
 # Third-party imports
 import requests
@@ -1216,7 +1220,6 @@ def find_enhanced_helix_elements(soup, page_source):
         return []
 
 
-
 def fetch_page(url):
     """
     Fetch webpage content using requests with optimized error handling
@@ -1667,3 +1670,33 @@ def process_batch_complexity_update(session_key):
             session.save()
         except:
             pass
+
+@login_required
+def trigger_webbuilder_site_creation(request, site_id):
+    """
+    AJAX endpoint to create a webbuilder site via webbuilder_site_creation.py and save the returned site ID.
+    """
+    if request.method == "POST":
+        site = get_object_or_404(SiteListDetails, pk=site_id)
+        try:
+            # Run the webbuilder_site_creation.py script and capture output
+            result = subprocess.run(
+                [sys.executable, "site_manager/webbuilder_site_creation.py"], capture_output=True, text=True, check=True
+            )
+            output = result.stdout.strip().splitlines()
+            # Extract the site ID from the URL using regex
+            url = output[-1]
+            match = re.search(r'/website/(\d+)/', url)
+            if match:
+                webbuilder_site_id = int(match.group(1))
+                site.webbuilder_site_id = webbuilder_site_id
+                site.save()
+                return JsonResponse({"success": True, "site_id": webbuilder_site_id})
+            else:
+                return JsonResponse({"success": False, "error": "Site ID not found in URL output: " + url})
+        except subprocess.CalledProcessError as e:
+            error_message = e.stderr or str(e)
+            return JsonResponse({"success": False, "error": error_message})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    return JsonResponse({"success": False, "error": "Invalid request"})

@@ -16,6 +16,10 @@ class DataMigrationUtility(models.Model):
         verbose_name = "Data Migration"
         verbose_name_plural = "Data Migrations"
 
+    class SiteListDetails(models.Model):
+        # ... existing fields ...
+        webbuilder_site_id = models.IntegerField(null=True, blank=True)
+
     def __str__(self):
         return f"Migration #{self.pk} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
 
