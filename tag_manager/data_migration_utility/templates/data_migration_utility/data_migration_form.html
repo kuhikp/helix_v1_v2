@@ -34,7 +34,7 @@
             </a>
         </div>
         <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" id="migrationForm">
                 {% csrf_token %}
                 {% if form.errors %}
                     <div class="alert alert-danger">
@@ -132,9 +132,17 @@
                 </div>
 
                 <!-- Submit Button -->
+                <!-- Loader (hidden by default) -->
+                <div id="loader" style="display:none; text-align:center; margin-top:20px;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="mt-2">Processing migration, please wait...</div>
+                </div>
+
                 <div class="text-center mt-4">
                     <div class="btn-group">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
                             <i class="fas fa-save me-2"></i>
                             {% if is_edit %}Save Changes{% else %}Create Migration{% endif %}
                         </button>
@@ -147,4 +155,10 @@
         </div>
     </div>
 </div>
+<script>
+document.getElementById('migrationForm').addEventListener('submit', function() {
+    document.getElementById('loader').style.display = 'block';
+    document.getElementById('submitBtn').disabled = true;
+});
+</script>
 {% endblock %}

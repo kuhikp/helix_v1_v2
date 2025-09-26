@@ -1,0 +1,1001 @@
+<noscript id="ivon">
+</noscript>
+<div id="iupgwx"><iframe src="//www.googletagmanager.com/ns.html?id=GTM-5BJX3X" height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</div>
+<div data-role="page" data-tap-toggle="false" id="wrapper-page">
+  <div data-role="content" data-tap-toggle="false" data-fullscreen="true" id="content">
+    <!-- Header -->
+    <!-- END Header -->
+    <!-- Scrollable Content -->
+    <div protected id="1b88aa39-77f7-4412-8227-3c613510f6d0" version="1.3.0" locked="1" async uuid="1b88aa39-77f7-4412-8227-3c613510f6d0" data-webbuilder-block-is-swe="yes" data-swe-block-title="Header block" data-webbuilder-swe-id-toggled="1" class="custom-block-element custom-block-is-swe-yes">
+      <header id="header" role="banner">
+        <div id="iq0s" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid section clearfix">
+          <!-- Header Region -->
+          <div id="header-region" data-role="header" data-position="fixed" data-fullscreen="true" data-tap-toggle="false" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid section fixed">
+            <div id="ix1k" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid header-wrapper">
+              <!-- Logo Image -->
+              <a data-ajax="false" href="page/5418d9e1-c8ae-4d0b-9a6d-2988d576b18c" title="Home" rel="home" id="logo-hidden" data-role="none"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/e49cfbeb-08ce-4deb-9695-2c3202b69a14" alt="Home" id="i7l9"/></a>
+              <a data-ajax="false" href="page/5418d9e1-c8ae-4d0b-9a6d-2988d576b18c" title="Home" rel="home" id="logo-mobile" data-role="none"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/52a365e6-7c66-4db0-a395-b485605d564c" alt="Home" id="ip8ot"/></a>
+              <div id="ipx16" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid region region-top-menu">
+                <div id="block-menu-menu-header-menu" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-menu header-menu">
+                  <h2 id="i9peg">Header Menu
+                  </h2>
+                  <div id="i9ic1" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                    <ul id="ieehl" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                      <li id="ixdsi" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first leaf">
+                        <a href="page/5418d9e1-c8ae-4d0b-9a6d-2988d576b18c" title="Home" id="ivb0s">Home</a>
+                      </li>
+                      <li id="inoqyk" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first leaf">
+                        <a href="page/5418d9e1-c8ae-4d0b-9a6d-2988d576b18c" title="Home" id="ip4pnu">Indications<br/></a>
+                        <div data-text-lock-children="true" id="ij9tsh" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid helix-text helix-text-locking-children-ckeditor indication-tooltip">
+                          <p id="insxb1">Duavee is used after menopause for women with a uterus to reduce moderate to severe hot flashes and to help reduce the chances of developing osteoporosis (thin, weak bones).
+                          </p>
+                          <p id="ijg2s3">If you use Duavee only to prevent osteoporosis due to menopause, talk with your healthcare provider about whether a different treatment or medicine without estrogens might be better for you. 
+                          </p>
+                          <p id="i4eiii">Duavee should be taken for the shortest time possible and only for as long as treatment is needed. You and your healthcare provider should talk regularly about whether you still need treatment with Duavee.
+                          </p>
+                        </div>
+                      </li>
+                      <li id="i5qfm" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                        <a href="page/c0640680-04f2-43c7-a36f-592567844c60" title="Important Safety Information" id="ikha3" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid for-hcp-link">Important Safety Information</a>
+                      </li>
+                      <li id="ii3xz" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                        <a href="http://labeling.pfizer.com/ShowLabeling.aspx?id=1174" title="Full Prescribing Information, Including BOXED WARNING and Patient Information" target="_blank" id="inyvd" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid full-pi-link">Full Prescribing Information, Including BOXED WARNING and Patient Information</a>
+                      </li>
+                      <li id="iijuk" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf last">
+                        <a href="https://duavee.pfizerpro.com/" title="For Healthcare Professionals" id="i1mhl" target="_blank" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid for-hcps newTabLink ext">For Healthcare Professionals</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <!-- /.content -->
+                </div>
+                <!-- /.block -->
+                <div id="block-block-27" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-block">
+                  <div id="izj2d" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                    <!--
+Start of DoubleClick Floodlight Tag: Please do not remove
+Activity name of this tag: Duavee.com_All Pages_Page View_Std_CV
+URL of the webpage where the tag is expected to be placed: http://duavee.com
+This tag must be placed between the <body> and </body> tags, as close as possible to the opening tag.
+Creation Date: 09/12/2013
+-->
+                    <noscript id="iwxeg">
+                      &amp;lt;iframe src=&amp;quot;https://4261697.fls.doubleclick.net/activityi;src=4261697;type=duav;cat=pgview;u1=page_id;ord=1?&amp;quot;
+                      width=&amp;quot;1&amp;quot; height=&amp;quot;1&amp;quot; frameborder=&amp;quot;0&amp;quot; style=&amp;quot;display:none&amp;quot;&amp;gt;&amp;lt;/iframe&amp;gt;
+                    </noscript>
+                    <!-- End of DoubleClick Floodlight Tag: Please do not remove -->
+                  </div>
+                  <!-- /.content -->
+                </div>
+                <!-- /.block -->
+                <div id="block-block-44" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-block">
+                  <div id="ib665" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                    <!--
+Start of DoubleClick Floodlight Tag: Please do not remove
+Activity name of this tag: Duavee.com_Key Action_Get Your Dr Cnvrsation Guide Button_Std_na
+URL of the webpage where the tag is expected to be placed: https://www.duavee.com/
+This tag must be placed between the <body> and </body> tags, as close as possible to the opening tag.
+Creation Date: 07/01/2014
+-->
+                    <noscript id="ijw6v">
+                      &amp;lt;iframe src=&amp;quot;https://4261697.fls.doubleclick.net/activityi;src=4261697;type=duav;cat=click5;ord=1?&amp;quot; width=&amp;quot;1&amp;quot;
+                      height=&amp;quot;1&amp;quot; frameborder=&amp;quot;0&amp;quot; style=&amp;quot;display:none&amp;quot;&amp;gt;&amp;lt;/iframe&amp;gt;
+                    </noscript>
+                    <!-- End of DoubleClick Floodlight Tag: Please do not remove -->
+                  </div>
+                  <!-- /.content -->
+                </div>
+                <!-- /.block -->
+                <div id="block-block-30" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-block">
+                  <div id="ijodl" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                    <!--
+Start of DoubleClick Floodlight Tag: Please do not remove
+Activity name of this tag: Duavee.com_Key Page_Homepage_Std_na
+URL of the webpage where the tag is expected to be placed: https://www.duavee.com/
+This tag must be placed between the <body> and </body> tags, as close as possible to the opening tag.
+Creation Date: 07/01/2014
+-->
+                    <noscript id="ix68h">
+                      &amp;lt;iframe src=&amp;quot;https://4261697.fls.doubleclick.net/activityi;src=4261697;type=duav;cat=pg01;ord=1?&amp;quot; width=&amp;quot;1&amp;quot;
+                      height=&amp;quot;1&amp;quot; frameborder=&amp;quot;0&amp;quot; style=&amp;quot;display:none&amp;quot;&amp;gt;&amp;lt;/iframe&amp;gt;
+                    </noscript>
+                    <!-- End of DoubleClick Floodlight Tag: Please do not remove -->
+                  </div>
+                  <!-- /.content -->
+                </div>
+                <!-- /.block -->
+                <div id="block-block-43" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-block">
+                  <div id="i04s5" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                    <!--
+Start of DoubleClick Floodlight Tag: Please do not remove
+Activity name of this tag: Duavee.com_Key Action_Learn More About How Duavee Button_Std_na
+URL of the webpage where the tag is expected to be placed: https://www.duavee.com/
+This tag must be placed between the <body> and </body> tags, as close as possible to the opening tag.
+Creation Date: 07/01/2014
+-->
+                    <noscript id="i684k">
+                      &amp;lt;iframe src=&amp;quot;https://4261697.fls.doubleclick.net/activityi;src=4261697;type=duav;cat=click4;ord=1?&amp;quot; width=&amp;quot;1&amp;quot;
+                      height=&amp;quot;1&amp;quot; frameborder=&amp;quot;0&amp;quot; style=&amp;quot;display:none&amp;quot;&amp;gt; &amp;lt;/iframe&amp;gt;
+                    </noscript>
+                    <!-- End of DoubleClick Floodlight Tag: Please do not remove -->
+                  </div>
+                  <!-- /.content -->
+                </div>
+                <!-- /.block -->
+                <div id="block-block-46" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-block">
+                  <div id="i41k2" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                    <!--
+Start of DoubleClick Floodlight Tag: Please do not remove
+Activity name of this tag: Duavee.com_Key Action_Lets Get Started Button_Std_na
+URL of the webpage where the tag is expected to be placed: https://www.duavee.com/
+This tag must be placed between the <body> and </body> tags, as close as possible to the opening tag.
+Creation Date: 07/01/2014
+-->
+                    <noscript id="i0gpa">
+                      &amp;lt;iframe src=&amp;quot;https://4261697.fls.doubleclick.net/activityi;src=4261697;type=duav;cat=click7;ord=1?&amp;quot; width=&amp;quot;1&amp;quot;
+                      height=&amp;quot;1&amp;quot; frameborder=&amp;quot;0&amp;quot; style=&amp;quot;display:none&amp;quot;&amp;gt;&amp;lt;/iframe&amp;gt;
+                    </noscript>
+                    <!-- End of DoubleClick Floodlight Tag: Please do not remove -->
+                  </div>
+                  <!-- /.content -->
+                </div>
+                <!-- /.block -->
+                <div id="block-block-45" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-block">
+                  <div id="iw6fg" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                    <!--
+Start of DoubleClick Floodlight Tag: Please do not remove
+Activity name of this tag: Duavee.com_Key Action_Start Savings Now Button_Std_na
+URL of the webpage where the tag is expected to be placed: https://www.duavee.com/
+This tag must be placed between the <body> and </body> tags, as close as possible to the opening tag.
+Creation Date: 07/01/2014
+-->
+                    <noscript id="ioldq">
+                      &amp;lt;iframe src=&amp;quot;https://4261697.fls.doubleclick.net/activityi;src=4261697;type=duav;cat=click6;ord=1?&amp;quot; width=&amp;quot;1&amp;quot;
+                      height=&amp;quot;1&amp;quot; frameborder=&amp;quot;0&amp;quot; style=&amp;quot;display:none&amp;quot;&amp;gt;&amp;lt;/iframe&amp;gt;
+                    </noscript>
+                    <!-- End of DoubleClick Floodlight Tag: Please do not remove -->
+                  </div>
+                  <!-- /.content -->
+                </div>
+                <!-- /.block -->
+                <div id="block-menu-menu-header-menu-mobile" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-menu header-menu-mobile">
+                  <h2 id="iz14h">Header Menu Mobile
+                  </h2>
+                  <div id="ihg5a" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                    <ul id="i80tk" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                      <li id="imbzh" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first last leaf">
+                        <a href="http://labeling.pfizer.com/ShowLabeling.aspx?id=1174" target="_blank" id="iptp9" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid full-pi-link">Full Prescribing Information, Including BOXED WARNING and Patient Information</a>
+                      </li>
+                    </ul>
+                  </div>
+                  <!-- /.content -->
+                </div>
+                <!-- /.block -->
+              </div>
+              <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+              <div id="ix7jr" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid button-mobile">
+                <button type="button" data-toggle="dropdown" id="ikufg" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid dropdown-toggle"><span id="igo7i" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid sr-only">MENU</span><span id="i0b45" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid icon-bar"></span><span id="i1sz7" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid icon-bar"></span></button>
+              </div>
+              <!-- Navigation - START -->
+              <div id="navbar" role="menu" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid dropdown dropdown-menu">
+                <div id="ixmyi" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid region region-header-menu">
+                  <div id="block-system-main-menu" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-system block-menu">
+                    <h2 id="ictnve">Menu
+                    </h2>
+                    <div id="ifbzpe" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                      <ul id="isgrg9" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                        <li id="i6vb8v" show-mega-menu="hide" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first expanded life-menopause only-trigger-menu">
+                          <a href="page/ffb045e0-eb44-41ef-ab0c-3fa540f18898" title="Life & Menopause" id="i5fx2a" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid life-menopause only-trigger-menu no-link">Life &amp;<br/>
+                            Menopause</a>
+                          <ul id="ipngp7" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                            <li id="i9hlfa" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first leaf">
+                              <a href="page/b492959f-0b85-4ad1-b947-f8905ca87559" title="Let's Talk Menopause" id="ioo9ny">Let&#039;s Talk Menopause
+                                <span id="inix04" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                            </li>
+                            <li id="ihk54l" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/8baba8e3-7b79-46ff-8625-01d8b4319acd" title="Hot Flashes & Menopause" id="ikt51q">Hot Flashes &amp; Menopause
+                                <span id="iq58y3" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                            </li>
+                            <li id="iwcwba" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/b1cd12cc-75bf-488f-9140-00ac41150c0b" title="Bone Loss & Menopause" id="ig9bt9">Bone Loss &amp; Menopause
+                                <span id="i6ljqk" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                            </li>
+                            <li id="i8zpgj" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/136e12a5-7ecf-4024-b0ce-0d3f011e5976" title="Estrogen & Menopause" id="ioz803">Estrogens &amp; Menopause
+                                <span id="i3fbxf" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                            </li>
+                            <li id="in2gww" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid last leaf">
+                              <a href="page/a5959ff7-3c22-4c53-88bf-084f3b60b9d3" title="Lifestyle Changes" id="iwbjic">Lifestyle Changes
+                                <span id="i52h3i" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li id="ivm2bf" show-mega-menu="hide" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid expanded duavee-symptom-relief only-trigger-menu">
+                          <a href="page/ffb045e0-eb44-41ef-ab0c-3fa540f18898" title="Duavee & What It Does" id="link_sign_up" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid duavee-symptom-relief only-trigger-menu no-link">Duavee &amp;
+                            <span id="ib7qmj" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid break">What It Does</span><span id="ich6px" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                          <ul id="iaqjtz" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                            <li id="i87c7v" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first leaf">
+                              <a href="page/c27db74b-c564-4cae-94aa-12300d797fb5" title="About Duavee" id="ia0qhv">About Duavee</a>
+                            </li>
+                            <li id="i9sxgk" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/20825d04-d83a-4388-b4d1-73ccc02b8fb6" title="How Duavee Works" id="il2egs">How Duavee Works </a>
+                            </li>
+                            <li id="izbg3j" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/12a001dd-036a-4d91-a182-ef1394ebef15" title="Duavee & Hot Flashes" id="i8xpvx">Duavee &amp; Hot Flashes </a>
+                            </li>
+                            <li id="iuaeg3" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/f22d9784-3572-40a6-8340-7c30a5d61b5b" title="Duavee & Bone Loss" id="itinmg">Duavee &amp; Bone Loss </a>
+                            </li>
+                            <li id="imt5al" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/fbede34e-411a-47e7-8e3b-f1991ce1617d" title="Is Duavee Right for You?" id="id9eul">Is Duavee Right for You? </a>
+                            </li>
+                            <li id="ijz8nm" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid last leaf">
+                              <a href="page/5abd7d82-7883-456d-97a3-3eb46476b61f" title="Possible Side Effects" id="i97eng">Possible Side Effects
+                                <span id="ifl378" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li id="iqca52" show-mega-menu="hide" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid expanded you-your-doctor no-children">
+                          <a href="page/f85c7199-f559-4f4f-affb-95af82843b17" title="You & Your Doctor" id="link_learn_more" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid you-your-doctor no-children no-link">You &amp;
+                            <span id="i8w62h" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid break">Your Doctor</span><span id="iujevy" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                          <ul id="iribhl" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                            <li id="ixs9n1" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first last collapsed hidden-item">
+                              <a href="page/f85c7199-f559-4f4f-affb-95af82843b17" title="Conversation guide" id="isxgeh" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid hidden-item">Conversation Guide
+                                <span id="ir4kcn" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li id="i3fisa" show-mega-menu="hide" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid last expanded offers-savings">
+                          <a href="https://pfizermenopause.com/savings-card/#duavee" title="Savings & Activation" id="iaebwx" target="_blank" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid offers-savings">Savings &amp;
+                            <span id="ifkqic" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid break">Activation</span><span id="ih29dc" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid general-sprite"></span></a>
+                        </li>
+                      </ul>
+                    </div>
+                    <!-- /.content -->
+                  </div>
+                  <!-- /.block -->
+                  <div id="block-menu-menu-main-menu-mobile" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid block block-menu">
+                    <h2 id="imnabo">Main Menu Mobile
+                    </h2>
+                    <div id="i6k5he" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid content">
+                      <ul id="iemzb5" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                        <li id="i7a0bl" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first expanded">
+                          <a href="page/ffb045e0-eb44-41ef-ab0c-3fa540f18898" id="i9a7wi" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid life-menopause only-trigger-menu">Life &amp; Menopause</a>
+                          <ul id="ictf8l" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                            <li id="ia5unl" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first leaf">
+                              <a href="page/b492959f-0b85-4ad1-b947-f8905ca87559" id="i19o0g">Let&#039;s Talk Menopause</a>
+                            </li>
+                            <li id="iq5epj" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/8baba8e3-7b79-46ff-8625-01d8b4319acd" id="indzqj">Hot Flashes &amp; Menopause</a>
+                            </li>
+                            <li id="icc76f" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/b1cd12cc-75bf-488f-9140-00ac41150c0b" id="i6txdk">Bone Loss &amp; Menopause</a>
+                            </li>
+                            <li id="im0fr8" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/136e12a5-7ecf-4024-b0ce-0d3f011e5976" id="ir15zd">Estrogens &amp; Menopause</a>
+                            </li>
+                            <li id="ibz6vk" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid last leaf">
+                              <a href="page/a5959ff7-3c22-4c53-88bf-084f3b60b9d3" title="Lifestyle Changes" id="idraj7">Lifestyle Changes</a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li id="icrx93" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid expanded">
+                          <a href="page/ffb045e0-eb44-41ef-ab0c-3fa540f18898" id="ip938i" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid duavee-symptom-relief only-trigger-menu">Duavee &amp; What It Does</a>
+                          <ul id="ishf6d" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu">
+                            <li id="itpulb" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first leaf">
+                              <a href="page/c27db74b-c564-4cae-94aa-12300d797fb5" id="i6hno9">About Duavee</a>
+                            </li>
+                            <li id="igfirw" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/20825d04-d83a-4388-b4d1-73ccc02b8fb6" id="i981gg">How Duavee Works</a>
+                            </li>
+                            <li id="ifxve5" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/12a001dd-036a-4d91-a182-ef1394ebef15" id="i1g0tw">Duavee &amp; Hot Flashes</a>
+                            </li>
+                            <li id="ivu35i" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/f22d9784-3572-40a6-8340-7c30a5d61b5b" id="igimuy">Duavee &amp; Bone Loss</a>
+                            </li>
+                            <li id="i44ot2" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/fbede34e-411a-47e7-8e3b-f1991ce1617d" id="ijo8xw">Is Duavee Right for You?</a>
+                            </li>
+                            <li id="iffiez" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid last leaf">
+                              <a href="page/5abd7d82-7883-456d-97a3-3eb46476b61f" id="ivy6fo">Possible Side Effects</a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li id="iez3hk" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                          <a href="page/f85c7199-f559-4f4f-affb-95af82843b17" id="i9c3pf" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid you-your-doctor no-children">You &amp; Your Doctor</a>
+                        </li>
+                        <li id="iv5mmb" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid expanded">
+                          <a href="https://www.pfizermenopause.com/savings-card/#duavee" id="ipg12b" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid offers-savings">Savings &amp; Activation</a>
+                          <ul id="ibbi0q" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid menu hide">
+                            <li id="izeip2" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid first leaf">
+                              <a href="page/414deae5-874f-4b09-aa6f-b441b0f3ebde" id="iavowt">Save on Duavee</a>
+                            </li>
+                            <li id="i8vkl9" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid leaf">
+                              <a href="page/04d3b39a-a0ab-4005-97b1-ea6c4bad1bbb" id="iplxu2">Get a Savings Card</a>
+                            </li>
+                            <li id="i91v49" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid last leaf">
+                              <a href="page/25276cc5-7040-46df-8da7-5de8c10af10b" id="ig0gpa">Activate a Savings Card</a>
+                            </li>
+                          </ul>
+                        </li>
+                        <li id="ij8cov" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid last leaf">
+                          <a href="page/5418d9e1-c8ae-4d0b-9a6d-2988d576b18c" id="ibtzg1" class="block-4735626-cid block-4536501-cid block-4401001-cid block-2699854-cid block-1603124-cid block-1062250-cid duavee-me">Home</a>
+                        </li>
+                      </ul>
+                    </div>
+                    <!-- /.content -->
+                  </div>
+                  <!-- /.block -->
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- END Header Region -->
+        </div>
+      </header>
+    </div>
+    <section id="scrollable">
+      <!-- Content -->
+      <section id="main-wrapper">
+        <div role="main" id="ims5fw" class="column">
+          <div id="iw8ldj" class="tabs">
+          </div>
+          <div id="iqymtn" class="region region-page-content">
+            <custom-site-element id="de02223e-2e5a-40f0-9021-de190284bdcd" uuid="de02223e-2e5a-40f0-9021-de190284bdcd" data-swe-block-title="Header #2" class="custom-block-element custom-block-is-swe-no custom-block-is-swe-converted">
+              <div id="block-block-96" class="block block-block">
+                <div id="i6ng" class="content">
+                </div> 
+                <!-- /.content -->
+              </div>
+            </custom-site-element>
+            <!-- /.block -->
+            <custom-site-element id="d4a465f7-4d5e-434e-ab73-c124cc955b91" uuid="d4a465f7-4d5e-434e-ab73-c124cc955b91" data-swe-block-title="Header #1" class="custom-block-element custom-block-is-swe-no custom-block-is-swe-converted">
+              <div id="block-block-76" class="block block-block">
+                <div id="ig7x" class="content">
+                </div> 
+                <!-- /.content -->
+              </div>
+            </custom-site-element>
+            <!-- /.block -->
+            <custom-site-element id="c19c2cd8-a129-4791-bc4c-4f4e3d4384ea" uuid="c19c2cd8-a129-4791-bc4c-4f4e3d4384ea" data-swe-block-title="block #3" class="custom-block-element custom-block-is-swe-no custom-block-is-swe-converted">
+              <div id="block-block-86" class="block block-block">
+                <div id="ib1j" class="content">
+                </div> 
+                <!-- /.content -->
+              </div>
+            </custom-site-element>
+            <!-- /.block -->
+            <custom-site-element id="0cf50dd0-ff7a-4446-bf05-ad02e6d81417" uuid="0cf50dd0-ff7a-4446-bf05-ad02e6d81417" data-swe-block-title="ISI #3" class="custom-block-element custom-block-is-swe-no custom-block-is-swe-converted">
+              <div id="block-block-106" class="block block-block">
+                <div id="ikoo" class="content">
+                </div> 
+                <!-- /.content -->
+              </div>
+            </custom-site-element>
+            <!-- /.block -->
+            <div id="block-system-main" class="block block-system">
+              <div id="i1mgvi" class="content">
+                <article id="node-9" about="/what-is-menopause" typeof="foaf:Document" class="node node-page clearfix">
+                  <div id="ifpoxf" class="content">
+                    <div id="i9siiq" class="field field-name-body field-type-text-with-summary field-label-hidden">
+                      <div id="i1dlwg" class="field-items">
+                        <div property="content:encoded" id="i1skat" class="field-item even">
+                          <div id="talk-menopause">
+                            <h2 title="LET’S TALK MENOPAUSE" id="ilb6zl" class="title-page">LET’S TALK 
+                              <strong id="isc4pl">MENOPAUSE</strong>
+                            </h2>
+                            <div id="ioyf1k" class="container">
+                              <div id="isu5oe" locked="">Menopause is a completely normal, natural stage in a woman’s life. Every woman is different. That’s why the
+                                <br data-highlightable="1" id="ir9dl4"/>
+                                transition to menopause is different for every woman. It usually occurs between the ages of 40 and 58.
+                              </div>
+                              <div id="i2fn5k">Let’s take a closer look at the menopause transition…
+                              </div>
+                              <br id="ilqja1"/>
+                              <div id="i2noc9" class="media media-element-container media-default">
+                                <div id="file-43" class="file file-image file-image-png">
+                                  <!--<h2><a href=""></a></h2>-->
+                                  <div id="ifxhf5" class="content">
+                                    <a href="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/494238cd-f9e7-40a9-92b2-f7b7a4e5a670" title="Menopause timelines" data-colorbox-gallery="gallery-file-43-4DTJQfA9Ujs" id="ijrscn" class="colorbox"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/494238cd-f9e7-40a9-92b2-f7b7a4e5a670" data-delta="1" alt="Menopause timelines" height="586" width="646" typeof="foaf:Image" title="" id="ij8sk1" class="media-image media-element file-default"/></a>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div id="iagxpj"> 
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="igis83" class="field field-name-field-content-mobile field-type-text-with-summary field-label-hidden menopause-mobilesection-2">
+                      <div id="iwcnvr" class="field-items">
+                        <div id="ifihh9" class="field-item even">
+                          <div id="talk-menopause-2" class="menopause-mobile-2">
+                            <h2 title="LET’S TALK MENOPAUSE" id="i1ve3s" class="title-page">LET’S TALK 
+                              <span id="iokfqf">MENOPAUSE</span>
+                            </h2>
+                            <div id="ir3be8" class="container">
+                              <div id="ivxqqk">Menopause is a completely normal, natural stage in a woman’s life. Every woman is different. That&#039;s why the transition to menopause is different for every woman. It usually occurs between the ages of 40 and 58.
+                              </div>
+                              <div id="ied7tx">Let’s take a closer look at the menopause transition…
+                              </div>
+                            </div>
+                            <h3 id="iew2jm" class="title-lets-accordion">The 
+                              <span id="iem2et">Menopause Transition</span>
+                            </h3>
+                            <helix-accordion data-hwc-version="3.335.0" id="ifw6s" class="main-accordiaon">
+                              <helix-accordion-panel data-hwc-version="3.335.0" id="if1na" class="per-accord-1">
+                                <h3 slot="header" id="irm9o" class="first-text">
+                                </h3>
+                                <div id="ij7hn">
+                                  <helix-image alt="Helix Image PARAG KUHIKAR" full-width="true" img-src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=300&w=338&q=80" img-retina="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=600&w=776&q=80" mobile-img-src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=300&w=338&q=80" mobile-img-retina="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=600&w=776&q=80" data-hwc-version="3.405.0" id="ii6l"></helix-image>
+                                </div>
+                              </helix-accordion-panel>
+                              <helix-accordion-panel data-hwc-version="3.335.0" id="i1uk9" class="meno-accord-2">
+                                <h3 slot="header" id="ioxtw" class="second-text">
+                                </h3>
+                                <div id="iysht">
+                                  <helix-image alt="Helix Image PARAG KUHIKAR" full-width="true" img-src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=300&w=338&q=80" img-retina="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=600&w=776&q=80" mobile-img-src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=300&w=338&q=80" mobile-img-retina="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=600&w=776&q=80" data-hwc-version="3.405.0" id="ii6l"></helix-image>
+                                </div>
+                              </helix-accordion-panel>
+                              <helix-accordion-panel data-hwc-version="3.335.0" id="ihv64" class="post-accord-3">
+                                <h3 slot="header" id="ii55v" class="third-text">Nullam at KC
+                                </h3>
+                                <div id="idgbh">
+                                  <helix-image alt="Helix Image PARAG KUHIKAR" full-width="true" img-src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=300&w=338&q=80" img-retina="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=600&w=776&q=80" mobile-img-src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=300&w=338&q=80" mobile-img-retina="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=600&w=776&q=80" data-hwc-version="3.405.0" id="ii6l"></helix-image>
+                                </div>
+                              </helix-accordion-panel>
+                            </helix-accordion>
+                            <ul id="ih0q5x" class="lets-accordion">
+                              <li id="iwhtul">
+                                <div id="i77a0u"> 
+                                </div>
+                                <ul id="iycdur">
+                                  <li id="i0196l">
+                                    <div id="i4amzg" class="media media-element-container media-default">
+                                      <div id="file-136" class="file file-image file-image-png">
+                                        <!--<h2><a href=""></a></h2>-->
+                                        <div id="iw2wxj" class="content">
+                                          <a href="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/639c45db-d0f1-4298-a1cb-4d3e7e809c83" title="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/74f1a30c-1cae-4856-b6bd-b6c3545a0a8f" data-colorbox-gallery="gallery-file-136-4DTJQfA9Ujs" id="i8oh5k" class="colorbox"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/639c45db-d0f1-4298-a1cb-4d3e7e809c83" data-delta="2" typeof="foaf:Image" width="165" height="392" alt="" title="" id="ix8b13" class="media-image media-element file-default"/></a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </li>
+                                </ul>
+                              </li>
+                              <li id="i49t4f">
+                                <div id="ic58kv"> 
+                                </div>
+                                <ul id="i7jhql" class="lets-accordion-second">
+                                  <li id="i27fp9">
+                                    <div id="is1gcm" class="media media-element-container media-default">
+                                      <div id="file-138" class="file file-image file-image-png">
+                                        <!--<h2><a href=""></a></h2>-->
+                                        <div id="i6fbkm" class="content">
+                                          <a href="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/22c59bec-2f55-497a-9f93-18dc35331135" title="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/d9dc5ebc-ea95-4cde-8e6d-0ff9b2537a07" data-colorbox-gallery="gallery-file-138-4DTJQfA9Ujs" id="is4r9r" class="colorbox"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/22c59bec-2f55-497a-9f93-18dc35331135" data-delta="3" typeof="foaf:Image" width="178" height="383" alt="" title="" id="i4qo2n" class="media-image media-element file-default"/></a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </li>
+                                </ul>
+                              </li>
+                              <li id="i3ja9t">
+                                <div id="i66pe9"> 
+                                </div>
+                                <ul id="id4q67" class="lets-accordion-three">
+                                  <li id="ipntaw">
+                                    <div id="i0aqyp" class="media media-element-container media-default">
+                                      <div id="file-140" class="file file-image file-image-png">
+                                        <!--<h2><a href=""></a></h2>-->
+                                        <div id="inqvc2" class="content">
+                                          <a href="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/a93948cd-901d-445f-a678-6659ef4d5367" title="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/b22980cc-629d-49f6-9a44-efc521e632d0" data-colorbox-gallery="gallery-file-140-4DTJQfA9Ujs" id="ihtdyb" class="colorbox"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/a93948cd-901d-445f-a678-6659ef4d5367" data-delta="4" height="193" width="218" typeof="foaf:Image" alt="" title="" id="iem0ik" class="media-image media-element file-default"/></a>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </li>
+                                </ul>
+                              </li>
+                            </ul>
+                          </div>
+                          <div id="itn6l6"> 
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="ib4eom" class="field field-name-field-next-section field-type-text-long field-label-hidden">
+                      <div id="i9bm5y" class="field-items">
+                        <div id="ih7331" class="field-item even">
+                          <div id="i7cvq1">
+                            <a data-highlightable="1" href="page/8baba8e3-7b79-46ff-8625-01d8b4319acd" class="next-page" id="ip3yhb"></a>
+                          </div>
+                          <div id="ib8pz7" class="media media-element-container media-media_original">
+                            <a href="/page/8baba8e3-7b79-46ff-8625-01d8b4319acd" id="iycjw9" class="next-page"><div id="file-62" class="file file-image file-image-png">
+                              <!--<h2><a href=""></a></h2>-->
+                              <div id="idibv5" class="content">
+                                <img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/259fe69b-1c9c-4560-b1b7-4b0230205a14" height="210" width="310" data-delta="5" typeof="foaf:Image" alt="" title="" id="ixgokb" class="media-image media-element file-media-original"/>
+                              </div>
+                              </div></a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="i8qngw" class="field field-name-field-next-section-mobile field-type-text-with-summary field-label-hidden">
+                      <div id="i962qj" class="field-items">
+                        <div id="ijeust" class="field-item even">
+                          <div id="inv9fh">
+                            <a data-highlightable="1" href="page/8baba8e3-7b79-46ff-8625-01d8b4319acd" class="next-page" id="ipnsjq"></a>
+                          </div>
+                          <div id="ic7nht" class="media media-element-container media-media_original">
+                            <a href="page/8baba8e3-7b79-46ff-8625-01d8b4319acd" id="ie3qqz" class="next-page"><div id="file-104" class="file file-image file-image-png">
+                              <!--<h2><a href=""></a></h2>-->
+                              <div id="i0glrr" class="content">
+                                <img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/784fc23b-96e5-4abd-afbf-16708f2b3c56" height="114" width="146" data-delta="6" typeof="foaf:Image" alt="" title="" id="i7fwbi" class="media-image media-element file-media-original"/>
+                              </div>
+                              </div></a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="iyrf5i" class="field field-name-field-callout-mobile field-type-text-with-summary field-label-hidden">
+                      <div id="i377qf" class="field-items">
+                        <div id="ir0fm2" class="field-item even">
+                          <div id="inw1r9">
+                            <a data-highlightable="1" href="page/f85c7199-f559-4f4f-affb-95af82843b17" class="talk-to-your-doctor" id="idv68s"></a>
+                          </div>
+                          <div id="i0dxff" class="media media-element-container media-media_original">
+                            <a href="page/f85c7199-f559-4f4f-affb-95af82843b17" id="i3i5jo" class="talk-to-your-doctor"><div id="file-216--4" class="file file-image file-image-png">
+                              <!--<h2><a href=""></a></h2>-->
+                              <div id="ixfu19" class="content">
+                                <img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/965b8b06-6a24-4612-9882-fdc91fce0434" height="114" width="149" data-delta="8" typeof="foaf:Image" alt="" title="" id="i3zkrf" class="media-image media-element file-media-original"/>
+                              </div>
+                              </div></a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="i1s2rm" class="field field-name-field-callout field-type-text-long field-label-hidden">
+                      <div id="iwlmpe" class="field-items">
+                        <div id="i9jukp" class="field-item even">
+                          <div id="i3rcff">
+                            <a data-highlightable="1" href="page/f85c7199-f559-4f4f-affb-95af82843b17" class="talk-to-your-doctor" id="igtxyv"></a>
+                          </div>
+                          <div id="ied98l" class="media media-element-container media-media_original">
+                            <a href="page/f85c7199-f559-4f4f-affb-95af82843b17" id="i8u1b2" class="talk-to-your-doctor"><div id="file-173--5" class="file file-image file-image-png">
+                              <!--<h2><a href=""></a></h2>-->
+                              <div id="if4b3k" class="content">
+                                <img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/944e521a-a1bf-4bfc-b80e-c5eed698abba" height="210" width="310" data-delta="7" typeof="foaf:Image" alt="" title="" id="ixofch" class="media-image media-element file-media-original"/>
+                              </div>
+                              </div></a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div id="igst9i" class="field field-name-field-twitter-share-text field-type-text-long field-label-hidden">
+                      <div id="i4e4zw" class="field-items">
+                        <div id="idviej" class="field-item even">~6000 women in the US reach menopause every day. More on this natural stage of life here: www.duavee.com/what-is-menopause &gt;&gt;
+                        </div>
+                      </div>
+                    </div>
+                  </div> 
+                  <!-- /.content -->
+                </article>
+                <!-- /.node -->
+              </div> 
+              <!-- /.content -->
+            </div> 
+            <!-- /.block -->
+            <div id="block-menu-block-1" class="block block-menu-block sections-menu">
+              <h2 id="ijqlh6">More from LIFE &amp; MENOPAUSE
+              </h2>
+              <div id="iqtcuc" class="content">
+                <div id="ijmlmk" class="menu-block-wrapper menu-block-1 menu-name-main-menu parent-mlid-0 menu-level-2">
+                  <ul id="i0emcg" class="menu">
+                    <li id="it3rk2" class="first leaf menu-mlid-1355">
+                      <a href="page/b492959f-0b85-4ad1-b947-f8905ca87559" title="Let's Talk Menopause" id="i72a0h">Let&#039;s Talk Menopause<span id="iuovev" class="general-sprite"></span></a>
+                    </li>
+                    <li id="iwvdas" class="leaf menu-mlid-1356">
+                      <a href="/page/8baba8e3-7b79-46ff-8625-01d8b4319acd" title="Hot Flashes & Menopause" id="i8c3vl">Hot Flashes &amp; Menopause<span id="imy3h3" class="general-sprite"></span></a>
+                    </li>
+                    <li id="ihwo0d" class="leaf menu-mlid-1357">
+                      <a href="page/b1cd12cc-75bf-488f-9140-00ac41150c0b" title="Bone Loss & Menopause" id="iyi3qt">Bone Loss &amp; Menopause<span id="ipz5nr" class="general-sprite"></span></a>
+                    </li>
+                    <li id="i4ozpf" class="leaf menu-mlid-1358">
+                      <a href="page/136e12a5-7ecf-4024-b0ce-0d3f011e5976" title="Estrogen & Menopause" id="ibgy6z">Estrogens &amp; Menopause<span id="igjg4l" class="general-sprite"></span></a>
+                    </li>
+                    <li id="ibpbei" class="last leaf menu-mlid-1359">
+                      <a href="page/a5959ff7-3c22-4c53-88bf-084f3b60b9d3" title="Lifestyle Changes" id="iqr71g">Lifestyle Changes<span id="iov6sl" class="general-sprite"></span></a>
+                    </li>
+                  </ul>
+                </div>
+              </div> 
+              <!-- /.content -->
+            </div> 
+            <!-- /.block -->
+            <!-- /.block -->
+            <div protected id="6162bfbd-de2b-42ac-b6ba-43aa07ad50d9" version="1.4.0" locked="1" async uuid="6162bfbd-de2b-42ac-b6ba-43aa07ad50d9" data-webbuilder-block-is-swe="yes" data-swe-block-title="ISI-footer" data-webbuilder-swe-id-toggled="1" class="custom-block-element custom-block-is-swe-yes">
+              <div id="block-multiblock-9" class="block-4400983-cid block-3623614-cid block-2920994-cid block-1603106-cid block-1027745-cid block block-multiblock isi-block">
+                <div id="ioir" class="block-4400983-cid block-3623614-cid block-2920994-cid block-1603106-cid block-1027745-cid content">
+                  <h2 id="i1s4" class="block-4400983-cid block-3623614-cid block-2920994-cid block-1603106-cid block-1027745-cid isi">IMPORTANT SAFETY INFORMATION
+                  </h2>
+                  <p id="i1nr">IMPORTANT SAFETY INFORMATION AND INDICATIONS
+                  </p>
+                  <p id="iznof">
+                    <strong>Do not take progestins, additional estrogens,</strong>
+                    <strong> or additional estrogen agonists/antagonists while taking Duavee<sup>®</sup> (conjugated estrogens/bazedoxifene).</strong>
+                  </p>
+                  <p id="ipy7m">
+                    <strong id="ilrvk">Using estrogen alone may increase your chance of getting cancer of the uterus. Report any unusual vaginal bleeding right away while taking Duavee. Vaginal bleeding after menopause may be a warning sign of cancer of the uterus. A healthcare provider should check unusual vaginal bleeding to find the cause.</strong>
+                  </p>
+                  <p id="izheq">
+                    <strong id="ijreo">Do not use estrogens to prevent heart disease, heart attacks, strokes, or dementia.</strong>
+                  </p>
+                  <p id="i6t34">
+                    <strong>Estrogen alone may increase the chance of getting blood clots or strokes.</strong>
+                  </p>
+                  <p id="ishof">
+                    <strong id="ibn1k">Using estrogen alone may increase the chance of getting dementia, based on a study of women 65 years of age or older.</strong>
+                  </p>
+                  <p id="ie6ol">
+                    <strong>The risks listed above are based on a study of an estrogen-alone oral product. Since other products and doses have not been studied in the same way, it is not known how the use of Duavee will affect your chances of getting these conditions.</strong>
+                  </p>
+                  <p id="i9q8a">Estrogens should be used at the lowest dose possible, only for as long as needed. You and your healthcare provider should talk regularly about whether you still need treatment with Duavee.
+                  </p>
+                  <p id="iu1kf">Do not use Duavee if you: have or had blood clots; are allergic to estrogens or bazedoxifene, the active ingredients of Duavee; have unusual vaginal bleeding; have or had certain cancers (e.g., uterine or breast), liver problems, or bleeding disorders; or are pregnant.
+                  </p>
+                  <p id="ix7z8">If you take thyroid medication, consult your healthcare provider, as use of estrogens may change the amount needed.
+                  </p>
+                  <p id="ickk2">Serious side effects include blood clots, stroke, heart attack, cancer of the lining of the uterus, breast cancer, cancer of the ovary, dementia, gallbladder problems, loss of vision, high blood pressure, increased fats in your blood, liver problems, thyroid problems, fluid retention, low calcium, swelling of your mouth or tongue, worsening of other medical problems such as asthma, diabetes, epilepsy, migraines, a genetic problem called porphyria, lupus and liver problems.
+                  </p>
+                  <p id="ifeti">Call your healthcare provider right away if you have any of the following warning signs, or any other unusual symptoms that concern you: new breast lumps, unusual vaginal bleeding, changes in vision or speech, sudden new severe headaches, severe pains in your chest or legs with or without shortness of breath, weakness and fatigue.
+                  </p>
+                  <p id="izh1u">Less serious, but common side effects include: muscle spasms, nausea, diarrhea, upset stomach, abdominal pain, throat pain, dizziness, neck pain.
+                  </p>
+                  <p id="ikh3r" class="block-4400983-cid block-3623614-cid block-2920994-cid block-1603106-cid block-1027745-cid separator"> 
+                  </p>
+                  <h2 id="iqrji">INDICATIONS
+                  </h2>
+                  <p id="ie1a9">Duavee is used after menopause for women with a uterus to reduce moderate to severe hot flashes and to help reduce the chances of developing osteoporosis (thin, weak bones).
+                  </p>
+                  <p id="i8n7w">If you use Duavee only to prevent osteoporosis due to menopause, talk with your healthcare provider about whether a different treatment or medicine without estrogens might be better for you.
+                  </p>
+                  <p id="ihvjc">Duavee should be taken for the shortest time possible and only for as long as treatment is needed. You and your healthcare provider should talk regularly about whether you still need treatment with Duavee.
+                  </p>
+                  <p id="i0zuf">
+                    <strong>Please see <a href="http://labeling.pfizer.com/ShowLabeling.aspx?id=1174" target="_blank">full Prescribing Information, including BOXED WARNING and Patient Information</a>.</strong>
+                  </p>
+                  <p id="i9oxn">Patients should always ask their doctors for medical advice about adverse events.
+                  </p>
+                  <p id="ihsw1">You are encouraged to report adverse events related to Pfizer products by calling 1-800-438-1985 (U.S. only). If you prefer, you may contact the U.S. Food and Drug Administration (FDA) directly. Visit 
+                    <a id="ext-pop" title="www.fda.gov/medwatch" href="https://www.fda.gov/MedWatch">http://www.fda.gov/MedWatch</a> or call 
+                    <span id="i7rhf" class="block-4400983-cid block-3623614-cid block-2920994-cid block-1603106-cid block-1027745-cid no-break-line">1-800-FDA-1088</span>.
+                  </p>
+                  <div id="ia4ai" class="block-4400983-cid block-3623614-cid block-2920994-cid block-1603106-cid block-1027745-cid right-rail-pathways">
+                    <p id="icmai">
+                      <strong id="i3l6l">This site is intended only for U.S. residents. The products discussed in this site may have different product labeling in different countries. The information provided is for educational purposes only and is not intended to replace discussions with a healthcare provider.</strong>
+                    </p>
+                    <p id="ijv3v">Doctors may recommend alternative treatment options to their patients.
+                    </p>
+                    <p id="iii0f" class="block-4400983-cid block-3623614-cid block-2920994-cid block-1603106-cid block-1027745-cid rx-path desktop-image">
+                      <a href="http://pfizerrxpath.com/" target="_blank" id="iif51"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/a277b445-2867-48ff-a7fe-05d7ccc96859" id="i14ll"/></a>
+                    </p>
+                    <p id="i1up3" class="block-4400983-cid block-3623614-cid block-2920994-cid block-1603106-cid block-1027745-cid rx-path mobile-image">
+                      <a href="http://pfizerrxpath.com/" target="_blank" id="iwak1"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/a277b445-2867-48ff-a7fe-05d7ccc96859" id="i2gw8"/></a>
+                    </p>
+                  </div>
+                </div> 
+                <!-- /.content -->
+              </div>
+            </div>
+            <custom-site-element id="21c3ab03-daa8-4d5b-9da7-807f3a424d41" uuid="21c3ab03-daa8-4d5b-9da7-807f3a424d41" data-swe-block-title="Footer #3" class="custom-block-element custom-block-is-swe-no custom-block-is-swe-converted">
+              <div id="block-block-14" class="block block-block inner-footer">
+                <div id="i4ps" class="content">
+                  <div id="ib63" class="left">
+                    <div id="inot">This site is intended only for U.S. residents. The products discussed in this site may have different product labeling in different countries. The information provided is for educational purposes only and is not intended to replace discussions with a healthcare provider.
+                    </div>
+                  </div>
+                  <div id="i6fg" class="right">
+                    <div id="icya" class="isi-image">
+                      <a href="http://pfizerrxpath.com/" target="_blank" id="imac"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/a277b445-2867-48ff-a7fe-05d7ccc96859" id="it0o"/></a>
+                    </div>
+                    <div id="i0ah" class="isi-content">
+                      <div id="ix27t">©2020 Pfizer Inc.
+                        <br data-highlightable="1" id="i3p6kg"/>All rights reserved.
+                        <br data-highlightable="1" id="iygk42"/>PP-DUA-USA-0457
+                      </div>
+                    </div>
+                  </div>
+                </div> 
+                <!-- /.content -->
+              </div>
+            </custom-site-element>
+            <!-- /.block -->
+            <custom-site-element id="49a9f534-6d37-4f8a-9c9e-dc7e06cb53de" uuid="49a9f534-6d37-4f8a-9c9e-dc7e06cb53de" data-swe-block-title="Footer #2" class="custom-block-element custom-block-is-swe-no custom-block-is-swe-converted">
+              <div id="block-block-25" class="block block-block inner-footer-mobile">
+                <div id="i4qy" class="content">
+                  <div id="ij55" class="title">
+                    <h2 id="iyft">HAVE A QUESTION?
+                    </h2>
+                    <h2 id="ih6g">CALL US AT 
+                      <strong id="izuo">1-866-881-2545</strong>
+                    </h2>
+                  </div>
+                  <div id="ixk4" class="left">
+                    <div id="it8jk">The product information provided in this site is intended for residents of the United States. The products discussed herein may have different product labeling in different countries.
+                    </div>
+                    <div id="i2o8g">The health information contained herein is provided for educational purposes only and is not intended to replace discussions with a healthcare provider. All decisions regarding patient care must be made with a healthcare provider, considering the unique characteristics of the patient.
+                    </div>
+                  </div>
+                  <div id="i3456" class="right">
+                    <a href="http://www.PfizerRxPath.com" target="_blank" id="ihsy2"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/a277b445-2867-48ff-a7fe-05d7ccc96859" alt="" typeof="foaf:Image" id="ik5in"/></a>
+                    <div id="i6dej">Copyright © 2018 Pfizer Inc. All rights reserved. 
+                      <span id="idzkyy">PP-DUA-USA-0398</span>
+                    </div>
+                  </div>
+                </div> 
+                <!-- /.content -->
+              </div>
+            </custom-site-element>
+            <!-- /.block -->
+            <custom-site-element id="fd020b72-043a-46c1-a768-4849b0c38069" uuid="fd020b72-043a-46c1-a768-4849b0c38069" data-swe-block-title="block #2" class="custom-block-element custom-block-is-swe-no custom-block-is-swe-converted">
+              <div id="block-block-26" class="block block-block back-to-top-mobile">
+                <div id="i3n7" class="content">
+                  <div id="ilh3" class="back-to-top-mobile">
+                    <div id="i28x" class="media media-element-container media-media_original">
+                      <div id="file-101" class="file file-image file-image-png">
+                        <!--<h2><a href=""></a></h2>-->
+                        <div id="iekp" class="content">
+                          <img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/ff686c3b-4bcd-4c96-a62c-0d99fdcec76a" alt="" height="9" width="15" typeof="foaf:Image" title="" id="iodb" class="media-image"/>
+                        </div>
+                      </div>
+                    </div>Back to Top
+                  </div>
+                </div> 
+                <!-- /.content -->
+              </div>
+            </custom-site-element>
+            <!-- /.block -->
+            <div id="block-communication-tools-communication-tools-email" class="block block-communication-tools">
+              <div id="iqdqbu" class="content">
+                <div id="ixh2kg" class="tool_box">
+                  <span id="iyef76" class="pipe"></span>
+                  <a id="communication_tools_share_link" href="#page" title="Email this Page" class="communication-tools-share-link">
+                    Email this Page  </a>
+                </div>
+              </div> 
+              <!-- /.content -->
+            </div> 
+            <!-- /.block -->
+          </div>
+        </div>
+      </section>
+      <!-- END Content -->
+      <!-- Footer -->
+      <div protected id="761f10dd-c996-4201-b697-306bbf55ed7d" version="1.4.0" locked="1" async uuid="761f10dd-c996-4201-b697-306bbf55ed7d" data-webbuilder-block-is-swe="yes" data-swe-block-title="Footer Block" data-webbuilder-swe-id-toggled="1" class="custom-block-element custom-block-is-swe-yes">
+        <footer id="footer" role="contentinfo">
+          <div id="ih9i" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid section">
+            <div id="i2kp" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid region region-footer">
+              <div id="block-multiblock-10" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid block block-multiblock main-menu-footer">
+                <h2 id="itx8">Main menu
+                </h2>
+                <div id="irfl" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid content">
+                  <ul id="ie1n" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid menu">
+                    <li id="ijai" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid first expanded life-menopause only-trigger-menu">
+                      <a href="page/ffb045e0-eb44-41ef-ab0c-3fa540f18898" title="Life & Menopause" id="in2rb" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid life-menopause only-trigger-menu no-link">Life &amp; <span id="i49wu" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid break">Menopause</span><span id="ij3n9" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                      <ul id="ic4vo" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid menu">
+                        <li id="iujyf" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid first leaf">
+                          <a href="page/b492959f-0b85-4ad1-b947-f8905ca87559" title="Let's Talk Menopause" id="iec45">Let&#039;s Talk Menopause<span id="ix7n5" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                        </li>
+                        <li id="ifndc" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                          <a href="/page/8baba8e3-7b79-46ff-8625-01d8b4319acd" title="Hot Flashes & Menopause" id="ig921">Hot Flashes &amp; Menopause<span id="iygk9" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                        </li>
+                        <li id="if9kx" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                          <a href="page/b1cd12cc-75bf-488f-9140-00ac41150c0b" title="Bone Loss & Menopause" id="i17ns">Bone Loss &amp; Menopause<span id="ibocf" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                        </li>
+                        <li id="it288" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                          <a href="page/136e12a5-7ecf-4024-b0ce-0d3f011e5976" title="Estrogen & Menopause" id="ifdhg">Estrogens &amp; Menopause<span id="i087e" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                        </li>
+                        <li id="i9ha4" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid last leaf">
+                          <a href="page/a5959ff7-3c22-4c53-88bf-084f3b60b9d3" title="Lifestyle Changes" id="iiuek">Lifestyle Changes<span id="it4kk" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li id="i9n5u" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid expanded duavee-symptom-relief only-trigger-menu">
+                      <a href="page/ffb045e0-eb44-41ef-ab0c-3fa540f18898" title="Duavee & What It Does" id="link_sign_up" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid duavee-symptom-relief only-trigger-menu no-link">Duavee &amp; <span id="idrji" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid break">What It Does</span><span id="i7nuh" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                      <ul id="ig02h" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid menu">
+                        <li id="i83u6" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid first leaf">
+                          <a href="page/c27db74b-c564-4cae-94aa-12300d797fb5" title="About DUAVEE" id="ieym3">About Duavee</a>
+                        </li>
+                        <li id="id332" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                          <a href="page/20825d04-d83a-4388-b4d1-73ccc02b8fb6" title="How DUAVEE Works" id="irkkf">How Duavee Works</a>
+                        </li>
+                        <li id="i2cna" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                          <a href="page/12a001dd-036a-4d91-a182-ef1394ebef15" title="DUAVEE & Hot Flashes" id="iahzl">Duavee &amp; Hot Flashes</a>
+                        </li>
+                        <li id="i0yi3" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                          <a href="page/f22d9784-3572-40a6-8340-7c30a5d61b5b" title="DUAVEE & Bone Loss" id="i7cwt">Duavee &amp; Bone Loss</a>
+                        </li>
+                        <li id="i5m6m" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                          <a href="page/fbede34e-411a-47e7-8e3b-f1991ce1617d" title="Is DUAVEE Right for You?" id="iq4xo">Is Duavee Right for You?</a>
+                        </li>
+                        <li id="ixzaj" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid last leaf">
+                          <a href="page/5abd7d82-7883-456d-97a3-3eb46476b61f" title="Possible Side Effects" id="i3x1d">Possible Side Effects<span id="ib7d8" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li id="iscd9" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid expanded you-your-doctor no-children">
+                      <a href="page/f85c7199-f559-4f4f-affb-95af82843b17" title="You & Your Doctor" id="link_learn_more" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid you-your-doctor no-children no-link">You &amp; <span id="iq4nf" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid break">Your Doctor</span><span id="irp26" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                      <ul id="i7mar" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid menu">
+                        <li id="i050b" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid first last collapsed hidden-item">
+                          <a href="page/f85c7199-f559-4f4f-affb-95af82843b17" title="Conversation guide" id="i0b6i" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid hidden-item">Conversation Guide<span id="impqj" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                        </li>
+                      </ul>
+                    </li>
+                    <li id="i4lxw" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid last expanded offers-savings">
+                      <a href="https://pfizermenopause.com/savings-card/#duavee" title="Savings & Activation" id="ibh4p" target="_blank" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid offers-savings">Savings &amp; <span id="iabgn" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid break">Activation</span><span id="ic6cc" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid general-sprite"></span></a>
+                    </li>
+                  </ul>
+                </div> 
+                <!-- /.content -->
+              </div> 
+              <!-- /.block -->
+              <div id="block-block-53" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid block block-block back-to-top-footer">
+                <div id="ieq1zn" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid content">
+                  <p id="i7q4o8">
+                    <a href="javascript:void(0)" id="iwyte1">Back to Top</a>
+                  </p>
+                </div> 
+                <!-- /.content -->
+              </div> 
+              <!-- /.block -->
+              <div id="block-menu-menu-helpful-links-footer-menu" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid block block-menu">
+                <h2 id="iuq4qq">Helpful Links Footer Menu
+                </h2>
+                <div id="iysqc7" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid content">
+                  <ul id="ij0tqy" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid menu">
+                    <li id="i1pj5e" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid first leaf">
+                      <a href="http://www.pfizer.com" title="Pfizer Logo" target="_blank" id="io9sj5" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid pfizer-logo">Pfizer Logo</a>
+                    </li>
+                    <li id="io9b6b" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                      <a href="http://www.pfizer.com/about" title="About Pfizer" target="_blank" id="infly8">About Pfizer</a>
+                    </li>
+                    <li id="itwjyf" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                      <a href="http://www.pfizer.com/contact/contact_us_support" title="Contact Us" target="_blank" id="ip1uxe">Contact Us</a>
+                    </li>
+                    <li id="i2flmg" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                      <a href="http://www.pfizer.com/general/privacy" title="Privacy Policy" target="_blank" id="i12j6l">Privacy Policy</a>
+                    </li>
+                    <li id="ipwbfg" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid leaf">
+                      <a href="http://www.pfizer.com/general/terms" title="Terms of Use" target="_blank" id="ieetsh">Terms of Use</a>
+                    </li>
+                    <li id="iv1mvj" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid last leaf">
+                      <a href="page/fb361edc-f42e-4ab7-a93b-a14887b9ee16" title="Site Map" id="iru7fl">Site Map</a>
+                    </li>
+                  </ul>
+                </div> 
+                <!-- /.content -->
+              </div> 
+              <!-- /.block -->
+              <div id="block-block-101" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid block block-block">
+                <div id="ie46pb" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid content">
+                  <div id="iyw0m8" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid Row">
+                    <div id="iytknr" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid Column ft-one">©2024 Pfizer Inc.
+                    </div>
+                    <div id="ia1ud3" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid Column txt-center">All rights reserved.
+                    </div>
+                    <div id="i8fbjs" class="block-4400979-cid block-3623610-cid block-3550661-cid block-2699832-cid block-2643932-cid block-1603102-cid block-1027741-cid Column ft-three">PP-DUA-USA-0810
+                    </div>
+                  </div>
+                  <p id="ijaxcv"> 
+                  </p>
+                </div> 
+                <!-- /.content -->
+              </div> 
+              <!-- /.block -->
+            </div>
+          </div>
+        </footer>
+      </div>
+      <!-- END Footer -->
+    </section>
+    <!-- END Scrollable Content -->
+  </div>
+  <!-- ISI -->
+  <section id="isi" data-role="footer" data-position="fixed" data-fullscreen="true" data-tap-toggle="false" class="section fixed">
+    <custom-site-element id="d0de8f21-3d6a-4b15-be85-ad3f26d45693" uuid="d0de8f21-3d6a-4b15-be85-ad3f26d45693" async="1" protected="1" data-swe-block-title="ISI block" class="custom-block-element custom-block-is-swe-no">
+      <div id="iv2p" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid region region-isi">
+        <div id="block-block-21" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid block block-block isi-title">
+          <div id="iksh" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid content">
+            <h2 id="iste">IMPORTANT SAFETY INFORMATION
+            </h2>
+          </div> 
+          <!-- /.content -->
+        </div> 
+        <!-- /.block -->
+        <div id="block-block-22" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid block block-block isi-expand-block">
+          <div id="i2if4" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid content">
+            <span id="ixh0j" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid isi-expand"> </span>
+          </div> 
+          <!-- /.content -->
+        </div> 
+        <!-- /.block -->
+        <div id="block-block-5" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid block block-block isi-block">
+          <div id="i3d3f" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid content">
+            <h2 id="ina1c" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid isi">IMPORTANT SAFETY INFORMATION
+            </h2>
+            <h2 id="iov96" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid isi-title">IMPORTANT SAFETY INFORMATION &amp; INDICATIONS
+            </h2>
+            <div id="istyt">IMPORTANT SAFETY INFORMATION AND INDICATIONS
+            </div>
+            <div id="i4ntjx">
+              <strong data-highlightable="1" id="i6un31">Do not take progestins, additional estrogens, or additional estrogen agonists/antagonists while taking Duavee<sup data-highlightable="1" id="ih41lz">®</sup> (conjugated estrogens/bazedoxifene). </strong>
+            </div>
+            <div id="ilkon">
+              <strong id="itw7ms">Using estrogen alone may increase your chance of getting cancer of the uterus. Report any unusual vaginal bleeding right away while taking Duavee. Vaginal bleeding after menopause may be a warning sign of cancer of the uterus. A healthcare provider should check unusual vaginal bleeding to find the cause. </strong>
+            </div>
+            <div id="ia788">
+              <strong id="ibxspn">Do not use estrogens to prevent heart disease, heart attacks, strokes, or dementia. </strong>
+            </div>
+            <div id="iajpi">
+              <strong id="ilr4dl">Estrogen alone may increase the chance of getting blood clots or strokes. </strong>
+            </div>
+            <div id="ip7wk">
+              <strong id="iwgkmr">Using estrogen alone may increase the chance of getting dementia, based on a study of women 65 years of age or older.</strong>
+            </div>
+            <div id="i6xmb">
+              <strong id="iutu1i">The risks listed above are based on a study of an estrogen-alone oral product. Since other products and doses have not been studied in the same way, it is not known how the use of Duavee will affect your chances of getting these conditions.  </strong>
+            </div>
+            <div id="ivdxd">Estrogens should be used at the lowest dose possible, only for as long as needed. You and your healthcare provider should talk regularly about whether you still need treatment with Duavee.
+            </div>
+            <div id="iuq7r">Do not use Duavee if you: have or had blood clots; are allergic to estrogens or bazedoxifene, the active ingredients of Duavee; have unusual vaginal bleeding; have or had certain cancers (e.g., uterine or breast), liver problems, or bleeding disorders; or are pregnant.   
+            </div>
+            <div id="irn5f">If you take thyroid medication, consult your healthcare provider, as use of estrogens may change the amount needed. 
+            </div>
+            <div id="idbro">Serious side effects include blood clots, stroke, heart attack, cancer of the lining of the uterus, breast cancer, cancer of the ovary, dementia, gallbladder problems, loss of vision, high blood pressure, increased fats in your blood, liver problems, thyroid problems, fluid retention, low calcium, swelling of your mouth or tongue, worsening of other medical problems such as asthma, diabetes, epilepsy, migraines, a genetic problem called porphyria, lupus and liver problems. 
+            </div>
+            <div id="ithq5">Call your healthcare provider right away if you have any of the following warning signs, or any other unusual symptoms that concern you: new breast lumps, unusual vaginal bleeding, changes in vision or speech, sudden new severe headaches, severe pains in your chest or legs with or without shortness of breath, weakness and fatigue. 
+            </div>
+            <div id="i3csd">Less serious, but common side effects include: muscle spasms, nausea, diarrhea, upset stomach, abdominal pain, throat pain, dizziness, neck pain. 
+            </div>
+            <div id="ir98l"> 
+            </div>
+            <h2 id="i7wby" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid indication-orange">INDICATIONS
+            </h2>
+            <div id="io0ls">Duavee is used after menopause for women with a uterus to reduce moderate to severe hot flashes and to help reduce the chances of developing osteoporosis (thin, weak bones). 
+            </div>
+            <div id="iye1p">If you use Duavee only to prevent osteoporosis due to menopause, talk with your healthcare provider about whether a different treatment or medicine without estrogens might be better for you.  
+            </div>
+            <div id="idpr4">Duavee should be taken for the shortest time possible and only for as long as treatment is needed. You and your healthcare provider should talk regularly about whether you still need treatment with Duavee. 
+            </div>
+            <div id="i8564">
+              <strong data-highlightable="1" id="i0krff">Please see <a data-highlightable="1" href="http://labeling.pfizer.com/ShowLabeling.aspx?id=1174" target="_blank" id="ikrsy1">full Prescribing Information, including BOXED WARNING and Patient Information</a>.</strong>
+            </div>
+            <div id="ir5xi">Patients should always ask their doctors for medical advice about adverse events.
+            </div>
+            <div id="ietzk">You are encouraged to report adverse events related to Pfizer products by calling 1-800-438-1985 (U.S. only). If you prefer, you may contact the U.S. Food and Drug Administration (FDA) directly. Visit 
+              <a data-highlightable="1" title="www.fda.gov/medwatch" href="https://www.fda.gov/MedWatch" id="i4hvsb">http://www.fda.gov/MedWatch</a> or call 
+              <span class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid no-break-line" id="ihmj83">1-800-FDA-1088</span>.
+            </div>
+            <div id="i9fhf" class="block-4400978-cid block-3623609-cid block-2920989-cid block-2699831-cid block-1603101-cid block-1027740-cid right-rail-pathways">
+              <div id="iavd9">
+                <strong id="i18xqo">This site is intended only for U.S. residents. The products discussed in this site may have different product labeling in different countries. The information provided is for educational purposes only and is not intended to replace discussions with a healthcare provider.</strong>
+              </div>
+              <div id="if34j">Doctors may recommend alternative treatment options to their patients.
+              </div>
+              <div id="icgxu">
+                <a data-highlightable="1" href="http://pfizerrxpath.com/" target="_blank" id="icusr4"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/a277b445-2867-48ff-a7fe-05d7ccc96859" id="i8jkzj"/></a>
+              </div>
+              <div id="imkl8">
+                <a data-highlightable="1" href="http://pfizerrxpath.com/" target="_blank" id="i3kkyl"><img src="https://webbuilder.pfizer/webbuilder/asset-proxy/16461423/282896f6-3859-4883-8a84-7cd27b14b2e6" id="iej34c"/></a>
+              </div>
+            </div>
+          </div> 
+          <!-- /.content -->
+        </div> 
+        <!-- /.block -->
+      </div>
+    </custom-site-element>
+  </section>
+  <helix-image alt="Helix Image PARAG KUHIKAR" full-width="true" img-src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=300&w=338&q=80" img-retina="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=600&w=776&q=80" mobile-img-src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=300&w=338&q=80" mobile-img-retina="https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&h=600&w=776&q=80" data-hwc-version="3.405.0" id="ii6l"></helix-image>
+  <!-- END ISI -->
+</div>

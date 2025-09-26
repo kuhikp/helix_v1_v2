@@ -1,0 +1,218 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-2 fw-bold">
+                                <i class="fas fa-book me-2"></i>Knowledge Base
+                            </h1>
+                            <p class="mb-0 opacity-90">Manage V1 to V2 component migration patterns and examples</p>
+                        </div>
+                        <div>
+                            <a href="{% url 'knowledge_base_create' %}" class="btn btn-light btn-lg">
+                                <i class="fas fa-plus me-2"></i>Add New Entry
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Stats -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form method="GET" class="d-flex">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" 
+                           name="search" 
+                           class="form-control border-start-0" 
+                           placeholder="Search by title, component name, description, or tags..." 
+                           value="{{ search_query }}">
+                    <button class="btn btn-primary" type="submit">Search</button>
+                    {% if search_query %}
+                        <a href="{% url 'knowledge_base_list' %}" class="btn btn-outline-secondary">Clear</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="d-flex align-items-center justify-content-end gap-3">
+                <div class="badge bg-info fs-6 p-2">
+                    <i class="fas fa-database me-1"></i>
+                    Total Entries: {{ total_entries }}
+                </div>
+                
+                {% if can_manage_rag and rag_status.available %}
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-brain me-1"></i>
+                        RAG Status
+                        {% if rag_status.is_synced %}
+                            <span class="badge bg-success ms-1">Synced</span>
+                        {% else %}
+                            <span class="badge bg-warning ms-1">Out of Sync</span>
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><h6 class="dropdown-header">RAG System Status</h6></li>
+                        <li><span class="dropdown-item-text small">
+                            DB Entries: {{ rag_status.db_count }}<br>
+                            RAG Entries: {{ rag_status.rag_count }}
+                        </span></li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% if not rag_status.is_synced %}
+                        <li><a class="dropdown-item" href="{% url 'update_rag_system' %}">
+                            <i class="fas fa-sync me-2"></i>Sync RAG System
+                        </a></li>
+                        {% endif %}
+                        <li><a class="dropdown-item" href="{% url 'rag_system_status' %}">
+                            <i class="fas fa-chart-line me-2"></i>View Details
+                        </a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Knowledge Base Entries -->
+    <div class="row">
+        <div class="col-12">
+            {% if page_obj %}
+                {% for entry in page_obj %}
+                <div class="card mb-3 shadow-sm border-0 hover-shadow">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <div class="d-flex align-items-start mb-2">
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title mb-1">
+                                            <a href="{% url 'knowledge_base_detail' entry.pk %}" class="text-decoration-none">
+                                                {{ entry.title }}
+                                            </a>
+                                        </h5>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <span class="badge bg-primary me-2">{{ entry.component_name }}</span>
+                                            {% if not entry.is_active %}
+                                                <span class="badge bg-secondary me-2">Inactive</span>
+                                            {% endif %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i>{{ entry.created_by.username }} • 
+                                                <i class="fas fa-calendar me-1"></i>{{ entry.created_at|date:"M d, Y" }}
+                                            </small>
+                                        </div>
+                                        {% if entry.description %}
+                                            <p class="text-muted small mb-2">{{ entry.description|truncatewords:20 }}</p>
+                                        {% endif %}
+                                        {% if entry.tags %}
+                                            <div class="mb-2">
+                                                {% for tag in entry.get_tags_list %}
+                                                    <span class="badge bg-light text-dark me-1">#{{ tag }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'knowledge_base_detail' entry.pk %}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>View
+                                    </a>
+                                    {% if user.is_staff or user.role == 'admin' or entry.created_by == user %}
+                                        <a href="{% url 'knowledge_base_edit' entry.pk %}" 
+                                           class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-edit me-1"></i>Edit
+                                        </a>
+                                        <a href="{% url 'knowledge_base_delete' entry.pk %}" 
+                                           class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash me-1"></i>Delete
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Knowledge Base pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <div class="text-muted mb-4">
+                            <i class="fas fa-book fa-3x opacity-25"></i>
+                        </div>
+                        <h5 class="text-muted">No Knowledge Base Entries Found</h5>
+                        <p class="text-muted">
+                            {% if search_query %}
+                                No entries match your search criteria. Try adjusting your search terms.
+                            {% else %}
+                                Start building your knowledge base by adding V1 to V2 migration patterns.
+                            {% endif %}
+                        </p>
+                        {% if not search_query %}
+                            <a href="{% url 'knowledge_base_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Create First Entry
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-shadow:hover {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    transform: translateY(-2px);
+    transition: all 0.2s ease-in-out;
+}
+
+.bg-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+</style>
+{% endblock %}

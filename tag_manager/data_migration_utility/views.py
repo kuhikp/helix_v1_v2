@@ -1,16 +1,60 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from .models import DataMigrationUtility
-from .forms import DataMigrationUtilityForm
+from django.core.paginator import Paginator
+from django.db.models import Q
+from .models import DataMigrationUtility, KnowledgeBase
+from .forms import DataMigrationUtilityForm, KnowledgeBaseForm
 import requests
 import os
 import subprocess
 import json
-from qdrant_client import QdrantClient
+# from qdrant_client import QdrantClient
+
+# Import RAG functions
+try:
+    from api_component.rag import update_rag, reset_rag, get_rag_statistics, force_reload_rag
+    RAG_AVAILABLE = True
+except ImportError:
+    RAG_AVAILABLE = False
+
+import logging
+logger = logging.getLogger(__name__)
+
+def update_rag_system_with_feedback(request, action_description="updated"):
+    """
+    Helper function to update RAG system and provide user feedback.
+    
+    Args:
+        request: Django request object for messages
+        action_description: Description of the action performed (e.g., "created", "updated", "deleted")
+    
+    Returns:
+        bool: True if RAG update was successful or not needed, False if failed
+    """
+    if not RAG_AVAILABLE:
+        logger.info("RAG system not available, skipping update")
+        return True
+    
+    try:
+        logger.info(f"Updating RAG system after Knowledge Base entry {action_description}")
+        update_success = force_reload_rag(use_database=True)
+        
+        if update_success:
+            logger.info("RAG system updated successfully")
+            return True
+        else:
+            logger.warning("RAG system update failed")
+            messages.warning(request, f"Knowledge Base entry {action_description}, but RAG system update failed. Please update manually.")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error updating RAG system: {str(e)}")
+        messages.warning(request, f"Knowledge Base entry {action_description}, but RAG update failed: {str(e)}")
+        return False
 
 
 def get_ollama_info():
@@ -19,85 +63,56 @@ def get_ollama_info():
     Returns a dictionary containing the results of all operations.
     """
     base_url = os.getenv('OLLAMA_BASE_URL')
-    print(f"Base URL: {base_url}")
-
+    
     result = {
-        'ollama_list': [],
+        'ollama_list': {'models': []},
         'ollama_status': {},
         'endpoint_response': {},
-        'error': None
+        'ollama_error': None,
+        'model_names': [],
+        'ollama_running': False,
     }
 
+    if not base_url:
+        result['ollama_error'] = "OLLAMA_BASE_URL environment variable is not set."
+        return result
+
+    headers = {}
+    api_key = os.getenv('OLLAMA_API_KEY')
+    if api_key:
+        headers['Authorization'] = f"Bearer {api_key}"
+
+    # Single try-except block for all API calls
     try:
-        print("Executing 'ollama list' command...")
-        list_result = subprocess.run(
-            ['ollama', 'list'],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
-
-        if list_result.returncode == 0:
-            output_lines = list_result.stdout.strip().split('\n')
-            models = []
-
-            for line in output_lines[1:]:
-                if line.strip():
-                    parts = line.split()
-                    if len(parts) >= 3:
-                        model_name = parts[0]
-                        model_id = parts[1] if len(parts) > 1 else ""
-                        size = parts[2] if len(parts) > 2 else ""
-                        modified = " ".join(parts[3:]) if len(parts) > 3 else ""
-
-                        models.append({
-                            'name': model_name,
-                            'id': model_id,
-                            'size': size,
-                            'modified': modified
-                        })
-
-            result['ollama_list'] = {'models': models}
-            print(f"Found {len(models)} Ollama models:", models)
+        # Fetch models
+        endpoint_response = requests.get(f"{base_url}/api/tags", headers=headers, timeout=10)
+        if endpoint_response.status_code == 200:
+            endpoint_data = endpoint_response.json()
+            result['endpoint_response'] = endpoint_data
+            
+            # Process models more efficiently
+            api_models = endpoint_data.get('models', [])
+            formatted_models = [
+                {'name': model.get('name', ''), 'size': model.get('size', 'Unknown')}
+                for model in api_models if model.get('name')
+            ]
+            
+            result['ollama_list'] = {'models': formatted_models}
+            result['model_names'] = [model['name'] for model in formatted_models]
         else:
-            print(f"Error executing 'ollama list': {list_result.stderr}")
-            result['error'] = f"Command failed: {list_result.stderr}"
+            result['ollama_error'] = f"Models API returned status code: {endpoint_response.status_code}"
 
-    except subprocess.TimeoutExpired:
-        print("Ollama list command timed out")
-        result['error'] = "Ollama list command timed out"
-    except FileNotFoundError:
-        print("Ollama command not found. Make sure Ollama is installed and in PATH")
-        result['error'] = "Ollama command not found"
-    except Exception as e:
-        print(f"Error executing ollama list: {e}")
-        result['error'] = f"Error executing ollama list: {str(e)}"
+        # Fetch status
+        status_response = requests.get(f"{base_url}/api/version", headers=headers, timeout=10)
+        if status_response.status_code == 200:
+            status_data = status_response.json()
+            result['ollama_status'] = status_data
+            result['ollama_running'] = bool(status_data)
+        else:
+            print(f"Status API returned status code: {status_response.status_code}")
 
-    if base_url:
-        headers = {
-            'Authorization': f"Bearer {os.getenv('OLLAMA_API_KEY')}"
-        } if os.getenv('OLLAMA_API_KEY') else {}
-
-        try:
-            status_response = requests.get(f"{base_url}/api/version", headers=headers, timeout=10)
-            if status_response.status_code == 200:
-                result['ollama_status'] = status_response.json()
-                print("Ollama Status Response:", result['ollama_status'])
-            else:
-                print(f"Status API returned status code: {status_response.status_code}")
-        except requests.exceptions.RequestException as e:
-            print(f"Status API request error: {e}")
-
-        try:
-            endpoint_response = requests.get(f"{base_url}/api/tags", headers=headers, timeout=10)
-            if endpoint_response.status_code == 200:
-                result['endpoint_response'] = endpoint_response.json()
-                print("Ollama Endpoint Response:", result['endpoint_response'])
-            else:
-                print(f"Endpoint API returned status code: {endpoint_response.status_code}")
-        except requests.exceptions.RequestException as e:
-            print(f"Endpoint API request error: {e}")
-
+    except requests.RequestException as e:
+        result['ollama_error'] = f"Request to Ollama API failed {e}" 
     return result
 
 
@@ -138,7 +153,23 @@ def data_migration_create(request):
                 messages.error(request, "Unauthorized: Invalid or expired Bearer token.")
                 return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
             elif response.status_code == 200:
-                data = response.json()
+                try:
+                    # Try to parse the response as JSON
+                    data = response.json()
+                except json.JSONDecodeError as e:
+                    # If extra data error, try to parse only the first JSON object
+                    raw = response.text
+                    first_brace = raw.find('{')
+                    last_brace = raw.find('}', first_brace)
+                    if first_brace != -1 and last_brace != -1:
+                        try:
+                            data = json.loads(raw[first_brace:last_brace+1])
+                        except Exception as e2:
+                            messages.error(request, f"Error parsing Ollama API response: {str(e2)}")
+                            return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+                    else:
+                        messages.error(request, f"Error parsing Ollama API response: {str(e)}")
+                        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
                 migration.v2_body = data.get('v2_body', '')
                 migration.v2_css = data.get('v2_css', '')
                 migration.v2_js = data.get('v2_js', '')
@@ -167,9 +198,11 @@ def data_migration_list(request):
 
     context = {
         'migrations': migrations,
-        'ollama_list': ollama_info.get('ollama_list', []),
+        'ollama_list': ollama_info.get('ollama_list', {'models': []}),
         'ollama_status': ollama_info.get('ollama_status', {}),
-        'endpoint_response': ollama_info.get('endpoint_response', {})
+        'endpoint_response': ollama_info.get('endpoint_response', {}),
+        'model_names': ollama_info.get('model_names', []),
+        'ollama_error': ollama_info.get('ollama_error')
     }
 
     return render(request, 'data_migration_utility/data_migration_list.html', context)
@@ -295,17 +328,18 @@ def clear_embeddings(request):
     """
     if request.method == 'POST':
         try:
-            print("Initializing Qdrant client...")
-            qdrant = QdrantClient(":memory:")
-            collection_name = os.getenv('COLLECTION_NAME', 'migration_collection')
-
-            collection_info = qdrant.get_collection(collection_name=collection_name)
-            vector_count = collection_info.vectors_count
-            print(f"Collection '{collection_name}' contains {vector_count} vectors.")
-            if vector_count == 0:
-                messages.info(request, f"Collection '{collection_name}' exists but contains no vector data.")
-            else:
-                messages.success(request, f"Collection '{collection_name}' contains {vector_count} vectors.")
+            # TODO: Re-enable when QdrantClient dependencies are fixed
+            # print("Initializing Qdrant client...")
+            # qdrant = QdrantClient(":memory:")
+            # collection_name = os.getenv('COLLECTION_NAME', 'migration_collection')
+            # collection_info = qdrant.get_collection(collection_name=collection_name)
+            # vector_count = collection_info.vectors_count
+            # print(f"Collection '{collection_name}' contains {vector_count} vectors.")
+            # if vector_count == 0:
+            #     messages.info(request, f"Collection '{collection_name}' exists but contains no vector data.")
+            # else:
+            #     messages.success(request, f"Collection '{collection_name}' contains {vector_count} vectors.")
+            messages.info(request, "Clear embeddings functionality temporarily disabled.")
 
         except Exception as e:
             print(f"{e}")
@@ -320,3 +354,300 @@ def clear_embeddings(request):
         'cancel_url': 'data_migration_list'
     }
     return render(request, 'data_migration_utility/confirm_action.html', context)
+
+
+# Knowledge Base Views
+@login_required
+def knowledge_base_list(request):
+    """List all Knowledge Base entries with search and pagination."""
+    search_query = request.GET.get('search', '')
+    entries = KnowledgeBase.objects.all()
+    
+    if search_query:
+        entries = entries.filter(
+            Q(title__icontains=search_query) |
+            Q(component_name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(tags__icontains=search_query)
+        )
+    
+    paginator = Paginator(entries, 10)  # Show 10 entries per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Check if RAG system needs updating
+    rag_status = {}
+    if RAG_AVAILABLE:
+        try:
+            stats = get_rag_statistics()
+            db_entry_count = KnowledgeBase.objects.filter(is_active=True).count()
+            rag_entry_count = stats.get('total_migrations', 0)
+            rag_status = {
+                'is_synced': db_entry_count == rag_entry_count,
+                'db_count': db_entry_count,
+                'rag_count': rag_entry_count,
+                'available': True
+            }
+        except:
+            rag_status = {'available': False}
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_entries': entries.count(),
+        'rag_status': rag_status,
+        'can_manage_rag': request.user.is_staff or getattr(request.user, 'role', '') == 'admin'
+    }
+    return render(request, 'data_migration_utility/knowledge_base_list.html', context)
+
+
+@login_required
+def knowledge_base_create(request):
+    """Create a new Knowledge Base entry. Only accessible to admin users."""
+    if not request.user.is_staff and getattr(request.user, 'role', None) != 'admin':
+        messages.error(request, "You don't have permission to create Knowledge Base entries.")
+        return redirect('knowledge_base_list')
+    
+    if request.method == 'POST':
+        form = KnowledgeBaseForm(request.POST)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.created_by = request.user
+            entry.save()
+            
+            # Update RAG system with new entry
+            rag_updated = update_rag_system_with_feedback(request, "created")
+            if rag_updated and RAG_AVAILABLE:
+                messages.success(request, "Knowledge Base entry created successfully and RAG system updated.")
+            else:
+                messages.success(request, "Knowledge Base entry created successfully.")
+            
+            return redirect('knowledge_base_detail', pk=entry.pk)
+    else:
+        form = KnowledgeBaseForm()
+    
+    context = {
+        'form': form,
+        'title': 'Create Knowledge Base Entry',
+        'submit_text': 'Create Entry'
+    }
+    return render(request, 'data_migration_utility/knowledge_base_form.html', context)
+
+
+@login_required
+def knowledge_base_detail(request, pk):
+    """View a specific Knowledge Base entry."""
+    entry = get_object_or_404(KnowledgeBase, pk=pk)
+    context = {
+        'object': entry,  # Use 'object' to match template expectations
+        'entry': entry   # Keep 'entry' for backward compatibility
+    }
+    return render(request, 'data_migration_utility/knowledge_base_detail.html', context)
+
+
+@login_required
+def knowledge_base_edit(request, pk):
+    """Edit a Knowledge Base entry. Only accessible to admin users or the creator."""
+    entry = get_object_or_404(KnowledgeBase, pk=pk)
+    
+    # Check permissions
+    if not (request.user.is_staff or 
+            getattr(request.user, 'role', None) == 'admin' or 
+            entry.created_by == request.user):
+        messages.error(request, "You don't have permission to edit this Knowledge Base entry.")
+        return redirect('knowledge_base_detail', pk=pk)
+    
+    if request.method == 'POST':
+        form = KnowledgeBaseForm(request.POST, instance=entry)
+        if form.is_valid():
+            # Check if critical fields changed that affect RAG
+            original_entry = KnowledgeBase.objects.get(pk=pk)
+            critical_fields_changed = any([
+                form.cleaned_data['v1_code'] != original_entry.v1_code,
+                form.cleaned_data['v2_code'] != original_entry.v2_code,
+                form.cleaned_data['component_name'] != original_entry.component_name,
+                form.cleaned_data['is_active'] != original_entry.is_active,
+                form.cleaned_data['title'] != original_entry.title,
+                form.cleaned_data['description'] != original_entry.description,
+                form.cleaned_data['tags'] != original_entry.tags
+            ])
+            
+            form.save()
+            
+            # Update RAG system if critical fields changed
+            if critical_fields_changed:
+                rag_updated = update_rag_system_with_feedback(request, "updated")
+                if rag_updated and RAG_AVAILABLE:
+                    messages.success(request, "Knowledge Base entry updated successfully and RAG system refreshed.")
+                else:
+                    messages.success(request, "Knowledge Base entry updated successfully.")
+            else:
+                messages.success(request, "Knowledge Base entry updated successfully.")
+            
+            return redirect('knowledge_base_detail', pk=entry.pk)
+    else:
+        form = KnowledgeBaseForm(instance=entry)
+    
+    context = {
+        'form': form,
+        'entry': entry,
+        'title': 'Edit Knowledge Base Entry',
+        'submit_text': 'Update Entry'
+    }
+    return render(request, 'data_migration_utility/knowledge_base_form.html', context)
+
+
+@login_required
+def knowledge_base_delete(request, pk):
+    """Delete a Knowledge Base entry. Only accessible to admin users or the creator."""
+    entry = get_object_or_404(KnowledgeBase, pk=pk)
+    
+    # Check permissions
+    if not (request.user.is_staff or 
+            getattr(request.user, 'role', None) == 'admin' or 
+            entry.created_by == request.user):
+        messages.error(request, "You don't have permission to delete this Knowledge Base entry.")
+        return redirect('knowledge_base_detail', pk=pk)
+    
+    if request.method == 'POST':
+        # Store entry info before deletion for RAG update
+        entry_title = entry.title
+        entry_component = entry.component_name
+        
+        entry.delete()
+        
+        # Update RAG system after deletion
+        rag_updated = update_rag_system_with_feedback(request, f"'{entry_title}' deleted")
+        if rag_updated and RAG_AVAILABLE:
+            messages.success(request, f"Knowledge Base entry '{entry_title}' deleted successfully and RAG system updated.")
+        else:
+            messages.success(request, f"Knowledge Base entry '{entry_title}' deleted successfully.")
+        
+        return redirect('knowledge_base_list')
+    
+    context = {
+        'entry': entry
+    }
+    return render(request, 'data_migration_utility/knowledge_base_confirm_delete.html', context)
+
+
+# RAG System Management Views
+@login_required
+def rag_system_status(request):
+    """Display RAG system status and provide management options."""
+    # Check if user is admin
+    if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin'):
+        messages.error(request, "Access denied. Admin permissions required.")
+        return redirect('data_migration_list')
+    
+    context = {
+        'rag_available': RAG_AVAILABLE,
+        'error': None
+    }
+    
+    if RAG_AVAILABLE:
+        try:
+            stats = get_rag_statistics()
+            context['stats'] = stats
+        except Exception as e:
+            context['error'] = str(e)
+    else:
+        context['error'] = "RAG system not available - check dependencies"
+    
+    return render(request, 'data_migration_utility/rag_system_status.html', context)
+
+@login_required
+def update_rag_system(request):
+    """Update the RAG system with latest Knowledge Base data."""
+    # Check if user is admin
+    if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin'):
+        messages.error(request, "Access denied. Admin permissions required.")
+        return redirect('data_migration_list')
+    
+    if request.method == 'POST':
+        if not RAG_AVAILABLE:
+            messages.error(request, "RAG system not available.")
+            return redirect('rag_system_status')
+        
+        try:
+            # Force reload RAG with database data
+            success = force_reload_rag(use_database=True)
+            
+            if success:
+                messages.success(request, "RAG system updated successfully with latest Knowledge Base data.")
+            else:
+                messages.error(request, "Failed to update RAG system. Check logs for details.")
+                
+        except Exception as e:
+            messages.error(request, f"Error updating RAG system: {str(e)}")
+        
+        return redirect('rag_system_status')
+    
+    # GET request - show confirmation page
+    context = {
+        'action_title': 'Update RAG System',
+        'action_description': 'This will update the RAG system with the latest Knowledge Base entries from the database.',
+        'warning_message': 'The system will reload all data and rebuild the search index. This may take a few moments.',
+        'confirm_url': 'update_rag_system',
+        'cancel_url': 'rag_system_status'
+    }
+    return render(request, 'data_migration_utility/confirm_action.html', context)
+
+@login_required  
+def reset_rag_system(request):
+    """Reset the RAG system completely."""
+    # Check if user is admin
+    if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin'):
+        messages.error(request, "Access denied. Admin permissions required.")
+        return redirect('data_migration_list')
+    
+    if request.method == 'POST':
+        if not RAG_AVAILABLE:
+            messages.error(request, "RAG system not available.")
+            return redirect('rag_system_status')
+        
+        try:
+            # Reset RAG system
+            success = reset_rag(use_database=True)
+            
+            if success:
+                messages.success(request, "RAG system reset and reinitialized successfully.")
+            else:
+                messages.error(request, "Failed to reset RAG system. Check logs for details.")
+                
+        except Exception as e:
+            messages.error(request, f"Error resetting RAG system: {str(e)}")
+        
+        return redirect('rag_system_status')
+    
+    # GET request - show confirmation page
+    context = {
+        'action_title': 'Reset RAG System',
+        'action_description': 'This will completely reset the RAG system, deleting all cached data and rebuilding from scratch.',
+        'warning_message': 'This action will delete all cached embeddings and force a complete rebuild. This cannot be undone.',
+        'confirm_url': 'reset_rag_system',
+        'cancel_url': 'rag_system_status'
+    }
+    return render(request, 'data_migration_utility/confirm_action.html', context)
+
+@login_required
+def rag_system_api(request):
+    """JSON API endpoint for RAG system status and statistics."""
+    # Check if user is admin
+    if not (request.user.is_staff or getattr(request.user, 'role', '') == 'admin'):
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    if not RAG_AVAILABLE:
+        return JsonResponse({'error': 'RAG system not available'}, status=500)
+    
+    try:
+        stats = get_rag_statistics()
+        return JsonResponse({
+            'status': 'success',
+            'data': stats
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'error': str(e)
+        }, status=500)

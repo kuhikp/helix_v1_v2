@@ -1,4 +1,5 @@
 {% extends 'authentication/base.html' %}
+{% csrf_token %}
 
 {% block title %}Data Migration List{% endblock %}
 
@@ -426,6 +427,21 @@
         margin-right: auto;
     }
     
+    /* RAG System Information Styles */
+    .info-item {
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        border: 1px solid var(--ios-border);
+        transition: all 0.3s ease;
+    }
+    
+    .info-item:hover {
+        background: rgba(255, 255, 255, 0.9);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
     /* Responsive design */
     @media (max-width: 768px) {
         .page-header {
@@ -507,31 +523,54 @@
         </div>
     </div>
 
+    
     <!-- Ollama Information Section -->
-    <div class="row mb-4" style="display: none;">
+    <div class="row mb-4" >
         <div class="col-12">
             <div class="ollama-info-section slide-up">
                 <div class="ollama-info-header">
-                    <i class="fas fa-robot me-2"></i>Ollama System Information
+                    <i class="fas fa-robot me-2"></i>Ollama System Information {{ parag|escape }}
                 </div>
+                {% if ollama_error %}
+                    <div class="error-message mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Ollama Connection Error:</strong><br>
+                        <small class="text-break">{{ ollama_error|escape }}</small>
+                    </div>
+                {% endif %}
+
                 <div class="row">
                     <div class="col-md-4 mb-3">
                         <h6 class="text-muted mb-2">
                             <i class="fas fa-list me-1"></i>Available Models
                         </h6>
                         {% if ollama_list %}
-                            {% if ollama_list.models %}
                                 <div class="ollama-info-content">
                                     {% for model in ollama_list.models %}
-                                        <div class="ollama-list-item">
-                                            <strong>{{ model.name }}</strong><br>
-                                            <small class="text-muted">Size: {{ model.size|default:"Unknown" }}</small>
+                                        <div class="ollama-list-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <i class="fas fa-cube text-primary me-2"></i>
+                                                    <strong class="text-dark">{{ model.name|default:"Unnamed Model" }}</strong>
+                                                </div>
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-hdd text-muted me-2" style="font-size: 12px;"></i>
+                                                    <small class="text-muted">{{ model.size|filesizeformat|default:"Unknown size" }}</small>
+                                                </div>
+                                            </div>
+                                            <span class="badge bg-success-subtle text-success px-2 py-1">
+                                                <i class="fas fa-check-circle me-1" style="font-size: 10px;"></i>
+                                                Active
+                                            </span>
+                                        </div>
+                                    {% empty %}
+                                        <div class="ollama-list-item text-center py-3">
+                                            <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                            <span class="text-muted">No models available</span>
                                         </div>
                                     {% endfor %}
                                 </div>
-                            {% else %}
-                                <div class="ollama-info-content">{{ ollama_list|truncatechars:200 }}</div>
-                            {% endif %}
+                            
                         {% else %}
                             <div class="error-message">
                                 <i class="fas fa-exclamation-triangle me-1"></i>No model list available
@@ -562,6 +601,69 @@
                             </div>
                         {% endif %}
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RAG System Information Card -->
+    <div class="migration-card fade-in mt-4">
+        <div class="migration-header">
+            <div class="migration-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <div>
+                <h2>RAG System Information</h2>
+                <p>Current system configuration and management tools</p>
+            </div>
+        </div>
+        
+        <div class="row g-4 p-4">
+            <!-- Current Model Name -->
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-brain text-primary me-2"></i>
+                        <span class="fw-bold">Current Model Name:</span>
+                    </div>
+                    <span class="text-muted">ChromaDB Vector Store</span>
+                </div>
+            </div>
+
+            <!-- Database Used -->
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-database text-success me-2"></i>
+                        <span class="fw-bold">DB Used:</span>
+                    </div>
+                    <span class="badge bg-success-subtle text-success px-3 py-2">ChromaDB</span>
+                </div>
+            </div>
+
+            <!-- Reset RAG Action -->
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-refresh text-warning me-2"></i>
+                        <span class="fw-bold">Reset RAG:</span>
+                    </div>
+                    <button onclick="resetRAG()" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-redo me-1"></i>Reset System
+                    </button>
+                </div>
+            </div>
+
+            <!-- Display API Details -->
+            <div class="col-md-6">
+                <div class="info-item">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-code text-info me-2"></i>
+                        <span class="fw-bold">API Details:</span>
+                    </div>
+                    <button onclick="showAPIDetails()" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-eye me-1"></i>View Details
+                    </button>
                 </div>
             </div>
         </div>
@@ -752,6 +854,8 @@
             </table>
         </div>
     </div>
+
+    
 </div>
 
 <!-- Component Details Modal -->
@@ -845,5 +949,60 @@ window.addEventListener('scroll', function() {
         header.style.transform = `translateY(${rate}px)`;
     }
 });
+
+// RAG System Management Functions
+function resetRAG() {
+    if (confirm('Are you sure you want to reset the RAG system? This action cannot be undone.')) {
+        fetch('{% url "api_component:rag_reset" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('RAG system has been reset successfully!');
+                location.reload();
+            } else {
+                alert('Error resetting RAG system: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error resetting RAG system. Please check the console for details.');
+        });
+    }
+}
+
+function showAPIDetails() {
+    fetch('{% url "api_component:rag_stats" %}')
+        .then(response => response.json())
+        .then(data => {
+            let details = `
+                <div class="api-details">
+                    <h4>RAG System API Details</h4>
+                    <table class="table table-sm">
+                        <tr><td><strong>Total Migrations:</strong></td><td>${data.total_migrations || 0}</td></tr>
+                        <tr><td><strong>ChromaDB Documents:</strong></td><td>${data.chromadb_documents || 0}</td></tr>
+                        <tr><td><strong>Component Types:</strong></td><td>${data.component_types || 0}</td></tr>
+                        <tr><td><strong>Is Initialized:</strong></td><td>${data.is_initialized ? 'Yes' : 'No'}</td></tr>
+                        <tr><td><strong>Persist Directory:</strong></td><td>${data.persist_directory || 'N/A'}</td></tr>
+                        <tr><td><strong>CSV Path:</strong></td><td>${data.csv_path || 'N/A'}</td></tr>
+                    </table>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('componentModal'));
+            document.querySelector('#componentModal .modal-title').innerHTML = '<i class="fas fa-info-circle me-2"></i>API Details';
+            document.getElementById('componentContent').innerHTML = details;
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error fetching API details. Please check the console for details.');
+        });
+}
 </script>
 {% endblock %}

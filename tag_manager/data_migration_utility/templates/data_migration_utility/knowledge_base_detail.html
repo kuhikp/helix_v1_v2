@@ -1,0 +1,280 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}{{ object.title }} - Knowledge Base{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-2 fw-bold">
+                                <i class="fas fa-book me-2"></i>{{ object.title }}
+                            </h1>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-light text-dark me-2 fs-6">{{ object.component_name }}</span>
+                                {% if not object.is_active %}
+                                    <span class="badge bg-warning text-dark me-2 fs-6">Inactive</span>
+                                {% endif %}
+                                <small class="opacity-90">
+                                    Created by {{ object.created_by.username }} on {{ object.created_at|date:"F d, Y" }}
+                                </small>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'knowledge_base_list' %}" class="btn btn-light">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                                </a>
+                                {% if user.is_staff or user.role == 'admin' or object.created_by == user %}
+                                    <a href="{% url 'knowledge_base_edit' object.pk %}" class="btn btn-light">
+                                        <i class="fas fa-edit me-2"></i>Edit
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Description -->
+            {% if object.description %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-align-left me-2 text-info"></i>Description
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ object.description|linebreaks }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Code Comparison -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-code me-2 text-success"></i>Migration Code Examples
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <!-- V1 Code -->
+                        <div class="col-lg-6 border-end">
+                            <div class="p-3 bg-light border-bottom">
+                                <h6 class="mb-0 text-danger">
+                                    <i class="fas fa-arrow-left me-2"></i>V1 Code (Before)
+                                </h6>
+                            </div>
+                            <div class="p-3">
+                                <pre class="code-block bg-light p-3 rounded"><code>{{ object.v1_code }}</code></pre>
+                                <button class="btn btn-sm btn-outline-secondary copy-btn" data-clipboard-text="{{ object.v1_code }}">
+                                    <i class="fas fa-copy me-1"></i>Copy V1 Code
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- V2 Code -->
+                        <div class="col-lg-6">
+                            <div class="p-3 bg-light border-bottom">
+                                <h6 class="mb-0 text-success">
+                                    <i class="fas fa-arrow-right me-2"></i>V2 Code (After)
+                                </h6>
+                            </div>
+                            <div class="p-3">
+                                <pre class="code-block bg-light p-3 rounded"><code>{{ object.v2_code }}</code></pre>
+                                <button class="btn btn-sm btn-outline-secondary copy-btn" data-clipboard-text="{{ object.v2_code }}">
+                                    <i class="fas fa-copy me-1"></i>Copy V2 Code
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            {% if user.is_staff or user.role == 'admin' or object.created_by == user %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-cogs me-2"></i>Actions
+                    </h6>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'knowledge_base_edit' object.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>Edit Entry
+                        </a>
+                        <a href="{% url 'knowledge_base_delete' object.pk %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash me-2"></i>Delete Entry
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Entry Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-0">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>Entry Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <small class="text-muted d-block">Component Name</small>
+                            <span class="fw-semibold">{{ object.component_name }}</span>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Status</small>
+                            {% if object.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Created By</small>
+                            <span class="fw-semibold">{{ object.created_by.username }}</span>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Created</small>
+                            <span class="fw-semibold">{{ object.created_at|date:"F d, Y g:i A" }}</span>
+                        </div>
+                        {% if object.updated_at != object.created_at %}
+                        <div class="col-12">
+                            <small class="text-muted d-block">Last Updated</small>
+                            <span class="fw-semibold">{{ object.updated_at|date:"F d, Y g:i A" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            {% if object.tags %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-0">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-tags me-2 text-warning"></i>Tags
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for tag in object.get_tags_list %}
+                        <span class="badge bg-light text-dark me-1 mb-1">#{{ tag }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Navigation -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-compass me-2 text-secondary"></i>Quick Navigation
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'knowledge_base_list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-list me-2"></i>All Entries
+                        </a>
+                        {% if object.component_name %}
+                        <a href="{% url 'knowledge_base_list' %}?search={{ object.component_name }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-search me-2"></i>More {{ object.component_name }}
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'knowledge_base_create' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus me-2"></i>Add New Entry
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.code-block {
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.copy-btn {
+    margin-top: 0.5rem;
+}
+
+.copy-btn.copied {
+    color: #198754;
+    border-color: #198754;
+}
+
+.copy-btn.copied i {
+    animation: checkmark 0.3s ease-in-out;
+}
+
+@keyframes checkmark {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+</style>
+
+<!-- Include clipboard.js for copy functionality -->
+<script src="https://cdn.jsdelivr.net/npm/clipboard@2/dist/clipboard.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize clipboard functionality
+    const clipboard = new ClipboardJS('.copy-btn');
+    
+    clipboard.on('success', function(e) {
+        const button = e.trigger;
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+        button.classList.add('copied');
+        
+        setTimeout(function() {
+            button.innerHTML = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+        
+        e.clearSelection();
+    });
+    
+    clipboard.on('error', function(e) {
+        console.error('Copy failed:', e);
+        const button = e.trigger;
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-exclamation me-1"></i>Copy failed';
+        button.classList.add('text-danger');
+        
+        setTimeout(function() {
+            button.innerHTML = originalText;
+            button.classList.remove('text-danger');
+        }, 2000);
+    });
+});
+</script>
+{% endblock %}

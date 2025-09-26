@@ -19,6 +19,8 @@ class TagMapper(models.Model):
     
     v1_component_name = models.CharField(max_length=255)
     v2_component_name = models.CharField(max_length=255)
+    v1_component_attributes = models.TextField(blank=True, null=True, help_text="Attributes for V1 tag")
+    v2_component_attributes = models.TextField(blank=True, null=True, help_text="Attributes for V2 tag")
     weight = models.FloatField(default=0.0)
     description = models.TextField(blank=True, help_text="Optional description of this mapping")
     mapping_rules = models.JSONField(blank=True, null=True, help_text="JSON mapping rules for transformation")

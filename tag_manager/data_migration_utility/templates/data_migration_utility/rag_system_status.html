@@ -1,0 +1,213 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}RAG System Status{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h3 mb-2 fw-bold">
+                                <i class="fas fa-brain me-2"></i>RAG System Status
+                            </h1>
+                            <p class="mb-0 opacity-90">Monitor and manage the Retrieval-Augmented Generation system</p>
+                        </div>
+                        <div>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'update_rag_system' %}" class="btn btn-light">
+                                    <i class="fas fa-sync me-2"></i>Update RAG
+                                </a>
+                                <a href="{% url 'reset_rag_system' %}" class="btn btn-light">
+                                    <i class="fas fa-refresh me-2"></i>Reset RAG
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- System Status -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-heartbeat me-2 text-success"></i>System Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if rag_status %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Status</small>
+                                {% if rag_status.is_initialized %}
+                                    <span class="badge bg-success fs-6">Initialized</span>
+                                {% else %}
+                                    <span class="badge bg-warning fs-6">Not Initialized</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Total Records</small>
+                                <span class="fw-semibold">{{ rag_status.total_records|default:"0" }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Data Source</small>
+                                <span class="fw-semibold">{{ rag_status.data_source|default:"Database" }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Collection</small>
+                                <span class="fw-semibold">{{ rag_status.collection_name|default:"helix_v1_v2_migrations" }}</span>
+                            </div>
+                            {% if rag_status.last_updated %}
+                            <div class="col-12">
+                                <small class="text-muted d-block">Last Updated</small>
+                                <span class="fw-semibold">{{ rag_status.last_updated|date:"F d, Y g:i A" }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                            <p class="text-muted">RAG system status unavailable</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2 text-info"></i>Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if statistics %}
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Vector Store Size</small>
+                                <span class="fw-semibold">{{ statistics.vector_count|default:"0" }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Components Indexed</small>
+                                <span class="fw-semibold">{{ statistics.component_count|default:"0" }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Memory Usage</small>
+                                <span class="fw-semibold">{{ statistics.memory_usage|default:"N/A" }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Performance</small>
+                                <span class="fw-semibold">{{ statistics.avg_query_time|default:"N/A" }}</span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-chart-line fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No statistics available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history me-2 text-secondary"></i>Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_activity %}
+                        <div class="list-group list-group-flush">
+                            {% for activity in recent_activity %}
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ activity.action }}</h6>
+                                        <small class="text-muted">{{ activity.description }}</small>
+                                    </div>
+                                    <small class="text-muted">{{ activity.timestamp|timesince }} ago</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light border-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs me-2 text-primary"></i>Management Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{% url 'update_rag_system' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-sync me-2"></i>Update System
+                                </a>
+                            </div>
+                            <small class="text-muted mt-1 d-block">Refresh RAG data from Knowledge Base</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{% url 'reset_rag_system' %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-refresh me-2"></i>Reset System
+                                </a>
+                            </div>
+                            <small class="text-muted mt-1 d-block">Clear and reinitialize RAG system</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{% url 'knowledge_base_list' %}" class="btn btn-outline-info">
+                                    <i class="fas fa-book me-2"></i>Knowledge Base
+                                </a>
+                            </div>
+                            <small class="text-muted mt-1 d-block">Manage source data for RAG</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{% url 'rag_system_api' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-code me-2"></i>API Endpoint
+                                </a>
+                            </div>
+                            <small class="text-muted mt-1 d-block">Access RAG system via API</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+</style>
+{% endblock %}

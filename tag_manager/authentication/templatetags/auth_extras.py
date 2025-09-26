@@ -12,6 +12,8 @@ MENU_PERMISSIONS = {
     'mapper': ['admin', 'tag_manager'],
     'tag_mapper': ['admin', 'tag_manager'],
     'migration_list': ['admin', 'tag_manager'],
+    'knowledge_base': ['admin', 'tag_manager'],
+    'rag_system': ['admin', 'tag_manager'],
     'sites': ['admin', 'tag_manager'],
     'api': ['admin', 'tag_manager', 'tag_viewer'],
 }
@@ -42,6 +44,7 @@ def can_access_menu(context, menu_name):
         'mapper': ['admin', 'tag_manager'],
         'tag_mapper': ['admin', 'tag_manager'],
         'migration_list': ['admin', 'tag_manager'],
+        'knowledge_base': ['admin', 'tag_manager'],
         'sites': ['admin', 'tag_manager'],
         'api': ['admin', 'tag_manager', 'tag_viewer'],
     }

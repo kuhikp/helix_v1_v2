@@ -123,6 +123,26 @@
                                     </a>
                                 </li>
                                 {% endif %}
+
+                                {% can_access_menu 'knowledge_base' as show_knowledge_base %}
+                                {% if show_knowledge_base %}
+                                <li>
+                                    <a class="dropdown-item {% get_menu_class 'knowledge_base' %}" 
+                                       href="{% url 'knowledge_base_list' %}">
+                                        <i class="fas fa-book"></i> Knowledge Base
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% can_access_menu 'rag_system' as show_rag_system %}
+                                {% if show_rag_system %}
+                                <li>
+                                    <a class="dropdown-item {% get_menu_class 'rag_system' %}" 
+                                       href="{% url 'rag_system_status' %}">
+                                        <i class="fas fa-brain"></i> RAG System
+                                    </a>
+                                </li>
+                                {% endif %}
                             </ul>
                         </li>
                         {% endif %}
@@ -135,7 +155,7 @@
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="apiDropdown">
                                 <li>
-                                    <a class="dropdown-item {% get_menu_class 'get_token' %}" href="{% url 'get_token' %}">
+                                    <a class="dropdown-item {% get_menu_class 'get_token' %}" href="{% url 'api_component:get_token' %}">>
                                         <i class="fas fa-key"></i> Generate API Token
                                     </a>
                                 </li>
