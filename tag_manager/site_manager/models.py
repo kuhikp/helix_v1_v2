@@ -30,6 +30,7 @@ class SiteListDetails(models.Model):
     is_imported = models.BooleanField(default=False)
     last_analyzed = models.DateTimeField(blank=True, null=True, help_text='Date and time when the site was last analyzed')
     webbuilder_site_id = models.IntegerField(null=True, blank=True)
+    webbuilder_site_url = models.URLField(max_length=512, null=True, blank=True)
 
     def __str__(self):
         return self.website_url

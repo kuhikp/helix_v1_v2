@@ -113,3 +113,17 @@ watchfiles==1.1.0
 websocket-client==1.8.0
 websockets==15.0.1
 zipp==3.23.0
+# Selenium for browser automation
+selenium==4.24.0
+
+# WebDriver Manager for automatic ChromeDriver installation
+webdriver-manager==4.0.2
+
+# Python-dotenv for loading environment variables from .env file
+python-dotenv==1.0.1
+
+# Openpyxl for Excel file handling (if needed)
+openpyxl==3.1.2
+
+rapidfuzz
+playwright

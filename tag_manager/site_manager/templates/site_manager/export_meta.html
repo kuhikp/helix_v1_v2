@@ -1,0 +1,110 @@
+{% extends 'authentication/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Export Meta</h2>
+    <form method="post" id="export-meta-form">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="v1-site-id" class="form-label">V1 Site ID</label>
+            <input type="text" class="form-control" id="v1-site-id" name="v1_site_id" required>
+        </div>
+        <div class="mb-3">
+            <label for="v2-site-id" class="form-label">V2 Site ID</label>
+            <input type="text" class="form-control" id="v2-site-id" name="v2_site_id" required>
+        </div>
+        <div id="export-meta-form-status" class="text-danger mb-3">{{ status_message }}</div>
+        <div id="export-meta-progress" class="mb-3" style="display:none;"></div>
+        <div id="export-meta-actions">
+            <button type="submit" class="btn btn-primary">Start Export</button>
+            <button type="button" id="cancel-export-btn" class="btn btn-warning ms-2" style="display:none;">Cancel Export</button>
+        </div>
+        {% if export_ready %}
+        <a href="{{ download_url }}" class="btn btn-success ms-2">Download Export</a>
+        {% endif %}
+    </form>
+</div>
+<script>
+const siteId = '{{ site_id }}';
+const statusDiv = document.getElementById('export-meta-form-status');
+const progressDiv = document.getElementById('export-meta-progress');
+const cancelBtn = document.getElementById('cancel-export-btn');
+let polling = false;
+
+function pollExportStatus() {
+    fetch(`/sites/${siteId}/meta/check-export-status/`)
+    .then(resp => resp.json())
+    .then(statusData => {
+        if (statusData.ready) {
+            statusDiv.innerHTML = '<span style="color:green">Export ready! <a href="/sites/' + siteId + '/meta/download-export/" class="btn btn-success ms-2">Download Export</a></span>';
+            progressDiv.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            polling = false;
+        } else if (statusData.status === 'cancelled') {
+            statusDiv.innerHTML = '<span style="color:red">Export cancelled.</span>';
+            progressDiv.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            polling = false;
+        } else {
+            let progressText = 'Exporting... (' + (statusData.status || 'processing') + ')';
+            if (typeof statusData.progress === 'number') {
+                progressText += ` | Progress: ${statusData.progress}%`;
+            }
+            progressDiv.textContent = progressText;
+            progressDiv.style.display = 'block';
+            cancelBtn.style.display = 'inline-block';
+            polling = true;
+            setTimeout(pollExportStatus, 2000);
+        }
+    });
+}
+
+document.getElementById('export-meta-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const form = this;
+    statusDiv.textContent = 'Exporting...';
+    progressDiv.style.display = 'block';
+    cancelBtn.style.display = 'inline-block';
+    fetch(`/sites/${siteId}/meta/export/start/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value, 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `v1_site_id=${encodeURIComponent(form.v1_site_id.value)}&v2_site_id=${encodeURIComponent(form.v2_site_id.value)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = '<span style="color:green">Export started. Checking status...</span>';
+            polling = true;
+            pollExportStatus();
+        } else {
+            statusDiv.innerHTML = '<span style="color:red">Error: ' + (data.error || 'Unknown error') + '</span>';
+            progressDiv.style.display = 'none';
+            cancelBtn.style.display = 'none';
+        }
+    })
+    .catch(err => {
+        statusDiv.innerHTML = '<span style="color:red">Error: ' + err + '</span>';
+        progressDiv.style.display = 'none';
+        cancelBtn.style.display = 'none';
+    });
+});
+
+cancelBtn.addEventListener('click', function() {
+    fetch(`/sites/${siteId}/meta/cancel-export/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if (data.success) {
+            statusDiv.innerHTML = '<span style="color:red">Export cancelled.</span>';
+            progressDiv.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            polling = false;
+            setTimeout(() => { window.history.back(); }, 1200);
+        } else {
+            statusDiv.innerHTML = '<span style="color:red">Cancel failed: ' + (data.error || 'Unknown error') + '</span>';
+        }
+    });
+});
+</script>
+{% endblock %}

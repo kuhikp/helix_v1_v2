@@ -13,8 +13,8 @@
             <p class="text-muted mb-0">
                 <i class="fas fa-globe me-2"></i>{{ site.website_url }}
             </p>
-            {% if site.webbuilder_site_id %}
-                <a href="https://webbuilder.pfizer/builder/website/{{ site.webbuilder_site_id }}/" class="btn btn-primary mt-3 mb-2" target="_blank" rel="noopener noreferrer">
+            {% if site.webbuilder_site_url %}
+                <a href="{{ site.webbuilder_site_url }}" class="btn btn-primary mt-3 mb-2" target="_blank" rel="noopener noreferrer">
                     View Webbuilder Site
                 </a>
             {% else %}
@@ -39,7 +39,7 @@
                                     document.getElementById('webbuilder-site-message').innerHTML =
                                         '<div class="alert alert-success">Webbuilder site created! ID: ' + data.site_id + '</div>';
                                     document.getElementById('webbuilder-site-action').innerHTML =
-                                        '<a href="https://webbuilder.pfizer/builder/website/' + data.site_id + '/" class="btn btn-primary" target="_blank" rel="noopener noreferrer">View Webbuilder Site</a>';
+                                        '<a href="' + data.site_url + '" class="btn btn-primary" target="_blank" rel="noopener noreferrer">View Webbuilder Site</a>';
                                 } else {
                                     btn.disabled = false;
                                     btn.textContent = 'Create Webbuilder Site';
@@ -53,11 +53,73 @@
                 </script>
             {% endif %}
         </div>
-        <!-- <div>
-            <a href="{% url 'site_meta_create' site.id %}" class="btn btn-primary ios-button me-2">
-                <i class="fas fa-plus me-2"></i>Add Meta Detail
-            </a>
-        </div> -->
+        <div style="width:100%;max-width:600px;">
+            <!-- Step 1: Export -->
+            <div class="mb-4 p-4 border rounded bg-white shadow-sm">
+                <h4 class="mb-3 fw-bold text-dark">Step 1: <span class="text-primary">Export Meta Data</span></h4>
+                <div class="mb-3 text-muted" style="font-size:1rem;">
+                    Export the meta data for this site. Once the export is complete, you can download the file below.
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <a href="/sites/{{ site.id }}/meta/export/" class="btn btn-outline-primary fw-semibold">
+                        <i class="fas fa-file-export me-1"></i>Export Meta
+                    </a>
+                    <button id="download-meta-btn" class="btn btn-success fw-semibold" style="display:none;">
+                        <i class="fas fa-download me-1"></i>Download Export
+                    </button>
+                    <span id="export-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
+                </div>
+            </div>
+            <!-- Step 2: Import -->
+            <div class="p-4 border rounded bg-white shadow-sm">
+                <h4 class="mb-3 fw-bold text-dark">Step 2: <span class="text-success">Import Meta Data</span></h4>
+                <div class="mb-3 text-muted" style="font-size:1rem;">
+                    After exporting and downloading, you can import a new or updated meta data CSV file for this site.
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <a href="/sites/{{ site.id }}/meta/import/" class="btn btn-outline-success border fw-semibold" id="import-meta-link">
+                        <i class="fas fa-file-import me-1"></i>Import Meta
+                    </a>
+                    <span id="import-meta-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
+                </div>
+            </div>
+            <!-- Step 3: Block Import -->
+            <div class="p-4 border rounded bg-white shadow-sm mt-4">
+                <h4 class="mb-3 fw-bold text-dark">Step 3: <span class="text-info">Block Import</span></h4>
+                <div class="mb-3 text-muted" style="font-size:1rem;">
+                    Import block data for this site using a CSV file. This is useful for advanced block-level migration.
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <a href="/sites/{{ site.id }}/block/import/" class="btn btn-outline-info border fw-semibold" id="block-import-link">
+                        <i class="fas fa-cubes me-1"></i>Block Import
+                    </a>
+                </div>
+            </div>
+            <!-- Step 4: Pages Import -->
+            <div class="p-4 border rounded bg-white shadow-sm mt-4">
+                <h4 class="mb-3 fw-bold text-dark">Step 4: <span class="text-primary">Pages Import</span></h4>
+                <div class="mb-3 text-muted" style="font-size:1rem;">
+                    Import page data for this site. This will automate the import of all pages for the selected site.
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <a href="/sites/{{ site.id }}/pages/import/" class="btn btn-outline-primary border fw-semibold" id="pages-import-link">
+                        <i class="fas fa-file-alt me-1"></i>Pages Import
+                    </a>
+                </div>
+            </div>
+            <!-- Step 5: File Attribute Import -->
+            <div class="p-4 border rounded bg-white shadow-sm mt-4">
+                <h4 class="mb-3 fw-bold text-dark">Step 5: <span class="text-warning">File Attribute Import</span></h4>
+                <div class="mb-3 text-muted" style="font-size:1rem;">
+                    Import file attribute data for this site using a CSV file. Use this to update or migrate file-level attributes in bulk.
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <a href="/sites/{{ site.id }}/file-attribute/import/" class="btn btn-outline-warning border fw-semibold" id="file-attribute-import-link">
+                        <i class="fas fa-file-csv me-1"></i>File Attribute Import
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Meta Details Table -->
@@ -216,6 +278,41 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         });
     });
+
+    // Export status polling logic (single, robust version)
+    // const downloadBtn = document.getElementById('download-meta-btn');
+    // let exportStatusInterval = null;
+    // function checkExportStatus() {
+    //     fetch(`/sites/{{ site.id }}/meta/export/status/`)
+    //         .then(response => {
+    //             if (!response.ok) {
+    //                 clearInterval(exportStatusInterval);
+    //                 downloadBtn.style.display = 'none';
+    //                 return Promise.reject('Export status endpoint not found or server error.');
+    //             }
+    //             return response.json();
+    //         })
+    //         .then(data => {
+    //             if (data.status === 'completed') {
+    //                 downloadBtn.style.display = 'inline-block';
+    //                 if (data.download_url) {
+    //                     downloadBtn.href = data.download_url;
+    //                     downloadBtn.onclick = null;
+    //                 }
+    //                 clearInterval(exportStatusInterval);
+    //             } else if (data.status === 'cancelled') {
+    //                 downloadBtn.style.display = 'none';
+    //                 clearInterval(exportStatusInterval);
+    //             } else {
+    //                 downloadBtn.style.display = 'none';
+    //             }
+    //         })
+    //         .catch(() => {
+    //             downloadBtn.style.display = 'none';
+    //         });
+    // }
+    // exportStatusInterval = setInterval(checkExportStatus, 5000);
+    // checkExportStatus();
 });
 </script>
 {% endblock %}

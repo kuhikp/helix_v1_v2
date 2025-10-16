@@ -370,8 +370,9 @@ body {
 /* Cards and Containers */
 .ios-card {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: var(--ios-blur);
-    -webkit-backdrop-filter: var(--ios-blur);
+    /* Remove blur from modal popups */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     border-radius: 20px;
     box-shadow: var(--ios-shadow-light);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -430,6 +431,56 @@ body {
     margin-bottom: 24px;
     box-shadow: var(--ios-shadow-light);
     border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure Bootstrap modal and backdrop z-index are correct and above all custom elements */
+.modal {
+    z-index: 2000 !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+}
+.modal-content {
+    filter: none !important;
+    backdrop-filter: none !important;
+    background: #fff;
+}
+/* Remove blur from modal and its content, even if .blurred-background is active */
+.modal, .modal *,
+.modal-content, .modal-content * {
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: #fff !important;
+}
+
+/* Ensure modal and its children are never blurred, even if parent is blurred */
+body > .modal, body > .modal *,
+body > .modal-content, body > .modal-content * {
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: #fff !important;
+}
+
+/* Blur background when modal is open */
+.blurred-background {
+    filter: blur(6px) grayscale(0.2) brightness(0.95);
+    pointer-events: none;
+    user-select: none;
+    transition: filter 0.3s;
+}
+
+/* Ensure modal form labels are always visible */
+.modal .form-label {
+  color: #212529 !important;
+  display: block !important;
+  opacity: 1 !important;
+  z-index: 1056 !important;
+}
+
+/* Ensure all modal text is visible (fixes invisible title and button text) */
+.modal-content, .modal-content * {
+    color: #212529 !important;
 }
 
 /* Responsive Design */

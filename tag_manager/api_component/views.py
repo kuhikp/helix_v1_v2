@@ -37,6 +37,10 @@ class MigrateV1ToV2View(APIView):
         v1_css = request.data.get('v1_css', '')
         v1_js = request.data.get('v1_js', '')
 
+        # Initialize to avoid UnboundLocalError
+        output_v2 = None
+        migrated_body = None
+
         # If V1 body is provided, perform migration
         if v1_body.strip():
             output_v2 = migrate(v1_body)

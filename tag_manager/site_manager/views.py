@@ -9,6 +9,9 @@ import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
 import subprocess
 import sys
+import os
+import tempfile
+from dotenv import load_dotenv
 
 # Django imports
 from django.contrib import messages
@@ -17,11 +20,14 @@ from django.contrib.sessions.backends.db import SessionStore
 from django.contrib.sessions.models import Session
 from django.db import models
 from django.db.models import Sum, Count, Q
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, FileResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from django.db import connection
+from django.views.decorators.http import require_POST, require_http_methods, require_GET
+import signal
+from django.conf import settings
 
 # Third-party imports
 import requests
@@ -33,12 +39,15 @@ from .models import SiteListDetails, SiteMetaDetails
 from .forms import SiteListDetailsForm, SiteMetaDetailsForm
 from tag_manager_component.models import Tag, TagMapper
 from tag_manager_component.views import get_website_complexity
+from import_files_func import process_files
+from playwright.sync_api import sync_playwright
+from dotenv import load_dotenv
 
 # Disable SSL warnings for sites with certificate issues
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configure logging
-logger = logging.getLogger(__name__)
+instance_id = os.getenv('INSTANCE_ID')
 
 @login_required
 def site_list(request):
@@ -1690,8 +1699,9 @@ def trigger_webbuilder_site_creation(request, site_id):
             if match:
                 webbuilder_site_id = int(match.group(1))
                 site.webbuilder_site_id = webbuilder_site_id
+                site.webbuilder_site_url = url  # Save the full URL
                 site.save()
-                return JsonResponse({"success": True, "site_id": webbuilder_site_id})
+                return JsonResponse({"success": True, "site_id": webbuilder_site_id, "site_url": url})
             else:
                 return JsonResponse({"success": False, "error": "Site ID not found in URL output: " + url})
         except subprocess.CalledProcessError as e:
@@ -1700,3 +1710,668 @@ def trigger_webbuilder_site_creation(request, site_id):
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)})
     return JsonResponse({"success": False, "error": "Invalid request"})
+
+def import_webbuilder_config(request, site_id):
+    """Handle CSV upload and import webbuilder config for a site using script_import_data.py."""
+    if not site_id:
+        from django.contrib import messages
+        messages.error(request, 'Site ID is missing. Cannot import config.')
+        return redirect('site_list')
+    if request.method == 'POST' and request.FILES.get('config_file'):
+        config_file = request.FILES['config_file']
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as temp_config:
+            for chunk in config_file.chunks():
+                temp_config.write(chunk)
+            temp_config_path = temp_config.name
+        try:
+            # Run the import script with the uploaded output.csv
+            result = subprocess.run(
+                [sys.executable, os.path.join(os.path.dirname(__file__), '../script_import_data.py'), temp_config_path],
+                capture_output=True, text=True, check=True
+            )
+            messages.success(request, 'Import completed successfully.')
+        except subprocess.CalledProcessError as e:
+            messages.error(request, f'Import failed: {e.stderr or str(e)}')
+        except Exception as e:
+            messages.error(request, f'Import failed: {str(e)}')
+        finally:
+            os.unlink(temp_config_path)
+        return redirect('site_meta_list', site_id=site.id)
+    return render(request, 'site_manager/import_webbuilder_config.html', {'site_id': site_id})
+
+def export_webbuilder_config(request, site_id):
+    """Export webbuilder config for a site as CSV by running the export script with uploaded input.csv."""
+    if request.method == 'POST' and request.FILES.get('input_csv'):
+        input_file = request.FILES['input_csv']
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as temp_input:
+            for chunk in input_file.chunks():
+                temp_input.write(chunk)
+            temp_input_path = temp_input.name
+        try:
+            # Run the export script with the uploaded input CSV
+            result = subprocess.run(
+                [sys.executable, os.path.join(os.path.dirname(__file__), '../script_to_export.py'), temp_input_path],
+                capture_output=True, text=True, check=True
+            )
+            output_lines = result.stdout.strip().splitlines()
+            # The script should print the output CSV path as the last line
+            output_csv_path = output_lines[-1]
+            abs_output_csv_path = os.path.abspath(output_csv_path)
+            if not os.path.exists(abs_output_csv_path):
+                return HttpResponse('Export failed: output.csv not found.', status=500)
+            with open(abs_output_csv_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='text/csv')
+                response['Content-Disposition'] = 'attachment; filename="output.csv"'
+                return response
+        except subprocess.CalledProcessError as e:
+            return HttpResponse(f'Export failed: {e.stderr or str(e)}', status=500)
+        except Exception as e:
+            return HttpResponse(f'Export failed: {str(e)}', status=500)
+        finally:
+            os.unlink(temp_input_path)
+    return HttpResponse('No file uploaded.', status=400)
+
+@login_required
+def export_site_meta(request, site_id):
+    """
+    Accepts v1_site_id and v2_site_id from POST, writes to input.csv, and triggers script_to_export.py asynchronously.
+    Stores PID and status in a status file for progress tracking and cancellation.
+    """
+    v1_site_id = request.POST.get('v1_site_id')
+    v2_site_id = request.POST.get('v2_site_id')
+    if not v1_site_id or not v2_site_id:
+        return JsonResponse({'success': False, 'error': 'Both v1_site_id and v2_site_id are required.'})
+    input_csv_path = os.path.join(settings.BASE_DIR, 'input.csv')
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
+    try:
+        with open(input_csv_path, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(['v1_site_id', 'v2_site_id'])
+            writer.writerow([v1_site_id, v2_site_id])
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Failed to write CSV: {e}'})
+    script_path = os.path.join(settings.BASE_DIR, 'script_to_export.py')
+    # Start the export script asynchronously
+    try:
+        process = subprocess.Popen(['python3', script_path, str(site_id)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Write PID and initial status to status file
+        with open(status_file, 'w') as f:
+            f.write(json.dumps({'pid': process.pid, 'status': 'running', 'progress': 0}))
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': f'Failed to start export: {e}'})
+    return JsonResponse({'success': True, 'message': 'Export started.'})
+
+@login_required
+def check_export_status(request, site_id):
+    """
+    Check the status of the export process for a given site_id.
+    Returns JSON: {"ready": bool, "status": str, "progress": int, "running": bool}
+    """
+    output_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.csv")
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
+    status = 'not_started'
+    progress = 0
+    running = False
+    if os.path.exists(status_file):
+        with open(status_file, 'r') as f:
+            try:
+                status_data = json.load(f)
+                status = status_data.get('status', 'not_started')
+                progress = status_data.get('progress', 0)
+                pid = status_data.get('pid')
+                if pid:
+                    # Check if process is still running
+                    try:
+                        os.kill(pid, 0)
+                        running = True
+                    except OSError:
+                        running = False
+            except Exception:
+                pass
+    is_ready = os.path.exists(output_file)
+    return JsonResponse({'ready': is_ready, 'status': status, 'progress': progress, 'running': running})
+
+@login_required
+@require_POST
+def cancel_export(request, site_id):
+    """
+    Cancel the export process for a given site_id by killing the process and updating the status file.
+    """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
+    if not os.path.exists(status_file):
+        return JsonResponse({'success': False, 'error': 'No export process found.'})
+    try:
+        with open(status_file, 'r') as f:
+            status_data = json.load(f)
+        pid = status_data.get('pid')
+        if pid:
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except OSError:
+                pass  # Process may have already exited
+        # Update status file
+        status_data['status'] = 'cancelled'
+        status_data['progress'] = 0
+        with open(status_file, 'w') as f:
+            json.dump(status_data, f)
+        return JsonResponse({'success': True, 'message': 'Export cancelled.'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def export_meta_page(request, site_id):
+    """
+    Render the export meta page for a given site_id.
+    """
+    from django.urls import reverse
+    import os
+    export_ready = False
+    download_url = None
+    output_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.csv")
+    if os.path.exists(output_file):
+        export_ready = True
+        download_url = reverse('download_exported_meta', args=[site_id])
+    return render(request, 'site_manager/export_meta.html', {
+        'site_id': site_id,
+        'export_ready': export_ready,
+        'download_url': download_url,
+    })
+
+@login_required
+def import_site_meta(request, site_id):
+    """
+    Accepts a POST request with a CSV file and processes it for meta import for the given site_id.
+    Now runs the import in the background and returns immediately.
+    """
+    import tempfile
+    from django.contrib import messages
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_import.status")
+    if request.method == 'POST' and request.FILES.get('import_file'):
+        import_file = request.FILES['import_file']
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as temp_file:
+            for chunk in import_file.chunks():
+                temp_file.write(chunk)
+            temp_file_path = temp_file.name
+        # Start background thread
+        thread = threading.Thread(target=run_import_script_in_background, args=(site_id, temp_file_path, status_file))
+        thread.daemon = True
+        thread.start()
+        response_data = {'success': True, 'message': 'Import started. You can check the status below.'}
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            from django.http import JsonResponse
+            return JsonResponse(response_data)
+        messages.info(request, 'Import started. You can check the status below.')
+        return redirect('export_meta_page', site_id=site_id)
+    return render(request, 'site_manager/import_meta.html', {'site_id': site_id})
+
+def run_import_script_in_background(site_id, temp_file_path, status_file):
+    try:
+        script_path = os.path.join(settings.BASE_DIR, 'script_import_data.py')
+        # Write status: running
+        with open(status_file, 'w') as f:
+            f.write(json.dumps({'status': 'running', 'message': 'Import in progress...'}))
+        result = subprocess.run(['python3', script_path, temp_file_path], capture_output=True, text=True)
+        if result.returncode == 0:
+            status = {'status': 'completed', 'message': 'Import completed successfully.'}
+        else:
+            status = {'status': 'failed', 'message': result.stderr or 'Import failed.'}
+        with open(status_file, 'w') as f:
+            f.write(json.dumps(status))
+    except Exception as e:
+        with open(status_file, 'w') as f:
+            f.write(json.dumps({'status': 'failed', 'message': str(e)}))
+    finally:
+        os.unlink(temp_file_path)
+
+@login_required
+def check_import_status(request, site_id):
+    """
+    Check the status of the import process for a given site_id.
+    Returns JSON: {"status": str, "message": str}
+    """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_import.status")
+    status = {'status': 'not_started', 'message': 'No import in progress.'}
+    if os.path.exists(status_file):
+        with open(status_file, 'r') as f:
+            try:
+                status = json.load(f)
+            except Exception:
+                pass
+    return JsonResponse(status)
+
+@login_required
+def download_exported_meta(request, site_id):
+    """
+    Serve the exported meta CSV file for download for the given site_id.
+    """
+    import os
+    from django.http import FileResponse, Http404
+    output_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.csv")
+    if not os.path.exists(output_file):
+        raise Http404("Exported file not found.")
+    response = FileResponse(open(output_file, 'rb'), as_attachment=True, filename=f"site_{site_id}_meta_export.csv")
+    return response
+
+@login_required
+def import_block(request, site_id):
+    """
+    View to handle block import for a given site.
+    """
+    if request.method == 'POST':
+        # Start the import in a background thread
+        threading.Thread(target=run_import_block, args=(site_id,)).start()
+        return JsonResponse({'status': 'started', 'message': 'Block import is in progress.'})
+    return render(request, 'site_manager/import_block.html', {'site_id': site_id})
+
+
+def run_import_block(site_id):
+    from playwright.sync_api import sync_playwright
+    from dotenv import load_dotenv
+    import os, csv
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page()
+
+        # Load environment variables from .env file
+        load_dotenv()
+
+        # Folder containing JSON files
+        files_folder = "files"
+        pages_folder = "pages"
+        blocks_folder = "modules"
+
+        username = os.getenv('USERNAME')
+        password = os.getenv('PASSWORD')
+        sitename = os.getenv('SITENAME')
+        instance_id = os.getenv('INSTANCE_ID')
+
+        csv_filename = f"v2_{instance_id}_duplicate_files_list.csv"
+
+        # Create the CSV file once if it doesn't exist
+        # CSV File is for noting the Duplicate Files
+        if not os.path.exists(csv_filename):
+            with open(csv_filename, mode='w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(["Duplicate File Name"])  # Header row
+
+        # Go to dashboard
+        page.goto("https://webbuilder.pfizer/webbuilder/dashboard")
+
+        # Click the Webbuilder Login button
+        page.click('xpath=//*[@id="app"]/div[1]/div[1]/div[1]/div/div[2]/a')
+
+        # Fill in login credentials
+        page.fill('xpath=//*[@id="username"]', username)
+        page.fill('xpath=//*[@id="password"]', password)
+        page.press('xpath=//*[@id="password"]', "Enter")
+
+        # Call the main processing functions in synchronous order
+        process_blocks(page, sitename, instance_id,
+                       blocks_folder=os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import',
+                                                  '21995','data','modules'))  # completed. released for trials  # completed. released for trials
+
+        browser.close()
+
+
+def create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach, b_auto_attach_location,
+                 b_auto_attach_exceptions, b_auto_attach_to_error_pages, b_html, b_css):
+    # Fill title
+    b_title_field = page.locator(
+        'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[1]/div[1]/input')
+    b_title_field.click()
+    page.keyboard.press("Control+A")
+    b_title_field.fill(b_title)
+    page.wait_for_timeout(1000)
+
+    # Fill Description
+    b_description_field = page.locator(
+        'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[1]/div[2]/input')
+    b_description_field.click()
+    page.keyboard.press("Control+A")
+    b_description_field.fill(b_description)
+    page.wait_for_timeout(1000)
+
+    # Fill category
+    page.locator(
+        'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[1]/div[3]/div/div[2]').click()
+    b_category_field = page.locator(
+        'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[1]/div[3]/div/div[2]/input')
+    b_category_field.fill(b_category)
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(1000)
+
+    # If protected, perform extended logic
+    if b_protected:
+        page.locator(
+            'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[2]/div/label/input').click()
+        page.wait_for_timeout(1000)
+
+        if isinstance(b_files, list) and b_files:
+            for file_value in b_files:
+                page.locator(
+                    'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/section/section/div/div[3]').click()
+                file_input = page.locator(
+                    'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/section/section/div/div[3]/input')
+                file_input.fill(file_value)
+                page.keyboard.press("Enter")
+                page.wait_for_timeout(1000)
+
+        if b_auto_attach:
+            page.locator(
+                'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[2]/div[2]/label/input').click()
+            page.wait_for_timeout(1000)
+
+            if b_auto_attach_location:
+                location_select = page.locator(
+                    'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[2]/div[3]/select')
+                options = location_select.locator('option').all()
+                for option in options:
+                    option_text = option.text_content()
+                    if option_text.strip() == b_auto_attach_location.strip():
+                        option.click()
+                        page.wait_for_timeout(1000)
+                        break
+
+            if isinstance(b_auto_attach_exceptions, list) and b_auto_attach_exceptions:
+                exception_container = page.locator(
+                    'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[2]/div[4]/div/div[2]')
+                page.wait_for_timeout(1000)
+                for exception in b_auto_attach_exceptions:
+                    exception_container.click()
+                    exception_input = page.locator(
+                        'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[2]/div[4]/div/div[2]/input')
+                    exception_input.fill(exception)
+                    page.keyboard.press("Enter")
+                    page.wait_for_timeout(1000)
+
+        if b_auto_attach_to_error_pages:
+            page.locator('xpath=b_auto_attach_to_error_pages').click()
+            page.wait_for_timeout(1000)
+
+    # Proceed with block import
+    import_btn = page.locator('.fa-download')
+    import_btn.click()  # click import button
+    page.wait_for_timeout(1000)
+    text_field = page.locator('xpath=//*[@id="gjs-mdl-c"]/div/div/div[6]/div[1]/div/div/div/div[5]/div/pre')
+    text_field.click()  # click the text area
+    page.wait_for_timeout(1000)
+    text_fill = page.locator('xpath=//*[@id="gjs-mdl-c"]/div/div/div[1]/textarea')
+    text_fill.fill(b_html + "\n" + "<style>\n" + b_css + "\n</style>")  # fill the text area
+    page.wait_for_timeout(2000)
+    page.locator('.gjs-btn-import').click()  # click import save button
+    page.wait_for_timeout(1000)
+    page.locator('xpath=//*[@id="wrapper"]/nav/div[2]/div[1]/div[2]/div/div/button[1]').click()  # click the save button
+    page.wait_for_timeout(4000)
+    page.locator('.btn-back-tiered-menu ').click()  # click back button
+    page.wait_for_timeout(10000)
+
+
+def search_and_check_block_existence(page, b_title, block_name, instance_id):
+    # Locate and interact with the search box
+    search_box = page.locator('xpath=//*[@id="search-input"]')
+    search_box.click()
+    page.keyboard.press("Control+A")
+    search_box.fill(b_title)
+    search_box.press("Enter")
+    page.wait_for_timeout(2000)
+
+    block_exists = False
+    matching_elements = page.locator(f"text={b_title}").all()
+
+    if matching_elements:
+        rows = page.query_selector_all('table[data-v-4aee22f3][data-v-816643a6] tbody tr')
+        for row in rows:
+            second_column = row.query_selector("td:nth-child(2)")
+            if second_column and second_column.inner_text().strip() == b_title:
+                block_exists = True
+                print(f"'{b_title}' already exists")
+
+                # Prepare CSV file path
+                csv_filename = f"v2_{instance_id}_Duplicate_Blocks.csv"
+
+                # Check if file exists, if not create with header
+                file_exists = os.path.isfile(csv_filename)
+                with open(csv_filename, mode='a', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.writer(csvfile)
+                    if not file_exists:
+                        writer.writerow(["b_title", "block_name"])
+                    writer.writerow([b_title, block_name])
+                break
+    return block_exists
+
+
+def process_blocks(page, sitename, instance_id, blocks_folder):
+    page.goto(f"https://{sitename}/builder/website/{instance_id}?panel=left-sidebar-settings--elements")
+    page.wait_for_timeout(10000)
+    print(blocks_folder)
+    for block_name in os.listdir(blocks_folder):
+        if block_name.endswith(".json"):
+            block_path = os.path.join(blocks_folder, block_name)
+
+            # Skip empty JSON files
+            if os.path.getsize(block_path) == 0:
+                print(f"Skipping empty file: {block_name}")
+                continue
+            with open(block_path, "r", encoding="utf-8") as f:
+
+                try:
+                    block_data = json.load(f)
+                    if block_data == []:
+                        print(f"Skipping file with empty array: {block_name}")
+                        continue
+                except json.JSONDecodeError:
+                    print(f"Skipping file with invalid JSON: {block_name}")
+                    continue
+
+                print(f"Opening JSON : {block_name}")
+                try:
+                    # Safely extract storage and settings dictionaries
+                    storage = block_data.get("storage", {})
+                    settings = block_data.get("settings", {})
+                    settings_settings = settings.get("settings", {}) if isinstance(settings.get("settings", {}),
+                                                                                   dict) else {}
+
+                    # Safely extract values from storage.data
+                    if isinstance(storage, dict):
+                        data = storage.get("data", {})
+                        if isinstance(data, dict):
+                            b_css = data.get("css", "")
+                            b_html = data.get("html", "")
+                        else:
+                            b_css = ""
+                            b_html = ""
+                    else:
+                        b_css = ""
+                        b_html = ""
+
+                    payload = {
+                        'v1_body': b_html,
+                        'v1_css': b_css,
+                        'v1_js': ''
+                    }
+
+                    api_url = os.getenv('API_URL')
+                    bearer_token = os.getenv('BEARER_TOKEN')
+                    headers = {
+                        'Authorization': f'Bearer {bearer_token}',
+                        'Content-Type': 'application/json'
+                    }
+
+                    # if not bearer_token:
+                    #     messages.error(request, "Bearer token is missing. Please check your environment configuration.")
+                    #     return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+
+                    response = requests.post(api_url, json=payload, headers=headers)
+
+                    if response.status_code == 403:
+                        try:
+                            error_detail = response.json()
+                            messages.error(request, f"Forbidden: {error_detail}")
+                        except:
+                            messages.error(request, f"Forbidden: {response.text}")
+                        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+                    elif response.status_code == 401:
+                        messages.error(request, "Unauthorized: Invalid or expired Bearer token.")
+                        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+                    elif response.status_code == 200:
+                        data = response.json()
+                        b_html = data.get('v2_body', '')
+                        b_css = data.get('v2_css', '')
+                        b_js = data.get('v2_js', '')
+                        print(b_html)
+                        print(b_css)
+                        #migration.save()
+                        #messages.success(request, "Migration completed successfully.")
+                        #return redirect('data_migration_detail', pk=migration.pk)
+                    # else:
+                    #     try:
+                    #         error_detail = response.json()
+                    #         messages.error(request,
+                    #                        f"Failed to migrate data. Status: {response.status_code}, Error: {error_detail}")
+                    #     except:
+                    #         messages.error(request,
+                    #                        f"Failed to migrate data. Status: {response.status_code}, Response: {response.text}")
+
+                    # Safely extract values from settings and settings.settings
+                    b_title = settings.get("title", "") if isinstance(settings, dict) else ""
+                    b_description = settings_settings.get("description", "") if isinstance(settings_settings,
+                                                                                           dict) else ""
+                    b_deleted_by = settings_settings.get("deleted_by", "") if isinstance(settings_settings,
+                                                                                         dict) else ""
+                    b_category = settings.get("category", "") if isinstance(settings, dict) else ""
+                    b_protected = settings.get("protected", "") if isinstance(settings, dict) else ""
+                    b_files = settings.get("files", []) if isinstance(settings, dict) else []
+                    b_auto_attach = settings_settings.get("auto_attach", False) if isinstance(settings_settings,
+                                                                                              dict) else False
+                    b_auto_attach_location = settings_settings.get("auto_attach_location", "") if isinstance(
+                        settings_settings, dict) else ""
+                    b_auto_attach_exceptions = settings_settings.get("auto_attach_exceptions", []) if isinstance(
+                        settings_settings, dict) else []
+                    b_auto_attach_to_error_pages = settings_settings.get("auto_attach_to_error_pages",
+                                                                         False) if isinstance(settings_settings,
+                                                                                              dict) else False
+
+                    if b_deleted_by:
+                        print(
+                            f"Skipping block '{b_title}' as it was deleted by {b_deleted_by}. Exiting block processing.")
+                        # break
+                    # block_exists = search_and_check_block_existence(page, b_title, block_name, instance_id)
+
+                    # print(f"found block : {b_title} at JSON {block_name}")
+
+                    add_block_button = page.locator(
+                        'xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/div[1]/div[2]/a')
+                    fresh_site_button = page.locator('xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/a')
+
+                    if add_block_button.is_visible() and not b_deleted_by:
+                        add_block_button.click()
+                        print("Clicked Add block list button.")
+                        page.wait_for_timeout(1000)
+                        create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach,
+                                     b_auto_attach_location, b_auto_attach_exceptions, b_auto_attach_to_error_pages,
+                                     b_html, b_css)
+                    elif fresh_site_button.is_visible() and not b_deleted_by:
+                        fresh_site_button.click()
+                        print("Clicked New site block list button.")
+                        page.wait_for_timeout(1000)
+                        create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach,
+                                     b_auto_attach_location, b_auto_attach_exceptions, b_auto_attach_to_error_pages,
+                                     b_html, b_css)
+                    else:
+                        print("Neither block list button was found.")
+
+                except KeyError:
+                    print(f"Certain Field Not Found : '{block_name}'")
+
+@login_required
+def import_file_attribute(request, site_id):
+    """
+    Trigger file attribute import automation for a site. No file upload required.
+    Shows only an Import button and triggers the process on submit.
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    if request.method == 'POST':
+        threading.Thread(target=run_import_file_attribute, args=(site_id,)).start()
+        messages.info(request, 'File attribute import started. You can navigate away; the process will continue in the background.')
+        return redirect('site_meta_list', site_id=site.id)
+    return render(request, 'site_manager/import_file_attribute.html', {'site': site})
+
+def run_import_file_attribute(site_id):
+    from playwright.sync_api import sync_playwright
+    from dotenv import load_dotenv
+    import os
+    from import_files_func import process_files
+    import logging
+    # Optionally: fetch site-specific info from DB if needed
+    load_dotenv()
+    username = os.getenv('USERNAME')
+    password = os.getenv('PASSWORD')
+    sitename = os.getenv('SITENAME')
+    instance_id = os.getenv('INSTANCE_ID')
+    files_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', str(instance_id), 'data',
+                                'files')
+    pages_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', str(instance_id), 'data',
+                                'pages')
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=False)  # Show browser window
+            page = browser.new_page()
+            # Login steps
+            page.goto("https://webbuilder.pfizer/webbuilder/dashboard")
+            page.click('xpath=//*[@id="app"]/div[1]/div[1]/div[1]/div/div[2]/a')
+            page.fill('xpath=//*[@id="username"]', username)
+            page.fill('xpath=//*[@id="password"]', password)
+            page.press('xpath=//*[@id="password"]', "Enter")
+            page.wait_for_timeout(3000)
+            process_files(page, sitename, instance_id, files_folder, pages_folder)
+            browser.close()
+    except Exception as e:
+        logging.error(f"Error in run_import_file_attribute: {e}")
+
+def import_file(request, site_id):
+    """
+    Handle file import for a site. Accepts file upload via POST and processes it.
+    """
+    if request.method == 'POST' and request.FILES.get('import_file'):
+        uploaded_file = request.FILES['import_file']
+        # Example: Save the uploaded file to a temporary location
+        import os
+        from django.conf import settings
+        temp_dir = getattr(settings, 'MEDIA_ROOT', '/tmp')
+        file_path = os.path.join(temp_dir, uploaded_file.name)
+        with open(file_path, 'wb+') as destination:
+            for chunk in uploaded_file.chunks():
+                destination.write(chunk)
+        # Optionally, trigger background processing here
+        return JsonResponse({'status': 'success', 'message': f'File {uploaded_file.name} uploaded.'})
+    return render(request, 'site_manager/import_file.html', {'site_id': site_id})
+
+@login_required
+@require_GET
+def export_status(request, site_id):
+    """
+    Return the export status for a given site_id as JSON.
+    """
+    return JsonResponse({"status": "ok", "site_id": site_id})
+
+@login_required
+def pages_import_view(request, site_id):
+    """
+    View for importing pages for a given site. Handles POST to trigger import_pages_func.py.
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    if request.method == 'POST':
+        try:
+            # Run the import_pages_func.py script
+            result = subprocess.run([
+                'python3', 'import_pages_func.py', str(site_id)
+            ], capture_output=True, text=True, check=True)
+            messages.success(request, f"Pages import completed successfully. Output: {result.stdout}")
+        except subprocess.CalledProcessError as e:
+            messages.error(request, f"Pages import failed: {e.stderr or e.output or str(e)}")
+        except Exception as e:
+            messages.error(request, f"Unexpected error: {str(e)}")
+        return redirect('pages_import', site_id=site.id)
+    return render(request, 'site_manager/pages_import.html', {'site': site})

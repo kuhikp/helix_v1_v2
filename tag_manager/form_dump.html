@@ -1,0 +1,91 @@
+<script>
+// Extract siteId from URL (e.g., /sites/1441/meta/)
+function getSiteIdFromUrl() {
+    const match = window.location.pathname.match(/\/sites\/(\d+)\//);
+    return match ? match[1] : '';
+}
+const siteId = getSiteIdFromUrl();
+const statusDiv = document.getElementById('export-meta-form-status');
+const progressDiv = document.getElementById('export-meta-progress');
+const cancelBtn = document.getElementById('cancel-export-btn');
+let polling = false;
+
+function pollExportStatus() {
+    fetch(`/sites/${siteId}/meta/check-export-status/`)
+    .then(resp => {
+        if (!resp.ok) {
+            throw new Error('Export status endpoint not found or server error.');
+        }
+        return resp.json();
+    })
+    .then(statusData => {
+        if (statusData.ready) {
+            const timestamp = Date.now();
+            statusDiv.innerHTML = '<span style="color:green;">Export ready!</span>' +
+                '<a href="/sites/' + siteId + '/meta/download-export/?t=' + timestamp + '" class="btn btn-success ms-2" style="margin-left:10px;">Download Export</a>';
+            progressDiv.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            polling = false;
+        } else if (statusData.status === 'cancelled') {
+            statusDiv.innerHTML = '<span style="color:red">Export cancelled.</span>';
+            progressDiv.style.display = 'none';
+            cancelBtn.style.display = 'none';
+            polling = false;
+        } else {
+            let progressText = 'Exporting... (' + (statusData.status || 'processing') + ')';
+            if (typeof statusData.progress === 'number') {
+                progressText += ` | Progress: ${statusData.progress}%`;
+            }
+            progressDiv.textContent = progressText;
+            progressDiv.style.display = 'block';
+            cancelBtn.style.display = 'inline-block';
+            polling = true;
+            setTimeout(pollExportStatus, 2000);
+        }
+    })
+    .catch(error => {
+        statusDiv.innerHTML = '<span style="color:red">Error: ' + error.message + '</span>';
+        progressDiv.style.display = 'none';
+        cancelBtn.style.display = 'none';
+        polling = false;
+    });
+}
+</script>
+
+<div class="mb-4 p-3 border rounded bg-light">
+    <h4 class="mb-2" style="color:#2c3e50;">Step 1: Export Meta Data</h4>
+    <p class="mb-2" style="color:#555;">Export the meta data for this site. Once the export is complete, you can download the file.</p>
+    <form method="post" id="export-meta-form">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <div class="mb-3">
+            <label for="v1-site-id" class="form-label" style="color:#2c3e50;">V1 Site ID</label>
+            <input type="text" class="form-control" id="v1-site-id" name="v1_site_id" required>
+        </div>
+        <div class="mb-3">
+            <label for="v2-site-id" class="form-label" style="color:#2c3e50;">V2 Site ID</label>
+            <input type="text" class="form-control" id="v2-site-id" name="v2_site_id" required>
+        </div>
+        <div id="export-meta-form-status" class="mb-3" style="display:flex;align-items:center;min-height:38px;"></div>
+        <div id="export-meta-progress" class="mb-3" style="display: none;"></div>
+        <div id="export-meta-actions" style="display:flex;gap:10px;align-items:center;">
+            <button type="submit" class="btn btn-outline-primary">Export Meta Data</button>
+            <button type="button" id="cancel-export-btn" class="btn btn-warning" style="display: none;">Cancel Export</button>
+        </div>
+    </form>
+</div>
+
+<div class="mb-4 p-3 border rounded bg-light">
+    <h4 class="mb-2" style="color:#2c3e50;">Step 2: Import Meta Data</h4>
+    <p class="mb-2" style="color:#555;">Import meta data for this site. Please select a CSV file to upload and import.</p>
+    <form method="post" id="import-meta-form" enctype="multipart/form-data" action="/sites/{{ site_id }}/meta/import/">
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <div class="mb-3">
+            <label for="import-csv" class="form-label" style="color:#2c3e50;">Select CSV File</label>
+            <input type="file" class="form-control" id="import-csv" name="import_csv" accept=".csv" required>
+        </div>
+        <div id="import-meta-form-status" class="text-danger mb-3"><span></span></div>
+        <div id="import-meta-actions">
+            <button type="submit" class="btn btn-outline-primary me-2">Import Meta Data</button>
+        </div>
+    </form>
+</div>

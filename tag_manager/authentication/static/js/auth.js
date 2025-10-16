@@ -270,7 +270,7 @@ const AuthForms = {
             const modalHTML = `
                 <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content" style="border-radius: 20px; border: none; backdrop-filter: blur(20px);">
+                        <div class="modal-content" style="border-radius: 20px; border: none;">
                             <div class="modal-header" style="border-bottom: 1px solid rgba(0,0,0,0.1);">
                                 <h5 class="modal-title" id="forgotPasswordModalLabel">
                                     <i class="fas fa-key me-2"></i>Reset Password

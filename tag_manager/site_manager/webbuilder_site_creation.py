@@ -9,7 +9,13 @@ from selenium.webdriver.support import expected_conditions as EC
 import json
 import re
 import sqlite3
+import os
+from dotenv import load_dotenv
+
 logging.basicConfig(level=logging.INFO)
+
+# Load environment variables from .env file
+load_dotenv()
 
 def select_multiselect_option(driver, wrapper_id, option_text):
     """Selects an option from a custom multiselect dropdown."""
@@ -40,9 +46,41 @@ def select_multiselect_option(driver, wrapper_id, option_text):
     except Exception as e:
         logging.error(f"Dropdown selection failed for {option_text}: {e}")
 
-# Load form data from config file
-with open('site_manager/webbuilder_site_creation_config.json', 'r', encoding='utf-8') as jsonfile:
-    form_data = json.load(jsonfile)
+# Get instance id from environment variable
+INSTANCE_ID = os.environ.get('INSTANCE_ID')
+json_path = f'/Applications/MAMP/htdocs/helix_v1_v2/tag_manager/site_manager/static/block_import/{INSTANCE_ID}/data/website.json'
+
+# Load form data from website.json (new config source)
+with open(json_path, 'r', encoding='utf-8') as jsonfile:
+    website_data = json.load(jsonfile)
+
+brand_name = None
+for item in website_data.get('related', []):
+    vocab = item.get('vocabulary', {})
+    if vocab.get('machine_name') == 'lexicon_brands':
+        brand_name = item.get('term', {}).get('name')
+        break
+
+country_name = None
+for item in website_data.get('related', []):
+    vocab = item.get('vocabulary', {})
+    if vocab.get('machine_name') == 'lexicon_countries':
+        country_name = item.get('term', {}).get('name')
+        break
+
+# Map website.json fields to expected form_data keys
+# Adjust these mappings as needed based on actual website.json structure
+form_data = {
+    'NAME': website_data['details']['settings']['seo_title'],
+    'TEAM': "TCS Development Team",
+    'BRAND': brand_name,
+    'COUNTRY': country_name,
+    'HELIX_COMPONENTS_VERSION': "Helix V2",
+    'DOMAIN': website_data['details']['settings']['domain'],
+    'EDISON_LITE_SITE_ID': "  ",  # Placeholder, replace with actual data if available
+    'DESCRIPTION': website_data['details']['settings']['description']
+}
+logging.info(f"Form data loaded: {form_data}")
 
 # Start Chrome WebDriver
 driver = webdriver.Chrome()
