@@ -46,9 +46,6 @@ from dotenv import load_dotenv
 # Disable SSL warnings for sites with certificate issues
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Configure logging
-instance_id = os.getenv('INSTANCE_ID')
-
 @login_required
 def site_list(request):
     """
@@ -1970,6 +1967,9 @@ def run_import_block(site_id):
     from dotenv import load_dotenv
     import os, csv
 
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    instance_id = site.get_webbuilder_site_id_by_id(site_id)
+
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
@@ -1985,7 +1985,7 @@ def run_import_block(site_id):
         username = os.getenv('USERNAME')
         password = os.getenv('PASSWORD')
         sitename = os.getenv('SITENAME')
-        instance_id = os.getenv('INSTANCE_ID')
+
 
         csv_filename = f"v2_{instance_id}_duplicate_files_list.csv"
 
@@ -2010,7 +2010,7 @@ def run_import_block(site_id):
         # Call the main processing functions in synchronous order
         process_blocks(page, sitename, instance_id,
                        blocks_folder=os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import',
-                                                  '21995','data','modules'))  # completed. released for trials  # completed. released for trials
+                       'data','modules'))  # completed. released for trials  # completed. released for trials
 
         browser.close()
 
@@ -2185,7 +2185,7 @@ def process_blocks(page, sitename, instance_id, blocks_folder):
                     else:
                         b_css = ""
                         b_html = ""
-
+                    #Adding logic to migrate v1 HTML/CSS components to v2.
                     payload = {
                         'v1_body': b_html,
                         'v1_css': b_css,
@@ -2220,8 +2220,8 @@ def process_blocks(page, sitename, instance_id, blocks_folder):
                         b_html = data.get('v2_body', '')
                         b_css = data.get('v2_css', '')
                         b_js = data.get('v2_js', '')
-                        print(b_html)
-                        print(b_css)
+                        #print(b_html)
+                        #print(b_css)
                         #migration.save()
                         #messages.success(request, "Migration completed successfully.")
                         #return redirect('data_migration_detail', pk=migration.pk)
@@ -2309,10 +2309,11 @@ def run_import_file_attribute(site_id):
     username = os.getenv('USERNAME')
     password = os.getenv('PASSWORD')
     sitename = os.getenv('SITENAME')
-    instance_id = os.getenv('INSTANCE_ID')
-    files_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', str(instance_id), 'data',
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    instance_id = site.get_webbuilder_site_id_by_id(site_id)
+    files_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data',
                                 'files')
-    pages_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', str(instance_id), 'data',
+    pages_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data',
                                 'pages')
     try:
         with sync_playwright() as p:

@@ -110,7 +110,7 @@ Notes
 # ------------------------------
 # Configurable constants
 # ------------------------------
-DEFAULT_V1_PAGES_DIR = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', '21995', 'data', 'pages')
+DEFAULT_V1_PAGES_DIR = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data', 'pages')
 # If you want to target a specific page JSON file, set it here; otherwise ALL JSON files will be processed
 TARGET_PAGE_JSON_BASENAME = None  # Set to None to process all pages, or specify a filename for single page
 
@@ -661,7 +661,7 @@ def wait_for(driver: webdriver.Chrome, by: By, selector: str, timeout: int = 20)
     return WebDriverWait(driver, timeout).until(EC.presence_of_element_located((by, selector)))
 
 
-def login_to_dashboard(driver: webdriver.Chrome, sitename: str, username: str, password: str):
+def login_to_dashboard(driver: webdriver.Chrome, sitename: str, username: str, password: str, instance_id: str):
     """Open the base site URL and log in directly using username/password fields.
     Flow provided by user:
       1) Open https://{SITENAME}/login
@@ -2263,6 +2263,40 @@ def insert_html_and_css_in_editor(driver: webdriver.Chrome, html_content: str, c
     print("Step 3: Looking for CodeMirror editor...")
     
     # Prepare the content to insert
+    payload = {
+        'v1_body': html_content,
+        'v1_css': css_content,
+        'v1_js': ''
+    }
+
+    api_url = os.getenv('API_URL')
+    bearer_token = os.getenv('BEARER_TOKEN')
+    headers = {
+        'Authorization': f'Bearer {bearer_token}',
+        'Content-Type': 'application/json'
+    }
+
+    # if not bearer_token:
+    #     messages.error(request, "Bearer token is missing. Please check your environment configuration.")
+    #     return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+
+    response = requests.post(api_url, json=payload, headers=headers)
+
+    if response.status_code == 403:
+        try:
+            error_detail = response.json()
+            messages.error(request, f"Forbidden: {error_detail}")
+        except:
+            messages.error(request, f"Forbidden: {response.text}")
+        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+    elif response.status_code == 401:
+        messages.error(request, "Unauthorized: Invalid or expired Bearer token.")
+        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+    elif response.status_code == 200:
+        data = response.json()
+        html_content = data.get('v2_body', '')
+        css_content = data.get('v2_css', '')
+        #b_js = data.get('v2_js', '')
     combined_content = html_content + "\n<style>\n" + css_content + "\n</style>"
     print(f"Content length: HTML={len(html_content)}, CSS={len(css_content)}, Combined={len(combined_content)}")
     
@@ -3141,7 +3175,7 @@ def main():
     skipped_pages = []
 
     try:
-        login_to_dashboard(driver, env["SITENAME"], env["USERNAME"], env["PASSWORD"])
+        login_to_dashboard(driver, env["SITENAME"], env["USERNAME"], env["PASSWORD"], env["INSTANCE_ID"])
         # Open builder in another tab per the user's flow
         open_builder_in_new_tab(driver, env["SITENAME"], env["INSTANCE_ID"])
 

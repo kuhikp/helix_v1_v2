@@ -19,8 +19,8 @@ wait = WebDriverWait(driver, 10)
 PANEL_WAIT_TIME = 10
 MULTISELECT_WAIT_TIME = 2
 
-NID = os.getenv('NID')
-NPASSWORD = os.getenv('NPASSWORD')
+USERNAME = os.getenv('USERNAME')
+PASSWORD = os.getenv('PASSWORD')
 
 def write_status(status_file, status, progress, message=None):
     data = {'status': status, 'progress': progress}
@@ -39,8 +39,8 @@ def main():
             )
             time.sleep(5)
             if 'authorization' in driver.current_url:
-                driver.find_element(By.ID, "username").send_keys(NID)
-                driver.find_element(By.ID, "password").send_keys(NPASSWORD)
+                driver.find_element(By.ID, "username").send_keys(USERNAME)
+                driver.find_element(By.ID, "password").send_keys(PASSWORD)
                 driver.find_element(By.ID, "submit_button").click()
                 time.sleep(5)
         except Exception:
@@ -56,18 +56,18 @@ def main():
         output_csv = f"site_{site_id}_meta_export.csv"
 
         panel_types = [
-             "left-sidebar-settings--optional-and-head-features",
-            "left-sidebar-settings--performance",
-            "left-sidebar-settings--developer",
-            "left-sidebar-settings--metatags",
-            "left-sidebar-settings--seo",
-            "left-sidebar-settings--fonts",
-            "left-sidebar-settings--main",
-            "left-sidebar-settings--promotional-popup-manager",
-            "left-sidebar-settings--external-link-manager",
-            "left-sidebar-settings--analytics",
-            "left-sidebar-settings--bootstrap",
-            "left-sidebar-settings--data-source"
+              "left-sidebar-settings--optional-and-head-features",
+              "left-sidebar-settings--performance",
+              "left-sidebar-settings--developer",
+              "left-sidebar-settings--metatags",
+              "left-sidebar-settings--seo",
+              "left-sidebar-settings--fonts",
+              "left-sidebar-settings--main",
+              "left-sidebar-settings--promotional-popup-manager",
+              "left-sidebar-settings--external-link-manager",
+              "left-sidebar-settings--analytics",
+              "left-sidebar-settings--bootstrap",
+              "left-sidebar-settings--data-source"
         ]
 
         input_file = "input.csv"

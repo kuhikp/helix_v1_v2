@@ -17,6 +17,12 @@ logging.basicConfig(level=logging.INFO)
 # Load environment variables from .env file
 load_dotenv()
 
+# Fetch credentials from environment
+USERNAME = os.environ.get('USERNAME')
+PASSWORD = os.environ.get('PASSWORD')
+if not USERNAME or not PASSWORD:
+    raise Exception("USERNAME and PASSWORD must be set in your .env file.")
+
 def select_multiselect_option(driver, wrapper_id, option_text):
     """Selects an option from a custom multiselect dropdown."""
     try:
@@ -46,9 +52,7 @@ def select_multiselect_option(driver, wrapper_id, option_text):
     except Exception as e:
         logging.error(f"Dropdown selection failed for {option_text}: {e}")
 
-# Get instance id from environment variable
-INSTANCE_ID = os.environ.get('INSTANCE_ID')
-json_path = f'/Applications/MAMP/htdocs/helix_v1_v2/tag_manager/site_manager/static/block_import/{INSTANCE_ID}/data/website.json'
+json_path = f'/Applications/MAMP/htdocs/helix_v1_v2/tag_manager/site_manager/static/block_import/data/website.json'
 
 # Load form data from website.json (new config source)
 with open(json_path, 'r', encoding='utf-8') as jsonfile:
@@ -94,9 +98,9 @@ try:
     ).click()
     # Enter credentials
     WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.NAME, "username"))
-    ).send_keys("your_username")  # Replace with your username
-    driver.find_element(By.NAME, "password").send_keys("your_password" + Keys.RETURN)  # Replace with your password
+        EC.element_to_be_clickable((By.NAME, "pf.username"))
+    ).send_keys(USERNAME)
+    driver.find_element(By.NAME, "pf.pass").send_keys(PASSWORD + Keys.RETURN)
 except Exception as e:
     logging.error("Login failed: %s", e)
 

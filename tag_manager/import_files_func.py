@@ -4,6 +4,10 @@ from playwright.sync_api import sync_playwright, TimeoutError
 from dotenv import load_dotenv
 import csv
 import time
+from django.shortcuts import get_object_or_404
+from site_manager.models import SiteListDetails  # import the site model
+
+# Updated to accept site_id
 
 def process_files(page, sitename, instance_id, files_folder, pages_folder):
     # Navigate to Content > Files
@@ -294,7 +298,7 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                         save_button.click()
                         page.wait_for_timeout(1000)
 
-def automate_dashboard_login():
+def automate_dashboard_login(site_id):
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
@@ -310,7 +314,9 @@ def automate_dashboard_login():
         username = os.getenv('USERNAME')
         password = os.getenv('PASSWORD')
         sitename = os.getenv('SITENAME')
-        instance_id = os.getenv('INSTANCE_ID')
+
+        site = get_object_or_404(SiteListDetails, pk=site_id)
+        instance_id = site.get_webbuilder_site_id_by_id(site_id)  # always from model
 
         csv_filename = f"v2_{instance_id}_duplicate_files_list.csv"
 
@@ -334,9 +340,10 @@ def automate_dashboard_login():
 
         # Call the main processing functions in synchronous order
         # process_blocks(page, sitename, instance_id, blocks_folder) # completed. released for trials
-        process_files(page, sitename, instance_id, files_folder = "site_manager/block_import/21995/data/files", pages_folder = "site_manager/block_import/21995/data/pages") # completed. released for trials
+        process_files(page, sitename, instance_id, files_folder = "site_manager/block_import/data/files", pages_folder = "site_manager/block_import/data/pages") # completed. released for trials
 
         browser.close()
 
 if __name__ == "__main__":
-    automate_dashboard_login()
+    # Example: automate_dashboard_login(site_id=1234)
+    pass

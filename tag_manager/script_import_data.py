@@ -21,8 +21,8 @@ wait = WebDriverWait(driver, 10)
 PANEL_WAIT_TIME = 10
 MULTISELECT_WAIT_TIME = 2
 
-NID = os.getenv('NID')
-NPASSWORD = os.getenv('NPASSWORD')
+USERNAME = os.getenv('USERNAME')
+PASSWORD = os.getenv('PASSWORD')
 
 SYSTEM_FIELDS_TO_SKIP = {'_token', 'csrfmiddlewaretoken', 'sessionid'}
 ALWAYS_SKIP_FIELDS = {'repository', 'lexicon_brands[]', 'brands[]', 'lexicon_therapeutic_areas[]', 'lexicon_indications[]'}
@@ -35,8 +35,8 @@ try:
         driver.execute_script("document.querySelector('div.tw-text-center a.tw-bg-gray-900').click();", 1)
         time.sleep(5)
         if 'authorization' in driver.current_url:
-            driver.find_element(By.ID, "username").send_keys(NID)
-            driver.find_element(By.ID, "password").send_keys(NPASSWORD)
+            driver.find_element(By.ID, "username").send_keys(USERNAME)
+            driver.find_element(By.ID, "password").send_keys(PASSWORD)
             driver.find_element(By.ID, "submit_button").click()
             time.sleep(5)
     except Exception:
