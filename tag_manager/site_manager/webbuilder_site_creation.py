@@ -52,7 +52,7 @@ def select_multiselect_option(driver, wrapper_id, option_text):
     except Exception as e:
         logging.error(f"Dropdown selection failed for {option_text}: {e}")
 
-json_path = f'/Applications/MAMP/htdocs/helix_v1_v2/tag_manager/site_manager/static/block_import/data/website.json'
+json_path = os.environ.get('JSONPATH')
 
 # Load form data from website.json (new config source)
 with open(json_path, 'r', encoding='utf-8') as jsonfile:
