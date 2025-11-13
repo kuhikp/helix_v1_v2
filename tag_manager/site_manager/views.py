@@ -39,7 +39,7 @@ from .models import SiteListDetails, SiteMetaDetails
 from .forms import SiteListDetailsForm, SiteMetaDetailsForm
 from tag_manager_component.models import Tag, TagMapper
 from tag_manager_component.views import get_website_complexity
-from import_files_func import process_files
+# from import_files_func import process_files
 from playwright.sync_api import sync_playwright
 from dotenv import load_dotenv
 
@@ -1950,6 +1950,14 @@ def download_exported_meta(request, site_id):
     response = FileResponse(open(output_file, 'rb'), as_attachment=True, filename=f"site_{site_id}_meta_export.csv")
     return response
 
+
+"""
+    Block Import Functionality
+    1. def import_block() --> For the UI of the Button
+    2. def run_import_block() --> For initiating the function
+    3. def process_blocks() & create_block() --> Used to add the conditions for various blocks
+"""
+
 @login_required
 def import_block(request, site_id):
     """
@@ -1963,12 +1971,12 @@ def import_block(request, site_id):
 
 
 def run_import_block(site_id):
-    from playwright.sync_api import sync_playwright
-    from dotenv import load_dotenv
+    # from playwright.sync_api import sync_playwright
+    # from dotenv import load_dotenv
     import os, csv
 
     site = get_object_or_404(SiteListDetails, pk=site_id)
-    instance_id = site.get_webbuilder_site_id_by_id(site_id)
+    # instance_id = site.get_webbuilder_site_id_by_id(site_id)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
@@ -1985,7 +1993,7 @@ def run_import_block(site_id):
         username = os.getenv('USERNAME')
         password = os.getenv('PASSWORD')
         sitename = os.getenv('SITENAME')
-
+        instance_id = os.getenv('INSTANCE_ID')
 
         csv_filename = f"v2_{instance_id}_duplicate_files_list.csv"
 
@@ -2010,13 +2018,13 @@ def run_import_block(site_id):
         # Call the main processing functions in synchronous order
         process_blocks(page, sitename, instance_id,
                        blocks_folder=os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import',
-                       'data','modules'))  # completed. released for trials  # completed. released for trials
+                       'data','modules'))
 
         browser.close()
 
 
 def create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach, b_auto_attach_location,
-                 b_auto_attach_exceptions, b_auto_attach_to_error_pages, b_html, b_css):
+                 b_auto_attach_exceptions, b_auto_attach_to_error_pages, b_css, b_html):
     # Fill title
     b_title_field = page.locator(
         'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div/div[2]/div/div[1]/div[2]/div[1]/div[1]/input')
@@ -2105,185 +2113,179 @@ def create_block(page, b_title, b_description, b_category, b_protected, b_files,
     page.locator('xpath=//*[@id="wrapper"]/nav/div[2]/div[1]/div[2]/div/div/button[1]').click()  # click the save button
     page.wait_for_timeout(4000)
     page.locator('.btn-back-tiered-menu ').click()  # click back button
-    page.wait_for_timeout(10000)
-
-
-def search_and_check_block_existence(page, b_title, block_name, instance_id):
-    # Locate and interact with the search box
-    search_box = page.locator('xpath=//*[@id="search-input"]')
-    search_box.click()
-    page.keyboard.press("Control+A")
-    search_box.fill(b_title)
-    search_box.press("Enter")
-    page.wait_for_timeout(2000)
-
-    block_exists = False
-    matching_elements = page.locator(f"text={b_title}").all()
-
-    if matching_elements:
-        rows = page.query_selector_all('table[data-v-4aee22f3][data-v-816643a6] tbody tr')
-        for row in rows:
-            second_column = row.query_selector("td:nth-child(2)")
-            if second_column and second_column.inner_text().strip() == b_title:
-                block_exists = True
-                print(f"'{b_title}' already exists")
-
-                # Prepare CSV file path
-                csv_filename = f"v2_{instance_id}_Duplicate_Blocks.csv"
-
-                # Check if file exists, if not create with header
-                file_exists = os.path.isfile(csv_filename)
-                with open(csv_filename, mode='a', newline='', encoding='utf-8') as csvfile:
-                    writer = csv.writer(csvfile)
-                    if not file_exists:
-                        writer.writerow(["b_title", "block_name"])
-                    writer.writerow([b_title, block_name])
-                break
-    return block_exists
-
+    page.wait_for_timeout(5000)
 
 def process_blocks(page, sitename, instance_id, blocks_folder):
     page.goto(f"https://{sitename}/builder/website/{instance_id}?panel=left-sidebar-settings--elements")
     page.wait_for_timeout(10000)
-    print(blocks_folder)
+
+    skipped_csv = f"v2_{instance_id}_skipped_blocks.csv"
+
     for block_name in os.listdir(blocks_folder):
-        if block_name.endswith(".json"):
+        # if block_name.endswith(".json"):
+        if not block_name.endswith(".json") or block_name.startswith("processed_"):
+            continue
+        
+        else:
             block_path = os.path.join(blocks_folder, block_name)
-
-            # Skip empty JSON files
-            if os.path.getsize(block_path) == 0:
-                print(f"Skipping empty file: {block_name}")
-                continue
             with open(block_path, "r", encoding="utf-8") as f:
+                block_data = json.load(f)
 
-                try:
-                    block_data = json.load(f)
-                    if block_data == []:
-                        print(f"Skipping file with empty array: {block_name}")
-                        continue
-                except json.JSONDecodeError:
-                    print(f"Skipping file with invalid JSON: {block_name}")
+                # Skip if the entire document is an empty array
+                if isinstance(block_data, list) and len(block_data) == 0:
+                    print(f"Skipping empty array JSON file: {block_name}")
+                    print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+
+                    # After successful processing, rename the file
+                    new_block_name = f"processed_{block_name}"
+                    new_block_path = os.path.join(blocks_folder, new_block_name)
+                    os.rename(block_path, new_block_path)
+
                     continue
 
-                print(f"Opening JSON : {block_name}")
-                try:
-                    # Safely extract storage and settings dictionaries
-                    storage = block_data.get("storage", {})
-                    settings = block_data.get("settings", {})
-                    settings_settings = settings.get("settings", {}) if isinstance(settings.get("settings", {}),
-                                                                                   dict) else {}
+                else:
+                    try:
+                        print(f"Reading JSON File : '{block_name}")
 
-                    # Safely extract values from storage.data
-                    if isinstance(storage, dict):
-                        data = storage.get("data", {})
-                        if isinstance(data, dict):
-                            b_css = data.get("css", "")
-                            b_html = data.get("html", "")
+                        # Safely extract storage and settings dictionaries
+                        storage = block_data.get("storage", {})
+                        settings = block_data.get("settings", {})
+                        settings_settings = settings.get("settings", {}) if isinstance(settings.get("settings", {}), dict) else {}
+
+                        # Safely extract values from settings and settings.settings
+                        b_title = settings.get("title", "") if isinstance(settings, dict) else ""
+                        b_description = settings_settings.get("description", "") if isinstance(settings_settings, dict) else ""
+                        b_deleted_by = settings_settings.get("deleted_by", "") if isinstance(settings_settings, dict) else ""
+                        b_category = settings.get("category", "") if isinstance(settings, dict) else ""
+                        b_protected = settings.get("protected", "") if isinstance(settings, dict) else ""
+                        b_files = settings.get("files", []) if isinstance(settings, dict) else []
+                        b_auto_attach = settings_settings.get("auto_attach", False) if isinstance(settings_settings, dict) else False
+                        b_auto_attach_location = settings_settings.get("auto_attach_location", "") if isinstance(settings_settings, dict) else ""
+                        b_auto_attach_exceptions = settings_settings.get("auto_attach_exceptions", []) if isinstance(settings_settings, dict) else []
+                        b_auto_attach_to_error_pages = settings_settings.get("auto_attach_to_error_pages", False) if isinstance(settings_settings, dict) else False
+
+                        # Safely extract values from storage.data
+                        if isinstance(storage, dict):
+                            data = storage.get("data", {})
+                            if isinstance(data, dict):
+                                b_css = data.get("css", "")
+                                b_html = data.get("html", "")
+                            else:
+                                b_css = ""
+                                b_html = ""
                         else:
                             b_css = ""
                             b_html = ""
-                    else:
-                        b_css = ""
-                        b_html = ""
-                    #Adding logic to migrate v1 HTML/CSS components to v2.
-                    payload = {
-                        'v1_body': b_html,
-                        'v1_css': b_css,
-                        'v1_js': ''
-                    }
+                        #Adding logic to migrate v1 HTML/CSS components to v2.
+                        payload = {
+                            'v1_body': b_html,
+                            'v1_css': b_css,
+                            'v1_js': ''
+                        }
 
-                    api_url = os.getenv('API_URL')
-                    bearer_token = os.getenv('BEARER_TOKEN')
-                    headers = {
-                        'Authorization': f'Bearer {bearer_token}',
-                        'Content-Type': 'application/json'
-                    }
+                        api_url = os.getenv('API_URL')
+                        bearer_token = os.getenv('BEARER_TOKEN')
+                        headers = {
+                            'Authorization': f'Bearer {bearer_token}',
+                            'Content-Type': 'application/json'
+                        }
 
-                    # if not bearer_token:
-                    #     messages.error(request, "Bearer token is missing. Please check your environment configuration.")
-                    #     return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+                        # if not bearer_token:
+                        #     messages.error(request, "Bearer token is missing. Please check your environment configuration.")
+                        #     return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
 
-                    response = requests.post(api_url, json=payload, headers=headers)
+                        response = requests.post(api_url, json=payload, headers=headers)
 
-                    if response.status_code == 403:
-                        try:
-                            error_detail = response.json()
-                            messages.error(request, f"Forbidden: {error_detail}")
-                        except:
-                            messages.error(request, f"Forbidden: {response.text}")
-                        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
-                    elif response.status_code == 401:
-                        messages.error(request, "Unauthorized: Invalid or expired Bearer token.")
-                        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
-                    elif response.status_code == 200:
-                        data = response.json()
-                        b_html = data.get('v2_body', '')
-                        b_css = data.get('v2_css', '')
-                        b_js = data.get('v2_js', '')
-                        #print(b_html)
-                        #print(b_css)
-                        #migration.save()
-                        #messages.success(request, "Migration completed successfully.")
-                        #return redirect('data_migration_detail', pk=migration.pk)
-                    # else:
-                    #     try:
-                    #         error_detail = response.json()
-                    #         messages.error(request,
-                    #                        f"Failed to migrate data. Status: {response.status_code}, Error: {error_detail}")
-                    #     except:
-                    #         messages.error(request,
-                    #                        f"Failed to migrate data. Status: {response.status_code}, Response: {response.text}")
+                        if response.status_code == 403:
+                            try:
+                                error_detail = response.json()
+                                messages.error(request, f"Forbidden: {error_detail}")
+                            except:
+                                messages.error(request, f"Forbidden: {response.text}")
+                            return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+                        elif response.status_code == 401:
+                            messages.error(request, "Unauthorized: Invalid or expired Bearer token.")
+                            return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
+                        elif response.status_code == 200:
+                            data = response.json()
+                            b_html = data.get('v2_body', '')
+                            b_css = data.get('v2_css', '')
+                            b_js = data.get('v2_js', '')
 
-                    # Safely extract values from settings and settings.settings
-                    b_title = settings.get("title", "") if isinstance(settings, dict) else ""
-                    b_description = settings_settings.get("description", "") if isinstance(settings_settings,
-                                                                                           dict) else ""
-                    b_deleted_by = settings_settings.get("deleted_by", "") if isinstance(settings_settings,
-                                                                                         dict) else ""
-                    b_category = settings.get("category", "") if isinstance(settings, dict) else ""
-                    b_protected = settings.get("protected", "") if isinstance(settings, dict) else ""
-                    b_files = settings.get("files", []) if isinstance(settings, dict) else []
-                    b_auto_attach = settings_settings.get("auto_attach", False) if isinstance(settings_settings,
-                                                                                              dict) else False
-                    b_auto_attach_location = settings_settings.get("auto_attach_location", "") if isinstance(
-                        settings_settings, dict) else ""
-                    b_auto_attach_exceptions = settings_settings.get("auto_attach_exceptions", []) if isinstance(
-                        settings_settings, dict) else []
-                    b_auto_attach_to_error_pages = settings_settings.get("auto_attach_to_error_pages",
-                                                                         False) if isinstance(settings_settings,
-                                                                                              dict) else False
+                        if not b_deleted_by:
+                            print(f"found block : {b_title} at JSON {block_name}")
 
-                    if b_deleted_by:
-                        print(
-                            f"Skipping block '{b_title}' as it was deleted by {b_deleted_by}. Exiting block processing.")
-                        # break
-                    # block_exists = search_and_check_block_existence(page, b_title, block_name, instance_id)
+                            add_block_button = page.locator('xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/div[1]/div[2]/a')
+                            fresh_site_button = page.locator('xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/a')
 
-                    # print(f"found block : {b_title} at JSON {block_name}")
+                            if add_block_button.is_visible() and not b_deleted_by:
+                                add_block_button.click()
+                                print("Clicked Add block list button.")
+                                page.wait_for_timeout(1000)
+                                create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach, b_auto_attach_location, b_auto_attach_exceptions, b_auto_attach_to_error_pages, b_css, b_html)
+                                print(f"'{b_title} Created for the JSON File '{block_name}'")
+                                print("========================================")
 
-                    add_block_button = page.locator(
-                        'xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/div[1]/div[2]/a')
-                    fresh_site_button = page.locator('xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/a')
+                                # After successful processing, rename the file
+                                new_block_name = f"processed_{block_name}"
+                                new_block_path = os.path.join(blocks_folder, new_block_name)
+                                os.rename(block_path, new_block_path)
 
-                    if add_block_button.is_visible() and not b_deleted_by:
-                        add_block_button.click()
-                        print("Clicked Add block list button.")
-                        page.wait_for_timeout(1000)
-                        create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach,
-                                     b_auto_attach_location, b_auto_attach_exceptions, b_auto_attach_to_error_pages,
-                                     b_html, b_css)
-                    elif fresh_site_button.is_visible() and not b_deleted_by:
-                        fresh_site_button.click()
-                        print("Clicked New site block list button.")
-                        page.wait_for_timeout(1000)
-                        create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach,
-                                     b_auto_attach_location, b_auto_attach_exceptions, b_auto_attach_to_error_pages,
-                                     b_html, b_css)
-                    else:
-                        print("Neither block list button was found.")
+                            elif fresh_site_button.is_visible() and not b_deleted_by:
+                                fresh_site_button.click()
+                                print("Clicked New site block list button.")
+                                page.wait_for_timeout(1000)
+                                create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach, b_auto_attach_location, b_auto_attach_exceptions, b_auto_attach_to_error_pages, b_css, b_html)
+                                print(f"'{b_title} Created for the JSON File '{block_name}'")
+                                print("========================================")
 
-                except KeyError:
-                    print(f"Certain Field Not Found : '{block_name}'")
+                                # After successful processing, rename the file
+                                new_block_name = f"processed_{block_name}"
+                                new_block_path = os.path.join(blocks_folder, new_block_name)
+                                os.rename(block_path, new_block_path)
+                            else:
+                                print("Neither block list button was found.")
+                                print(f"'{b_title}' Skipped the JSON File '{block_name}'")
+                                print("xxx---xxxx---xxx---xxx---xxx---xxx---xxx")
+
+                                file_exists = os.path.isfile(skipped_csv)
+                                with open(skipped_csv, mode='a', newline='', encoding='utf-8') as csvfile:
+                                    writer = csv.writer(csvfile)
+                                    if not file_exists:
+                                        writer.writerow(["Block Title", "Block JSON", "Error Message"])
+                                    writer.writerow([b_title, block_name, "Check the Block Individually"])
+
+                                # After successful processing, rename the file
+                                new_block_name = f"processed_{block_name}"
+                                new_block_path = os.path.join(blocks_folder, new_block_name)
+                                os.rename(block_path, new_block_path)
+
+                        elif b_deleted_by:
+                            file_exists = os.path.isfile(skipped_csv)
+                            with open(skipped_csv, mode='a', newline='', encoding='utf-8') as csvfile:
+                                writer = csv.writer(csvfile)
+                                if not file_exists:
+                                    writer.writerow(["Block Title", "Block JSON", "Error Message"])
+                                writer.writerow([b_title, block_name, "Deleted by : " + b_deleted_by])
+
+                            # After successful processing, rename the file
+                            new_block_name = f"processed_{block_name}"
+                            new_block_path = os.path.join(blocks_folder, new_block_name)
+                            os.rename(block_path, new_block_path)
+
+                            continue
+
+
+                    except KeyError:
+                        print(f"Certain Field Not Found : '{block_name}'")
+
+
+"""
+    Files Import Functionality
+    1. def import_file_attribute() --> For the UI of the Button
+    2. def run_import_file_attribute() --> For initiating the function
+    3. def process_files() --> Used to add the conditions for various files
+"""
 
 @login_required
 def import_file_attribute(request, site_id):
@@ -2293,43 +2295,375 @@ def import_file_attribute(request, site_id):
     """
     site = get_object_or_404(SiteListDetails, pk=site_id)
     if request.method == 'POST':
-        threading.Thread(target=run_import_file_attribute, args=(site_id,)).start()
+        threading.Thread(target=run_import_file_attribute, args=(site,)).start()
         messages.info(request, 'File attribute import started. You can navigate away; the process will continue in the background.')
-        return redirect('site_meta_list', site_id=site.id)
     return render(request, 'site_manager/import_file_attribute.html', {'site': site})
 
+
 def run_import_file_attribute(site_id):
-    from playwright.sync_api import sync_playwright
-    from dotenv import load_dotenv
+    # from playwright.sync_api import sync_playwright
+    # from dotenv import load_dotenv
     import os
-    from import_files_func import process_files
+    # from import_files_func import process_files
     import logging
+
     # Optionally: fetch site-specific info from DB if needed
     load_dotenv()
+
     username = os.getenv('USERNAME')
     password = os.getenv('PASSWORD')
     sitename = os.getenv('SITENAME')
-    site = get_object_or_404(SiteListDetails, pk=site_id)
-    instance_id = site.get_webbuilder_site_id_by_id(site_id)
+    instance_id = os.getenv('INSTANCE_ID')
+
+    # site = get_object_or_404(SiteListDetails, pk=site_id)
+
     files_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data',
                                 'files')
     pages_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data',
                                 'pages')
+
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=False)  # Show browser window
             page = browser.new_page()
+
             # Login steps
             page.goto("https://webbuilder.pfizer/webbuilder/dashboard")
             page.click('xpath=//*[@id="app"]/div[1]/div[1]/div[1]/div/div[2]/a')
             page.fill('xpath=//*[@id="username"]', username)
             page.fill('xpath=//*[@id="password"]', password)
             page.press('xpath=//*[@id="password"]', "Enter")
-            page.wait_for_timeout(3000)
+            page.wait_for_timeout(2000)
+
             process_files(page, sitename, instance_id, files_folder, pages_folder)
+
             browser.close()
+
     except Exception as e:
         logging.error(f"Error in run_import_file_attribute: {e}")
+
+def process_files(page, sitename, instance_id, files_folder, pages_folder):
+    # Navigate to Content > Files
+    page.goto(f"https://{sitename}/builder/website/{instance_id}?panel=left-sidebar-settings--file-manager")
+    page.wait_for_timeout(5000)
+
+    skipped_file_csv = f"v2_{instance_id}_skipped_files.csv"
+    duplicate_file_csv = f"v2_{instance_id}_duplicate_files_list.csv"
+
+    all_files = [f for f in os.listdir(files_folder) if f.endswith(".json") and not f.startswith("processed_")]
+    files_count = len(all_files)
+
+    # If more than 50 files, divide into batches
+    batch_size = 50
+    batches = [all_files[i:i + batch_size] for i in range(0, files_count, batch_size)]
+
+    for batch_index, batch_files in enumerate(batches):
+        print(f"Processing batch {batch_index + 1} of {len(batches)}")
+
+        for file_name in batch_files:
+            print(f"Remianing Files to Scan : {files_count}")
+            files_count -= 1
+            file_found = 0
+
+            file_path = os.path.join(files_folder, file_name)
+            with open(file_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            f_name = ""
+            f_path = ""
+            f_url = ""
+            f_category = ""
+            f_only_on_deploy = ""
+            f_deploy_on = ""
+            f_weight = ""
+            f_pages = []
+            f_private = ""
+            f_footer = ""
+            f_header = ""
+            f_async = ""
+            f_modular = ""
+            f_deleted_at = ""
+
+            index = 0 # needed for multiple entries in search result
+
+            f_name = data["details"]["filename"]
+            f_path = data["details"]["filepath"]
+            f_url = data["details"]["url"]
+            f_only_on_deploy = data["details"]["only_on_deployment"]
+            f_deploy_on = data["details"]["deploy_on"]
+            f_category = data["details"]["category"]
+            f_weight = data["details"]["weight"]
+            f_pages = data["details"]["pages"]
+            f_private = data["details"]["private"]
+            f_footer = data["details"]["footer_file"]
+            f_header = data["details"]["header_file"]
+            f_async = data["details"]["async"]
+            f_modular = data["details"]["modular"]
+
+            # Convert the Variables to String
+            f_path_str = str(f_path)
+            f_url_str = str(f_url)
+            f_only_on_deploy_str = str(f_only_on_deploy)
+            f_deploy_on_str = str(f_deploy_on)
+            f_category_str = str(f_category)
+            f_weight_str = str(f_weight)
+            f_private_str = str(f_private)
+            f_footer_str = str(f_footer)
+            f_header_str = str(f_header)
+
+            print(f"File is : '{f_name}' for JSON file '{file_name}'")
+
+            # Search for file name
+            search_box = page.locator('xpath=//*[@id="file-search-text-input"]')
+            search_box.click()
+            page.keyboard.press("Control+A")
+            search_box.fill(f_name)
+            search_box.press("Enter")
+            page.wait_for_timeout(3000)
+
+            # Check if file name appears in page
+            file_visible = page.locator(f"text={f_name}")
+            file_visible_count = file_visible.count()
+            if file_visible_count > 1:
+                print(f"Duplicate File Name : '{f_name}' is DUPLICATE hence SKIPPING !!")
+
+                if not os.path.exists(duplicate_file_csv):
+                    with open(duplicate_file_csv, mode='w', newline='', encoding='utf-8') as csvfile:
+                        writer = csv.writer(csvfile)
+                        writer.writerow(["Duplicate File Name"])  # Header row
+
+                with open(duplicate_file_csv, mode='a', newline='', encoding='utf-8') as csvfile:
+                    writer = csv.writer(csvfile)
+                    writer.writerow([f_name])
+
+                new_file_name = f"processed_{file_name}"
+                new_file_path = os.path.join(files_folder, new_file_name)
+                os.rename(file_path, new_file_path)
+
+            else:
+                if page.locator(f"text={f_name}").is_visible():
+                    rows = page.query_selector_all('table[data-v-7a2af82c] tbody tr')
+
+                    # Scan each row for the exact value from Table
+                    for i, row in enumerate(rows):
+                        first_column = row.query_selector("td:nth-child(1)")
+                        if first_column.inner_text().strip() == f_name:
+                            index = i + 1
+                            file_found = 1
+                            break
+                        elif i+1 == len(rows):
+                            file_found = 0
+
+                    if file_found == 1:
+                        print(f"File Name '{f_name}' FOUND !!!! at Index {index}")
+
+                        # Click edit icon of File
+                        page.locator(f'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div/div[2]/table/tbody/tr[{index}]/td[7]/div/span[1]/a/i').click()
+                        page.wait_for_timeout(2000)
+
+                        # Paste the pages data in the file config
+                        for key, value in f_pages.items():
+                            pages_count = len(f_pages)
+                            if pages_count <= 1:
+                                # attach_page = page.locator('xpath=//*[@id="attachToAll"]')
+                                if page.locator('xpath=//*[@id="attachToAll"]').is_visible():
+                                    page.locator('xpath=//*[@id="attachToAll"]').click()
+                                    page.wait_for_timeout(1000)
+                            else:
+                                for page_path in os.listdir(pages_folder):
+                                    # print(index)
+                                    if page_path.endswith(".json"):
+                                        page_file_path = os.path.join(pages_folder, page_path)
+                                        with open(page_file_path, "r", encoding="utf-8") as f:
+                                            page_data = json.load(f)
+                                            p_title = page_data['settings']['title']
+                                            p_uuid = page_data['settings']['uuid']
+
+                                        if key == p_uuid and page.locator('xpath=//*[@id="attachToIndividual"]').is_visible():
+                                            page.locator('xpath=//*[@id="attachToIndividual"]').click() #click on Individial Pages Radio Button
+                                            if pages_count == 2:
+                                                # Locate all <li> elements inside the specified <ul>
+                                                li_locator = page.locator('xpath=/html/body/div[1]/div[1]/div[7]/div/div/div[2]/div/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[3]/ul/li/span')
+                                                span_texts = li_locator.all_text_contents()
+
+                                                if p_title in span_texts:
+                                                    page.locator('xpath=//*[@id="attachToIndividual"]').click()  # Click on Individual Pages Radio Button
+                                                    page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]').click()
+                                                    add_individual_pages = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]/input')
+                                                    add_individual_pages.fill(p_title)
+                                                    page.keyboard.press("Enter")
+                                                    page.wait_for_timeout(700)
+                                                else:
+                                                    page.locator('xpath=//*[@id="attachToAll"]').click()
+                                                    page.wait_for_timeout(1000)
+
+                                            elif pages_count > 2:
+                                                page.locator('xpath=//*[@id="attachToIndividual"]').click()  # Click on Individual Pages Radio Button
+                                                page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]').click()
+                                                add_individual_pages = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]/input')
+                                                add_individual_pages.fill(p_title)
+                                                page.keyboard.press("Enter")
+                                                page.wait_for_timeout(700)
+
+
+                        # Paste file details in field
+
+                        # Only proceed if header or footer is set and the section is visible
+                        if page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[3]').is_visible():
+                            if (f_header_str != "0" or f_footer_str != "0"):
+                                # Scope to the specific div containing the radio buttons
+                                placement_section = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[3]')
+                                # Determine which value to select
+                                if f_header_str != "0":
+                                    placement_value = "header"
+                                elif f_footer_str != "0":
+                                    placement_value = "footer"
+                                else:
+                                    placement_value = "none"
+                                # Select the correct radio button within the scoped section
+                                placement_radio = placement_section.locator(f'input[type="radio"][value="{placement_value}"]')
+                                placement_radio.click(force=True)
+                                page.wait_for_timeout(1000)
+
+                        if f_async != False:
+                            async_field = page.locator('xpath=//*[@id="cssLoadingAsync"]') # for css file
+                            if async_field.is_visible():
+                                async_field.click()
+                                page.wait_for_timeout(1000)
+                            elif page.locator('xpath=//*[@id="fileloadasAsync"]').is_visible():
+                                page.locator('xpath=//*[@id="fileloadasAsync"]').click() # for js or any other files
+                                page.wait_for_timeout(1000)
+                        elif page.locator('xpath=//*[@id="fileloadasDefer"]').is_visible():
+                            page.locator('xpath=//*[@id="fileloadasDefer"]').click()
+                            page.locator('xpath=//*[@id="fileloadasDefer"]')
+                            page.wait_for_timeout(1000)
+                        else:
+                            page.wait_for_timeout(1000)
+
+                        weight_field = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[2]/input')
+                        if weight_field.is_visible():
+                            weight_field.click()
+                            page.keyboard.press("Control+A")
+                            weight_field.fill(f_weight_str)
+                            page.wait_for_timeout(1000)
+
+                        if f_modular != False:
+                            modular_field = page.locator('xpath=//*[@id="modularFile"]')
+                            modular_field.click()
+                            page.wait_for_timeout(1000)
+
+                        path_field = page.locator("input[name='filepath']")
+                        if f_path_str and f_path_str != "None":
+                            path_field.click()
+                            page.keyboard.press("Control+A")
+                            path_field.fill(f_path_str)
+                            page.wait_for_timeout(1000)
+
+                        category_span = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
+                        if category_span.is_visible():
+                            span_text = category_span.inner_text().strip()
+                            # Check if f_category_str has a value (not empty and not None)
+                            if f_category_str and f_category_str.strip() and f_category_str != span_text and f_category_str.strip() != "None":
+                                category_field = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
+                                category_field.click()
+                                page.wait_for_timeout(1000)
+                                category_fill = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/input')
+                                category_fill.fill(f_category_str)
+                                page.wait_for_timeout(700)
+                                page.keyboard.press("Enter")
+                                page.wait_for_timeout(1000)
+
+                        if f_private != False:
+                            private_field = page.locator('xpath=//*[@id="privateFile"]')
+                            if private_field.is_visible():
+                                private_field.click()
+                                page.wait_for_timeout(1000)
+
+
+                        # Step 9: Click Save button
+                        save_button = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[1]/div[2]/div[2]/button')
+                        cancel_button = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[1]/div[2]/div[1]/button')
+
+                        if save_button.get_attribute("disabled") is not None:
+                            # Click the cancel button
+                            cancel_button.click()
+                            page.wait_for_timeout(1000)
+
+                            # Create the CSV file only once if it doesn't exist
+                            if not os.path.exists(skipped_file_csv):
+                                with open(skipped_file_csv, mode='w', newline='', encoding='utf-8') as file:
+                                    writer = csv.writer(file)
+                                    writer.writerow(["Skipped File Name", "Error"])
+
+                            # Append the skipped file name to the CSV
+                            with open(skipped_file_csv, mode='a', newline='', encoding='utf-8') as file:
+                                writer = csv.writer(file)
+                                writer.writerow([f_name, "'Check the Configs Individually'"])
+
+                            new_file_name = f"processed_{file_name}"
+                            new_file_path = os.path.join(files_folder, new_file_name)
+                            os.rename(file_path, new_file_path)
+
+                        else:
+                            # Click the save button
+                            save_button.click()
+                            page.wait_for_timeout(1000)
+
+                            if not search_box.is_visible():
+
+                                cancel_button.click()
+
+                                # Create the CSV file only once if it doesn't exist
+                                if not os.path.exists(skipped_file_csv):
+                                    with open(skipped_file_csv, mode='w', newline='', encoding='utf-8') as file:
+                                        writer = csv.writer(file)
+                                        writer.writerow(["Skipped File Name", "Error"])
+
+                                # Append the skipped file name to the CSV
+                                with open(skipped_file_csv, mode='a', newline='', encoding='utf-8') as file:
+                                    writer = csv.writer(file)
+                                    writer.writerow([f_name, 'File could not be Saved !!'])
+
+                        new_file_name = f"processed_{file_name}"
+                        new_file_path = os.path.join(files_folder, new_file_name)
+                        os.rename(file_path, new_file_path)
+
+                    else:
+                        print(f"File : '{f_name}' Not in The WB Page")
+                        # Create the CSV file only once if it doesn't exist
+                        if not os.path.exists(skipped_file_csv):
+                            with open(skipped_file_csv, mode='w', newline='', encoding='utf-8') as file:
+                                writer = csv.writer(file)
+                                writer.writerow(["Skipped File Name", "Error"])
+
+                        # Append the skipped file name to the CSV
+                        with open(skipped_file_csv, mode='a', newline='', encoding='utf-8') as file:
+                            writer = csv.writer(file)
+                            writer.writerow([f_name, 'File could not be Saved !!'])
+
+                        new_file_name = f"processed_{file_name}"
+                        new_file_path = os.path.join(files_folder, new_file_name)
+                        os.rename(file_path, new_file_path)
+
+                else:
+                    # Create the CSV file only once if it doesn't exist
+                    if not os.path.exists(skipped_file_csv):
+                        with open(skipped_file_csv, mode='w', newline='', encoding='utf-8') as file:
+                            writer = csv.writer(file)
+                            writer.writerow(["Skipped File Name", "Error"])
+
+                    # Append the skipped file name to the CSV
+                    with open(skipped_file_csv, mode='a', newline='', encoding='utf-8') as file:
+                        writer = csv.writer(file)
+                        writer.writerow([f_name, "'File Not Found in Webbuilder"])
+
+                    new_file_name = f"processed_{file_name}"
+                    new_file_path = os.path.join(files_folder, new_file_name)
+                    os.rename(file_path, new_file_path)
+
+    print(f"Completed Batch : {batch_index + 1}")
+    print("======================================================")
+
 
 def import_file(request, site_id):
     """
