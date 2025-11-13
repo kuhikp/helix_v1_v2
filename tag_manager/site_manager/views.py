@@ -45,6 +45,9 @@ from dotenv import load_dotenv
 # Disable SSL warnings for sites with certificate issues
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# Load environment variables from .env file
+load_dotenv()
+
 username = os.getenv('USERNAME')
 password = os.getenv('PASSWORD')
 sitename = os.getenv('SITENAME')
@@ -1981,9 +1984,6 @@ def run_import_block(site_id):
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
 
-        # Load environment variables from .env file
-        load_dotenv()
-
         csv_filename = f"v2_{instance_id}_duplicate_files_list.csv"
 
         # Create the CSV file once if it doesn't exist
@@ -2287,7 +2287,6 @@ def import_file_attribute(request, site_id):
 
 def run_import_file_attribute(site_id):
     # Optionally: fetch site-specific info from DB if needed
-    load_dotenv()
 
     files_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data',
                                 'files')
