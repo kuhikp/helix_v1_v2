@@ -39,12 +39,16 @@ from .models import SiteListDetails, SiteMetaDetails
 from .forms import SiteListDetailsForm, SiteMetaDetailsForm
 from tag_manager_component.models import Tag, TagMapper
 from tag_manager_component.views import get_website_complexity
-# from import_files_func import process_files
 from playwright.sync_api import sync_playwright
 from dotenv import load_dotenv
 
 # Disable SSL warnings for sites with certificate issues
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+username = os.getenv('USERNAME')
+password = os.getenv('PASSWORD')
+sitename = os.getenv('SITENAME')
+instance_id = os.getenv('INSTANCE_ID')
 
 @login_required
 def site_list(request):
@@ -1971,12 +1975,7 @@ def import_block(request, site_id):
 
 
 def run_import_block(site_id):
-    # from playwright.sync_api import sync_playwright
-    # from dotenv import load_dotenv
-    import os, csv
-
     site = get_object_or_404(SiteListDetails, pk=site_id)
-    # instance_id = site.get_webbuilder_site_id_by_id(site_id)
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=False)
@@ -1984,16 +1983,6 @@ def run_import_block(site_id):
 
         # Load environment variables from .env file
         load_dotenv()
-
-        # Folder containing JSON files
-        files_folder = "files"
-        pages_folder = "pages"
-        blocks_folder = "modules"
-
-        username = os.getenv('USERNAME')
-        password = os.getenv('PASSWORD')
-        sitename = os.getenv('SITENAME')
-        instance_id = os.getenv('INSTANCE_ID')
 
         csv_filename = f"v2_{instance_id}_duplicate_files_list.csv"
 
@@ -2190,10 +2179,6 @@ def process_blocks(page, sitename, instance_id, blocks_folder):
                             'Content-Type': 'application/json'
                         }
 
-                        # if not bearer_token:
-                        #     messages.error(request, "Bearer token is missing. Please check your environment configuration.")
-                        #     return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
-
                         response = requests.post(api_url, json=payload, headers=headers)
 
                         if response.status_code == 403:
@@ -2301,21 +2286,8 @@ def import_file_attribute(request, site_id):
 
 
 def run_import_file_attribute(site_id):
-    # from playwright.sync_api import sync_playwright
-    # from dotenv import load_dotenv
-    import os
-    # from import_files_func import process_files
-    import logging
-
     # Optionally: fetch site-specific info from DB if needed
     load_dotenv()
-
-    username = os.getenv('USERNAME')
-    password = os.getenv('PASSWORD')
-    sitename = os.getenv('SITENAME')
-    instance_id = os.getenv('INSTANCE_ID')
-
-    # site = get_object_or_404(SiteListDetails, pk=site_id)
 
     files_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data',
                                 'files')
