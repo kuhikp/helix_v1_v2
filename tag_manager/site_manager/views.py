@@ -2554,6 +2554,7 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                         # Step 9: Click Save button
                         save_button = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[1]/div[2]/div[2]/button')
                         cancel_button = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[1]/div[2]/div[1]/button')
+                        error_parent_div_xpath = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[1]')
 
                         if save_button.get_attribute("disabled") is not None:
                             # Click the cancel button
@@ -2579,10 +2580,17 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                             # Click the save button
                             save_button.click()
                             page.wait_for_timeout(1000)
+                            print("Save Button clicked")
 
-                            if not search_box.is_visible():
+                            # Check for error inside the specified div
+                            # We look for any child div with class 'error'
+                            error_found = error_parent_div_xpath.locator(".error-message").count() > 0
 
+                            # if save_button.is_visible():
+                            if error_found:
+                                print("Error Found while Saving")
                                 cancel_button.click()
+                                print("Clicked Cancel Button for review")
 
                                 # Create the CSV file only once if it doesn't exist
                                 if not os.path.exists(skipped_file_csv):
