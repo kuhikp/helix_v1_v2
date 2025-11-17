@@ -6,10 +6,12 @@ This script automates the process of creating pages in V2 from V1 JSON exports.
 import os
 import sys
 import json
+import requests
 import time
 import platform
 from pathlib import Path
 from typing import Dict, Any, Optional
+from urllib.parse import urlparse
 
 # Ensure Django settings are available if script is run standalone
 if not os.environ.get('DJANGO_SETTINGS_MODULE'):
@@ -480,11 +482,85 @@ def parse_page_json(file_path) -> Dict[str, Any]:
     
     return result
 
+def convert_v1_to_v2(html: str, css: str) -> str:
+    """
+    Call Django API to convert V1 HTML and CSS to V2 format.
+    Returns the converted content if successful, or the original content if conversion fails.
+    """
+    api_url = os.getenv("API_URL")
+    bearer_token = os.getenv("BEARER_TOKEN")
 
-def compose_html_with_css(html: str, css: str) -> str:
-    html = html or ""
-    css = css or ""
-    return f"{html}\n<style>\n{css}\n</style>\n"
+    headers = {
+        'Authorization': f'Bearer {bearer_token}',
+        'Content-Type': 'application/json'
+    }
+
+    payload = {
+        "v1_body": html,
+        "v1_css": css,
+        "v1_js": ""
+    }
+
+    # Validate API URL and token
+    if not api_url:
+        print("ERROR: API_URL is not set in environment variables")
+        return f"{html}\n<style>\n{css}\n</style>"
+        
+    if not bearer_token:
+        print("WARNING: BEARER_TOKEN is not set in environment variables")
+        # Continue without token if the API doesn't require it
+
+    # Parse the API URL to check if it's valid
+    try:
+        parsed_url = urlparse(api_url)
+        if not all([parsed_url.scheme, parsed_url.netloc]):
+            print(f"ERROR: Invalid API URL: {api_url}")
+            return f"{html}\n<style>\n{css}\n</style>"
+    except Exception as e:
+        print(f"ERROR: Failed to parse API URL: {e}")
+        return f"{html}\n<style>\n{css}\n</style>"
+    
+    print(f"\nCalling V1 to V2 conversion API at: {api_url}")
+    print(f"Request payload size - HTML: {len(html)} chars, CSS: {len(css)} chars")
+    
+    try:
+        # Make the API request with a timeout of 60 seconds
+        print("Sending request to conversion API...")
+        response = requests.post(api_url, json=payload, headers=headers, timeout=60)
+        
+        print(f"API response status code: {response.status_code}")
+        
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                v2_body = data.get('v2_body', '')
+                v2_css = data.get('v2_css', '')
+                
+                if not v2_body and not v2_css:
+                    print("WARNING: API returned empty V2 content. Using original content.")
+                    return f"{html}\n<style>\n{css}\n</style>"
+                
+                print(f"API response received - V2 content size: {len(v2_body) + len(v2_css)} chars")
+                return f"{v2_body}\n<style>\n{v2_css}\n</style>"
+                
+            except json.JSONDecodeError as je:
+                print(f"ERROR: Failed to parse API response as JSON: {je}")
+                print(f"Response content: {response.text[:500]}..." if len(response.text) > 500 else f"Response content: {response.text}")
+        else:
+            print(f"ERROR: API request failed with status {response.status_code}")
+            print(f"Response headers: {dict(response.headers)}")
+            print(f"Response content: {response.text[:500]}..." if len(response.text) > 500 else f"Response content: {response.text}")
+            
+    except requests.exceptions.Timeout:
+        print("ERROR: API request timed out after 60 seconds")
+    except requests.exceptions.RequestException as re:
+        print(f"ERROR: Request failed: {str(re)}")
+    except Exception as e:
+        print(f"ERROR: Unexpected error during API call: {str(e)}")
+    
+    # If we get here, there was an error - return original content
+    print("Falling back to original V1 content due to API error")
+    return f"{html}\n<style>\n{css}\n</style>"
 
 
 # ------------------------------
@@ -3156,9 +3232,7 @@ def main():
 
     # Process homepage first (update existing), then create other pages
     pages_to_process = []
-    # Skip homepage for now - TODO: implement homepage update logic
-    # if homepage_file:
-    #     pages_to_process.append((homepage_file, True))  # (file, is_homepage)
+
     pages_to_process.extend([(f, False) for f in other_page_files])
 
     print(f"\nProcessing order:")
@@ -3262,14 +3336,47 @@ def main():
                 css_content = parsed.get('css', '')
 
                 if html_content or css_content:
-                    print("\nInserting HTML and CSS content...")
-                    content_inserted = insert_html_and_css_in_editor(driver, html_content, css_content)
-                    if content_inserted:
-                        print("HTML and CSS content successfully inserted!")
-                    else:
-                        print("WARNING: Could not insert HTML and CSS content")
-                        failed_pages.append((page_file, "Failed to insert content"))
-                        continue
+                    print("\nConverting V1 content to V2 format...")
+                    try:
+                        # Convert V1 content to V2 format using the API
+                        converted_content = convert_v1_to_v2(html_content, css_content)
+                        print("Content successfully converted from V1 to V2 format")
+                        
+                        # Split back into HTML and CSS for insertion
+                        if '<style>' in converted_content:
+                            html_part = converted_content.split('<style>')[0].strip()
+                            css_part = converted_content.split('<style>')[1].replace('</style>', '').strip()
+                        else:
+                            html_part = converted_content
+                            css_part = ''
+                            
+                        print("\nInserting converted HTML and CSS content...")
+                        content_inserted = insert_html_and_css_in_editor(driver, html_part, css_part)
+                        
+                        if content_inserted:
+                            print("Converted HTML and CSS content successfully inserted!")
+                        else:
+                            print("WARNING: Could not insert converted content, trying original content...")
+                            # Fallback to original content if converted content fails
+                            content_inserted = insert_html_and_css_in_editor(driver, html_content, css_content)
+                            if content_inserted:
+                                print("Original HTML and CSS content successfully inserted!")
+                            else:
+                                print("ERROR: Failed to insert both converted and original content")
+                                failed_pages.append((page_file, "Failed to insert content"))
+                                continue
+                                
+                    except Exception as e:
+                        print(f"Error during content conversion: {str(e)}")
+                        print("Falling back to original content...")
+                        # If conversion fails, try with original content
+                        content_inserted = insert_html_and_css_in_editor(driver, html_content, css_content)
+                        if content_inserted:
+                            print("Original HTML and CSS content successfully inserted!")
+                        else:
+                            print("ERROR: Failed to insert original content after conversion failed")
+                            failed_pages.append((page_file, f"Content conversion and insertion failed: {str(e)[:100]}"))
+                            continue
                 else:
                     print("No HTML or CSS content found")
 
