@@ -2413,7 +2413,7 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
 
             else:
                 if page.locator(f"text={f_name}").is_visible():
-                    rows = page.query_selector_all('table[data-v-7a2af82c] tbody tr')
+                    rows = page.query_selector_all('table[data-v-c28095ba] tbody tr')
 
                     # Scan each row for the exact value from Table
                     for i, row in enumerate(rows):
@@ -2480,7 +2480,7 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                         # Paste file details in field
 
                         # Only proceed if header or footer is set and the section is visible
-                        if page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[3]').is_visible():
+                        if page.locator("#fileplacementHeader").is_visible():
                             if (f_header_str != "0" or f_footer_str != "0"):
                                 # Scope to the specific div containing the radio buttons
                                 placement_section = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[3]')
