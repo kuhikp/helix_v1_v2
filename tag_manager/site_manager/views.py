@@ -2689,3 +2689,327 @@ def pages_import_view(request, site_id):
             messages.error(request, f"Unexpected error: {str(e)}")
         return redirect('pages_import', site_id=site.id)
     return render(request, 'site_manager/pages_import.html', {'site': site})
+
+@login_required
+def file_upload_meta(request, site_id):
+    """
+    Handle file upload using the file_upload.py script for WebBuilder.
+    This function integrates with the PfizerWebBuilderUploader class.
+    """
+    import tempfile
+    from django.contrib import messages
+    from django.http import JsonResponse
+    import threading
+    
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_file_upload.status")
+    
+    if request.method == 'POST':
+        # Get WebBuilder configuration from environment variables
+        instance_id = os.getenv('INSTANCE_ID', '')
+        username = os.getenv('USERNAME', '')
+        password = os.getenv('PASSWORD', '')
+        file_folder = os.getenv('FILEFOLDER', '')
+        
+        if not instance_id:
+            return JsonResponse({'success': False, 'message': 'Instance ID not configured in environment variables.'})
+        
+        if not file_folder:
+            return JsonResponse({'success': False, 'message': 'FILEFOLDER not configured in environment variables.'})
+        
+        if not os.path.exists(file_folder):
+            return JsonResponse({'success': False, 'message': f'File directory does not exist: {file_folder}'})
+        
+        # Get all files from the configured directory
+        try:
+            all_files = [f for f in os.listdir(file_folder) if os.path.isfile(os.path.join(file_folder, f))]
+            if not all_files:
+                return JsonResponse({'success': False, 'message': f'No files found in directory: {file_folder}'})
+            
+            # Start background upload process
+            thread = threading.Thread(
+                target=run_file_upload_in_background,
+                args=(site_id, file_folder, instance_id, username, password, status_file)
+            )
+            thread.daemon = True
+            thread.start()
+            
+            response_data = {
+                'success': True, 
+                'message': f'File upload started for {len(all_files)} files from {file_folder}. You can check the status below.'
+            }
+            
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse(response_data)
+            
+            messages.info(request, response_data['message'])
+            return redirect('site_meta_list', site_id=site_id)
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': f'Error reading directory: {str(e)}'})
+    
+    # Get environment configuration for display
+    instance_id = os.getenv('INSTANCE_ID', 'Not configured')
+    username = os.getenv('USERNAME', 'Not configured')
+    file_folder = os.getenv('FILEFOLDER', 'Not configured')
+    
+    # Get list of files in the directory
+    available_files = []
+    directory_exists = False
+    if file_folder and file_folder != 'Not configured':
+        directory_exists = os.path.exists(file_folder)
+        if directory_exists:
+            try:
+                available_files = [f for f in os.listdir(file_folder) if os.path.isfile(os.path.join(file_folder, f))]
+            except Exception:
+                available_files = []
+    
+    return render(request, 'site_manager/file_upload_meta.html', {
+        'site': site,
+        'site_id': site_id,
+        'instance_id': instance_id,
+        'username': username,
+        'file_folder': file_folder,
+        'available_files': available_files,
+        'directory_exists': directory_exists,
+        'credentials_configured': bool(os.getenv('USERNAME')) and bool(os.getenv('PASSWORD'))
+    })
+
+def run_file_upload_in_background(site_id, file_folder, instance_id, username, password, status_file):
+    """
+    Run the file upload process in the background using the file_upload.py script.
+    """
+    import sys
+    
+    try:
+        # Write initial status with process information
+        process_info = {
+            'status': 'running', 
+            'message': 'File upload in progress... Checking authentication status...',
+            'pid': os.getpid(),
+            'start_time': time.time()
+        }
+        with open(status_file, 'w') as f:
+            f.write(json.dumps(process_info))
+        
+        # Set up environment variables for the upload script
+        env = os.environ.copy()
+        env['FILEFOLDER'] = file_folder
+        env['INSTANCE_ID'] = instance_id
+        env['USERNAME'] = username
+        env['PASSWORD'] = password
+        
+        # Get the path to file_upload.py
+        upload_script_path = os.path.join(settings.BASE_DIR, 'file_upload.py')
+        
+        # Run the file upload script with periodic status updates
+        import threading
+        import subprocess
+        
+        # Start a thread to periodically update status to show process is alive
+        def update_status_periodically():
+            start_time = time.time()
+            while True:
+                time.sleep(60)  # Update every minute
+                elapsed = int((time.time() - start_time) / 60)
+                try:
+                    with open(status_file, 'w') as f:
+                        f.write(json.dumps({
+                            'status': 'running', 
+                            'message': f'File upload in progress... ({elapsed} minutes elapsed)',
+                            'pid': os.getpid(),
+                            'last_update': time.time()
+                        }))
+                except:
+                    break  # Exit if we can't write status (probably finished)
+        
+        status_thread = threading.Thread(target=update_status_periodically)
+        status_thread.daemon = True
+        status_thread.start()
+        
+        result = subprocess.run([
+            sys.executable, upload_script_path
+        ], capture_output=True, text=True, env=env, timeout=600)  # 10 minute timeout
+        
+        if result.returncode == 0:
+            # Check if SSO was detected in the output
+            sso_detected = "SSO authentication successful!" in result.stdout or "already authenticated via SSO" in result.stdout
+            auth_method = "SSO" if sso_detected else "Credentials"
+            
+            # Parse the output for upload statistics
+            output_lines = result.stdout.split('\n')
+            total_files = 0
+            skipped_files = 0
+            successful_uploads = 0
+            failed_uploads = 0
+            
+            for line in output_lines:
+                if "Total files processed:" in line:
+                    total_files = int(line.split(':')[1].strip())
+                elif "Skipped files (already exist):" in line:
+                    skipped_files = int(line.split(':')[1].strip())
+                elif "Successful uploads:" in line:
+                    successful_uploads = int(line.split(':')[1].strip())
+                elif "Failed uploads:" in line:
+                    failed_uploads = int(line.split(':')[1].strip())
+            
+            # Create detailed success message
+            if skipped_files > 0:
+                message = f'File upload completed using {auth_method} authentication. '
+                message += f'Processed {total_files} files: {successful_uploads} uploaded, {skipped_files} already existed'
+                if failed_uploads > 0:
+                    message += f', {failed_uploads} failed'
+                message += f'. Time saved by skipping existing files: ~{skipped_files * 2} minutes.'
+            else:
+                message = f'File upload completed successfully using {auth_method} authentication. {successful_uploads} files uploaded.'
+            
+            status = {
+                'status': 'completed', 
+                'message': message,
+                'output': result.stdout,
+                'stats': {
+                    'total_files': total_files,
+                    'skipped_files': skipped_files,
+                    'successful_uploads': successful_uploads,
+                    'failed_uploads': failed_uploads
+                }
+            }
+        else:
+            # Parse error message for authentication-related issues
+            error_msg = result.stderr or "Unknown error"
+            if "login" in error_msg.lower() or "authentication" in error_msg.lower():
+                status = {
+                    'status': 'failed', 
+                    'message': f'Authentication failed: {error_msg}. Please check SSO status or credentials.',
+                    'output': result.stdout
+                }
+            else:
+                status = {
+                    'status': 'failed', 
+                    'message': f'File upload failed: {error_msg}',
+                    'output': result.stdout
+                }
+            
+    except subprocess.TimeoutExpired:
+        status = {
+            'status': 'failed', 
+            'message': 'File upload timed out after 10 minutes.'
+        }
+    except Exception as e:
+        status = {
+            'status': 'failed', 
+            'message': f'Unexpected error during file upload: {str(e)}'
+        }
+    finally:
+        # Write final status
+        with open(status_file, 'w') as f:
+            f.write(json.dumps(status))
+        
+        # If the upload completed successfully, schedule cleanup of the status file
+        if status.get('status') == 'completed':
+            # Clean up the status file after 30 seconds to give user time to see success message
+            import threading
+            def cleanup_status_file():
+                time.sleep(30)
+                try:
+                    if os.path.exists(status_file):
+                        os.remove(status_file)
+                        print(f"Cleaned up status file: {status_file}")
+                except Exception as e:
+                    print(f"Error cleaning up status file: {e}")
+            
+            cleanup_thread = threading.Thread(target=cleanup_status_file)
+            cleanup_thread.daemon = True
+            cleanup_thread.start()
+
+@login_required
+def check_file_upload_status(request, site_id):
+    """
+    Check the status of the file upload process for a given site_id.
+    Returns JSON: {"status": str, "message": str, "output": str}
+    """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_file_upload.status")
+    status = {'status': 'not_started', 'message': 'No file upload in progress.'}
+    
+    if os.path.exists(status_file):
+        try:
+            # Check if the status file is stale (older than 15 minutes)
+            file_age = time.time() - os.path.getmtime(status_file)
+            if file_age > 900:  # 15 minutes
+                print(f"Status file is stale ({file_age/60:.1f} minutes old), removing it")
+                os.remove(status_file)
+                return JsonResponse(status)
+            
+            with open(status_file, 'r') as f:
+                status = json.load(f)
+                
+            # Check if upload is truly stale by checking process and last update time
+            if status.get('status') == 'running':
+                is_stale = False
+                last_update = status.get('last_update', status.get('start_time', 0))
+                time_since_update = time.time() - last_update if last_update else file_age
+                
+                # Consider stale if no update for 10 minutes
+                if time_since_update > 600:  # 10 minutes
+                    is_stale = True
+                    reason = f"no status update for {time_since_update/60:.1f} minutes"
+                
+                # Additional check: if we have a PID, check if process is still running
+                if not is_stale and status.get('pid'):
+                    try:
+                        import psutil
+                        if not psutil.pid_exists(status['pid']):
+                            is_stale = True
+                            reason = "process no longer exists"
+                    except ImportError:
+                        # psutil not available, fall back to time-based check
+                        if file_age > 600:  # 10 minutes
+                            is_stale = True
+                            reason = f"file age {file_age/60:.1f} minutes (psutil not available)"
+                
+                if is_stale:
+                    print(f"Running upload appears stale: {reason}")
+                    status = {
+                        'status': 'failed',
+                        'message': 'Upload process appears to have stopped unexpectedly. You can try starting a new upload.',
+                        'output': status.get('output', '')
+                    }
+                    # Update the status file
+                    with open(status_file, 'w') as f:
+                        f.write(json.dumps(status))
+                    
+        except Exception as e:
+            print(f"Error reading status file: {e}")
+            # If we can't read the status file, remove it
+            try:
+                os.remove(status_file)
+            except:
+                pass
+    
+    return JsonResponse(status)
+
+@login_required
+def clear_file_upload_status(request, site_id):
+    """
+    Clear the file upload status for a given site_id.
+    This is useful for clearing stale status files.
+    """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_file_upload.status")
+    
+    try:
+        if os.path.exists(status_file):
+            os.remove(status_file)
+            return JsonResponse({
+                'success': True, 
+                'message': 'Upload status cleared successfully.'
+            })
+        else:
+            return JsonResponse({
+                'success': True, 
+                'message': 'No upload status to clear.'
+            })
+    except Exception as e:
+        return JsonResponse({
+            'success': False, 
+            'message': f'Error clearing status: {str(e)}'
+        })

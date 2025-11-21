@@ -70,9 +70,22 @@
                     <span id="export-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
                 </div>
             </div>
-            <!-- Step 2: Import -->
+            <!-- Step 2: File Upload -->
+            <div class="mb-4 p-4 border rounded bg-white shadow-sm">
+                <h4 class="mb-3 fw-bold text-dark">Step 2: <span class="text-info">File Upload to WebBuilder</span></h4>
+                <div class="mb-3 text-muted" style="font-size:1rem;">
+                    Upload files directly to WebBuilder using automated browser automation. This step handles bulk file uploads to your WebBuilder instance.
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <a href="/sites/{{ site.id }}/meta/file-upload/" class="btn btn-outline-info border fw-semibold" id="file-upload-link">
+                        <i class="fas fa-cloud-upload-alt me-1"></i>Upload Files
+                    </a>
+                    <span id="file-upload-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
+                </div>
+            </div>
+            <!-- Step 3: Import -->
             <div class="p-4 border rounded bg-white shadow-sm">
-                <h4 class="mb-3 fw-bold text-dark">Step 2: <span class="text-success">Import Meta Data</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 3: <span class="text-success">Import Meta Data</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     After exporting and downloading, you can import a new or updated meta data CSV file for this site.
                 </div>
@@ -83,9 +96,9 @@
                     <span id="import-meta-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
                 </div>
             </div>
-            <!-- Step 3: Block Import -->
+            <!-- Step 4: Block Import -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
-                <h4 class="mb-3 fw-bold text-dark">Step 3: <span class="text-info">Block Import</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 4: <span class="text-info">Block Import</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Import block data for this site using Web-builder Export Archive. This is useful for advanced block-level migration.
                 </div>
@@ -95,9 +108,9 @@
                     </a>
                 </div>
             </div>
-            <!-- Step 4: Pages Import -->
+            <!-- Step 5: Pages Import -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
-                <h4 class="mb-3 fw-bold text-dark">Step 4: <span class="text-primary">Pages Import</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 5: <span class="text-primary">Pages Import</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Import page data for this site using Web-builder Export Archive. This will automate the import of all pages for the selected site.
                 </div>
@@ -107,9 +120,9 @@
                     </a>
                 </div>
             </div>
-            <!-- Step 5: File Attribute Import -->
+            <!-- Step 6: File Attribute Import -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
-                <h4 class="mb-3 fw-bold text-dark">Step 5: <span class="text-warning">File Attribute Import</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 6: <span class="text-warning">File Attribute Import</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Import file attribute data for this site using Web-builder Export Archive. Use this to update or migrate file-level attributes in bulk.
                 </div>
@@ -278,6 +291,51 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         });
     });
+
+    // File upload status polling
+    const fileUploadStatus = document.getElementById('file-upload-status');
+    if (fileUploadStatus) {
+        function checkFileUploadStatus() {
+            fetch(`/sites/{{ site.id }}/meta/file-upload/status/`)
+                .then(response => response.json())
+                .then(data => {
+                    let statusText = '';
+                    let statusClass = '';
+                    
+                    switch (data.status) {
+                        case 'running':
+                            statusText = 'Upload in progress...';
+                            statusClass = 'text-info';
+                            break;
+                        case 'completed':
+                            statusText = 'Upload completed';
+                            statusClass = 'text-success';
+                            break;
+                        case 'failed':
+                            statusText = 'Upload failed';
+                            statusClass = 'text-danger';
+                            break;
+                        default:
+                            statusText = '';
+                            statusClass = '';
+                    }
+                    
+                    fileUploadStatus.textContent = statusText;
+                    fileUploadStatus.className = `ms-2 text-secondary small ${statusClass}`;
+                    
+                    // Continue polling if upload is running
+                    if (data.status === 'running') {
+                        setTimeout(checkFileUploadStatus, 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error('File upload status check failed:', error);
+                });
+        }
+        
+        // Initial status check
+        checkFileUploadStatus();
+    }
 
     // Export status polling logic (single, robust version)
     // const downloadBtn = document.getElementById('download-meta-btn');

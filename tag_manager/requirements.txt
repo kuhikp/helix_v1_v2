@@ -115,7 +115,8 @@ websockets==15.0.1
 zipp==3.23.0
 # Selenium for browser automation
 selenium==4.24.0
-
+# Pathlib2 for backward compatibility with older Python versions
+pathlib2==2.3.7
 # WebDriver Manager for automatic ChromeDriver installation
 webdriver-manager==4.0.2
 
