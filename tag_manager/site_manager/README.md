@@ -45,6 +45,7 @@ SITENAME="webbuilder.pfizer"
 INSTANCE_ID=21822
 USERNAME=Pfizer Network ID
 PASSWORD=Pfizer Network Password
+FILEFOLDER="folder_path_for_files"
 ```
 
 ## Page Migration Script Details

@@ -52,37 +52,37 @@ def select_multiselect_option(driver, wrapper_id, option_text):
     except Exception as e:
         logging.error(f"Dropdown selection failed for {option_text}: {e}")
 
-json_path = os.environ.get('JSONPATH')
+# json_path = os.environ.get('JSONPATH')
 
-# Load form data from website.json (new config source)
-with open(json_path, 'r', encoding='utf-8') as jsonfile:
-    website_data = json.load(jsonfile)
+# # Load form data from website.json (new config source)
+# with open(json_path, 'r', encoding='utf-8') as jsonfile:
+#     website_data = json.load(jsonfile)
 
-brand_name = None
-for item in website_data.get('related', []):
-    vocab = item.get('vocabulary', {})
-    if vocab.get('machine_name') == 'lexicon_brands':
-        brand_name = item.get('term', {}).get('name')
-        break
+# brand_name = None
+# for item in website_data.get('related', []):
+#     vocab = item.get('vocabulary', {})
+#     if vocab.get('machine_name') == 'lexicon_brands':
+#         brand_name = item.get('term', {}).get('name')
+#         break
 
-country_name = None
-for item in website_data.get('related', []):
-    vocab = item.get('vocabulary', {})
-    if vocab.get('machine_name') == 'lexicon_countries':
-        country_name = item.get('term', {}).get('name')
-        break
+# country_name = None
+# for item in website_data.get('related', []):
+#     vocab = item.get('vocabulary', {})
+#     if vocab.get('machine_name') == 'lexicon_countries':
+#         country_name = item.get('term', {}).get('name')
+#         break
 
 # Map website.json fields to expected form_data keys
 # Adjust these mappings as needed based on actual website.json structure
 form_data = {
-    'NAME': website_data['details']['settings']['seo_title'],
+    'NAME': "ABC",
     'TEAM': "TCS Development Team",
-    'BRAND': brand_name,
-    'COUNTRY': country_name,
+    'BRAND': "UNBRANDED",
+    'COUNTRY': "United States",
     'HELIX_COMPONENTS_VERSION': "Helix V2",
-    'DOMAIN': website_data['details']['settings']['domain'],
-    'EDISON_LITE_SITE_ID': "  ",  # Placeholder, replace with actual data if available
-    'DESCRIPTION': website_data['details']['settings']['description']
+    'DOMAIN': "abc.com",
+    'EDISON_LITE_SITE_ID': "gitidtest",  # Placeholder, replace with actual data if available
+    'DESCRIPTION': "test description"
 }
 logging.info(f"Form data loaded: {form_data}")
 
@@ -105,10 +105,12 @@ except Exception as e:
     logging.error("Login failed: %s", e)
 
 try:
-    # Click New Website
-    WebDriverWait(driver, 20).until(
-        EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'New Website')]"))
-    ).click()
+    logging.info(f"inside try block for new website creation")  # Add this
+
+    # # Click New Website
+    # WebDriverWait(driver, 20).until(
+    #     EC.element_to_be_clickable((By.XPATH, "//*[contains(text(), 'New Website')]"))
+    # ).click()
     # Click Start from scratch
     WebDriverWait(driver, 20).until(
         EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'choice-box')]//div[contains(text(), 'Start from scratch')]"))
@@ -151,18 +153,18 @@ try:
     ).click()
 except Exception as e:
     logging.error("Form fill failed: %s", e)
-
+logging.info(f"Form submission attempted, waiting for navigation...")  # Add this
 # Wait for page to finish processing before quitting
 try:
     WebDriverWait(driver, 15).until(
-        lambda d: re.search(r'/website/\\d+/?$', d.current_url)
-    )
+        lambda d: re.search(r'/website/\d+/?$', d.current_url)    )
 except Exception as e:
     logging.warning(f"Timeout waiting for site creation page: {e}")
 WebDriverWait(driver, 15).until(lambda d: d.execute_script('return document.readyState') == 'complete')
 
 # After form submission and navigation
 current_url = driver.current_url
+logging.info(f"Current URL after submission: {current_url}")  # Add this
 
 # Extract site ID from URL
 match = re.search(r'/website/(\d+)', current_url)

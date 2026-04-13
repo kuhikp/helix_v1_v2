@@ -1698,16 +1698,23 @@ def trigger_webbuilder_site_creation(request, site_id):
             )
             output = result.stdout.strip().splitlines()
             # Extract the site ID from the URL using regex
-            url = output[-1]
-            match = re.search(r'/website/(\d+)/', url)
-            if match:
-                webbuilder_site_id = int(match.group(1))
+            url = None
+            webbuilder_site_id = None
+            for line in output:
+                match = re.search(r'https?://[^\s]*/website/(\d+)/?', line)
+                if match:
+                    webbuilder_site_id = int(match.group(1))
+                    url = line.strip()
+                    break
+            if webbuilder_site_id:
                 site.webbuilder_site_id = webbuilder_site_id
-                site.webbuilder_site_url = url  # Save the full URL
+                site.webbuilder_site_url = url
                 site.save()
                 return JsonResponse({"success": True, "site_id": webbuilder_site_id, "site_url": url})
             else:
-                return JsonResponse({"success": False, "error": "Site ID not found in URL output: " + url})
+                # Include full output in error for easier debugging
+                full_output = "\n".join(output)
+                return JsonResponse({"success": False, "error": f"Site ID not found in script output:\n{full_output}"})
         except subprocess.CalledProcessError as e:
             error_message = e.stderr or str(e)
             return JsonResponse({"success": False, "error": error_message})
