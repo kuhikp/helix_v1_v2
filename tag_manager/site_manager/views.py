@@ -47,6 +47,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Load environment variables from .env file
 load_dotenv()
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 username = os.getenv('USERNAME')
 password = os.getenv('PASSWORD')

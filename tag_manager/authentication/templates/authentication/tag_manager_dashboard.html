@@ -11,9 +11,9 @@
     } */
     
     .dashboard-header {
-        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-purple) 100%);
+        background: linear-gradient(135deg, var(--ios-blue) 0%, var(--ios-white) 100%);
         border-radius: 24px;
-        color: white;
+        color: black;
         padding: 40px;
         margin-bottom: 32px;
         box-shadow: 0 12px 32px rgba(0, 122, 255, 0.3);
@@ -71,7 +71,7 @@
         width: 40px;
         height: 40px;
         border-radius: 12px;
-        background: linear-gradient(135deg, var(--ios-pink), var(--ios-orange));
+        background: linear-gradient(135deg, var(--ios-yellow), var(--ios-purple));
         display: flex;
         align-items: center;
         justify-content: center;
@@ -163,7 +163,7 @@
     }
     
     .stat-icon.info {
-        background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));
+        background: linear-gradient(135deg, var(--ios-purple), var(--ios-yellow));
     }
     
     .stat-content h6 {
@@ -515,8 +515,8 @@
     <div class="dashboard-header fade-in">
         <div class="d-flex justify-content-between align-items-start flex-wrap">
             <div class="flex-grow-1">
-                <h1><i class="fas fa-rocket me-3"></i>HelixBridge</h1>
-                <p class="dashboard-subtitle">Intelligent Bridge to migrate website from Helix V1 to V2 website</p>
+                <h1><i class="fas fa-rocket me-3"></i>Custom To Webuilder</h1>
+                <p class="dashboard-subtitle">Intelligent Bridge to migrate website from custom to Webuilder    </p>
                 
                 <div class="user-greeting">
                     <h5>
@@ -533,335 +533,7 @@
             </div> -->
         </div>
     </div>
-    <div class="quick-actions slide-up">
-        <a href="{% url 'site_list' %}" class="action-card analytics">
-            <div class="action-content">
-                <div class="action-header">
-                    <div class="action-icon analytics" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));">
-                        <i class="fas fa-globe"></i>
-                    </div>
-                    <div class="action-info">
-                        <h4>Sites Listing</h4>
-                        <div class="badge-container" style="margin-top: 8px; display: flex; gap: 8px;">
-                            <span class="badge" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple)); padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600;">
-                                <i class="fas fa-globe" style="margin-right: 4px;"></i>{{ total_sites|default:0 }} Sites
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="site-complexity-container" style="margin: 24px 0;">
-                    <div style="margin-bottom: 16px;">
-                        <h6 style="color: var(--ios-text-secondary); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
-                            SITE COMPLEXITY DISTRIBUTION
-                        </h6>
-                    </div>
-                    
-                    <div class="complexity-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                        <div class="complexity-item" style="background: rgba(52, 199, 89, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(52, 199, 89, 0.2);">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-green); margin-right: 8px;"></div>
-                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Simple</span>
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-green);">{{ simple_sites|default:0 }}</div>
-                        </div>
-                        
-                        <div class="complexity-item" style="background: rgba(255, 149, 0, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 149, 0, 0.2);">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-orange); margin-right: 8px;"></div>
-                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Medium</span>
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-orange);">{{ medium_sites|default:0 }}</div>
-                        </div>
-                        
-                        <div class="complexity-item" style="background: rgba(255, 59, 48, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(255, 59, 48, 0.2);">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-red); margin-right: 8px;"></div>
-                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Complex</span>
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-red);">{{ complex_sites|default:0 }}</div>
-                        </div>
-                        
-                        <div class="complexity-item" style="background: rgba(142, 142, 147, 0.1); border-radius: 12px; padding: 16px; border: 1px solid rgba(142, 142, 147, 0.2);">
-                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                <div style="width: 8px; height: 8px; border-radius: 4px; background: var(--ios-gray); margin-right: 8px;"></div>
-                                <span style="color: var(--ios-text-primary); font-weight: 600; font-size: 14px;">Unidentified</span>
-                            </div>
-                            <div style="font-size: 24px; font-weight: 700; color: var(--ios-gray);">{{ unidentified_sites|default:0 }}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--ios-border);">
-                    <p class="action-description" style="margin: 0; font-size: 14px; color: var(--ios-text-secondary);">
-                        Manage and monitor site complexity levels
-                    </p>
-                    <div class="view-all-button" style="display: flex; align-items: center; color: var(--ios-blue); font-weight: 600; font-size: 14px;">
-                        View All 
-                        <i class="fas fa-chevron-right" style="margin-left: 6px; font-size: 12px;"></i>
-                    </div>
-                </div>
-            </div>
-        </a>
-        </div>
-
-    <!-- Statistics Overview -->
-    <div class="stats-grid slide-up">
-        <div class="stat-card primary">
-            <div class="stat-header">
-                <div class="stat-icon primary">
-                    <i class="fas fa-exchange-alt"></i>
-                </div>
-                <div class="stat-content">
-                    <h6>Total Migrations</h6>
-                </div>
-            </div>
-            <div class="stat-number">{{ total_migrations|default:0 }}</div>
-            <p class="stat-subtitle">Component conversions</p>
-        </div>
-        
-        <div class="stat-card success">
-            <div class="stat-header">
-                <div class="stat-icon success">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="stat-content">
-                    <h6>Success Rate</h6>
-                </div>
-            </div>
-            <div class="stat-number">{{ completion_percentage|default:0 }}%</div>
-            <p class="stat-subtitle">Migration accuracy</p>
-        </div>
-        
-        <div class="stat-card warning">
-            <div class="stat-header">
-                <div class="stat-icon warning">
-                    <i class="fas fa-tags"></i>
-                </div>
-                <div class="stat-content">
-                    <h6>Tags Managed</h6>
-                </div>
-            </div>
-            <div class="stat-number">{{ total_tags|default:0 }}</div>
-            <p class="stat-subtitle">Component definitions</p>
-        </div>
-        
-        <div class="stat-card info">
-            <div class="stat-header">
-                <div class="stat-icon info">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="stat-content">
-                    <h6>Extractors</h6>
-                </div>
-            </div>
-            <div class="stat-number">{{ total_extractors|default:0 }}</div>
-            <p class="stat-subtitle">Active scrapers</p>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    
-        <div class="quick-actions slide-up">
-        <!-- <a href="{% url 'data_migration_create' %}" class="action-card migration">
-            <div class="action-content">
-                <div class="action-header">
-                    <div class="action-icon migration">
-                        <i class="fas fa-magic"></i>
-                    </div>
-                    <div class="action-info">
-                        <h4>New Migration</h4>
-                    </div>
-                </div>
-                <p class="action-description">
-                    Transform V1 components to V2 format with AI-powered conversion. 
-                    Supports HTML, CSS, and JavaScript with intelligent pattern recognition.
-                </p>
-                <div class="action-stats">
-                    <div class="action-stat">
-                        <div class="action-stat-number">{{ successful_migrations|default:0 }}</div>
-                        <div class="action-stat-label">Completed</div>
-                    </div>
-                    <div class="action-stat">
-                        <div class="action-stat-number">{{ completion_percentage|default:0 }}%</div>
-                        <div class="action-stat-label">Success Rate</div>
-                    </div>
-                </div>
-            </div>
-        </a> -->
-        
-        <a href="{% url 'tags_extractor_list' %}" class="action-card extractor">
-            <div class="action-content">
-                <div class="action-header">
-                    <div class="action-icon extractor">
-                        <i class="fas fa-spider"></i>
-                    </div>
-                    <div class="action-info">
-                        <h4>Tag Extractor</h4>
-                    </div>
-                </div>
-                <p class="action-description">
-                    Automatically scan and extract component definitions from repositories.
-                    Analyze code structure and identify migration candidates.
-                </p>
-                <div class="action-stats">
-                    <div class="action-stat">
-                        <div class="action-stat-number">{{ total_extractors|default:0 }}</div>
-                        <div class="action-stat-label">Extractors</div>
-                    </div>
-                    <div class="action-stat">
-                        <div class="action-stat-number">{{ total_tags|default:0 }}</div>
-                        <div class="action-stat-label">Tags Found</div>
-                    </div>
-                </div>
-            </div>
-        </a>
-        
-        <a href="{% url 'data_migration_list' %}" class="action-card history">
-            <div class="action-content">
-                <div class="action-header">
-                    <div class="action-icon history">
-                        <i class="fas fa-history"></i>
-                    </div>
-                    <div class="action-info">
-                        <h4>Migration History</h4>
-                    </div>
-                </div>
-                <p class="action-description">
-                    Review, edit, and manage all your previous migrations.
-                    Track conversion results and download processed files.
-                </p>
-                <div class="action-stats">
-                    <div class="action-stat">
-                        <div class="action-stat-number">{{ total_migrations|default:0 }}</div>
-                        <div class="action-stat-label">Total</div>
-                    </div>
-                    <div class="action-stat">
-                        <div class="action-stat-number">{{ successful_migrations|default:0 }}</div>
-                        <div class="action-stat-label">Success</div>
-                    </div>
-                </div>
-            </div>
-        </a>
-        
-        <a href="{% url 'tag_list' %}" class="action-card analytics">
-            <div class="action-content">
-            <div class="action-header">
-                <div class="action-icon analytics">
-                <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="action-info">
-                <h4>Tags List</h4>
-                </div>
-            </div>
-            <p class="action-description">
-                Browse and manage all available component tags. View definitions, usage statistics, and organize tags for efficient migration workflows.
-            </p>
-            <div class="action-stats">
-                <div class="action-stat">
-                    <div class="action-stat-number">{{ total_tags|default:0 }}</div>
-                    <div class="action-stat-label">Tags</div>
-                </div>
-            </div>
-            </div>
-        </a>
-
-        
-    </div>
-
-    <!-- Recent Activity -->
-    <div class="recent-section slide-up">
-        <div class="recent-card">
-            <div class="recent-header">
-                <h5><i class="fas fa-clock"></i>Recent Migrations</h5>
-            </div>
-            
-            {% if recent_migrations %}
-                {% for migration in recent_migrations %}
-                <div class="recent-item">
-                    <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-blue), var(--ios-purple));">
-                        <i class="fas fa-exchange-alt"></i>
-                    </div>
-                    <div class="recent-content">
-                        <h6>Migration #{{ migration.pk }}</h6>
-                        <p>{{ migration.get_v1_content_summary }}</p>
-                    </div>
-                    <div class="recent-time">{{ migration.created_at|timesince }} ago</div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-exchange-alt"></i>
-                    <h6>No Recent Migrations</h6>
-                    <p>Start your first migration to see activity here</p>
-                </div>
-            {% endif %}
-        </div>
-        
-        <div class="recent-card">
-            <div class="recent-header">
-                <h5><i class="fas fa-robot"></i>Recent Extractions</h5>
-            </div>
-            
-            {% if recent_extractors %}
-                {% for extractor in recent_extractors %}
-                <div class="recent-item">
-                    <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-green), #30D158);">
-                        <i class="fas fa-spider"></i>
-                    </div>
-                    <div class="recent-content">
-                        <h6>{{ extractor.repo_url|truncatechars:30 }}</h6>
-                        <p>Version: {{ extractor.get_version_value_display }}</p>
-                    </div>
-                    <div class="recent-time">{{ extractor.created_at|timesince }} ago</div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <i class="fas fa-spider"></i>
-                    <h6>No Recent Extractions</h6>
-                    <p>Create an extractor to analyze repositories</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Quick Tips -->
-    <div class="recent-card slide-up">
-        <div class="recent-header">
-            <h5><i class="fas fa-lightbulb"></i>Pro Tips</h5>
-        </div>
-        
-        <div class="recent-item">
-            <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-green), #30D158);">
-                <i class="fas fa-layer-group"></i>
-            </div>
-            <div class="recent-content">
-                <h6>Batch Processing</h6>
-                <p>Use bulk migration for multiple components at once to save time</p>
-            </div>
-        </div>
-        
-        <div class="recent-item">
-            <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-orange), #FF6B35);">
-                <i class="fas fa-shield-alt"></i>
-            </div>
-            <div class="recent-content">
-                <h6>Backup First</h6>
-                <p>Always backup your V1 components before starting migration</p>
-            </div>
-        </div>
-        
-        <div class="recent-item">
-            <div class="recent-icon" style="background: linear-gradient(135deg, var(--ios-purple), var(--ios-pink));">
-                <i class="fas fa-flask"></i>
-            </div>
-            <div class="recent-content">
-                <h6>Test Thoroughly</h6>
-                <p>Validate converted components in staging environment first</p>
-            </div>
-        </div>
-    </div>
+   
 </div>
 
 <!-- JavaScript for Enhanced Interactions -->
