@@ -61,14 +61,15 @@
                     Export the meta data for this site. Once the export is complete, you can download the file below.
                 </div>
                 <div class="d-flex align-items-center flex-wrap gap-2">
-                    <a href="/sites/{{ site.id }}/meta/export/" class="btn btn-outline-primary fw-semibold">
+                    <button id="export-meta-btn" class="btn btn-outline-primary fw-semibold">
                         <i class="fas fa-file-export me-1"></i>Export Meta
-                    </a>
+                    </button>
                     <button id="download-meta-btn" class="btn btn-success fw-semibold" style="display:none;">
                         <i class="fas fa-download me-1"></i>Download Export
                     </button>
                     <span id="export-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
                 </div>
+                <div id="export-meta-message" class="mt-2"></div>
             </div>
             <!-- Step 2: File Upload -->
             <div class="mb-4 p-4 border rounded bg-white shadow-sm">
@@ -90,11 +91,12 @@
                     After exporting and downloading, you can import a new or updated meta data CSV file for this site.
                 </div>
                 <div class="d-flex align-items-center flex-wrap gap-2">
-                    <a href="/sites/{{ site.id }}/meta/import/" class="btn btn-outline-success border fw-semibold" id="import-meta-link">
+                    <button id="import-meta-btn" class="btn btn-outline-success border fw-semibold">
                         <i class="fas fa-file-import me-1"></i>Import Meta
-                    </a>
+                    </button>
                     <span id="import-meta-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
                 </div>
+                <div id="import-meta-message" class="mt-2"></div>
             </div>
             <!-- Step 4: Block Import -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
@@ -291,6 +293,174 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         });
     });
+
+    // Export Meta button handler
+    const exportMetaBtn = document.getElementById('export-meta-btn');
+    const exportStatus = document.getElementById('export-status');
+    const exportMetaMessage = document.getElementById('export-meta-message');
+    
+    if (exportMetaBtn) {
+        exportMetaBtn.addEventListener('click', function() {
+            exportMetaBtn.disabled = true;
+            exportMetaBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Running Export...';
+            exportStatus.textContent = 'Starting export...';
+            exportStatus.className = 'ms-2 small text-info';
+            exportMetaMessage.innerHTML = '';
+            
+            fetch(`/sites/{{ site.id }}/meta/run-export-script/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    exportMetaMessage.innerHTML = '<div class="alert alert-info mt-2">Export script is running. This may take several minutes...</div>';
+                    checkExportStatus();
+                } else {
+                    exportMetaBtn.disabled = false;
+                    exportMetaBtn.innerHTML = '<i class="fas fa-file-export me-1"></i>Export Meta';
+                    exportStatus.textContent = 'Failed to start';
+                    exportStatus.className = 'ms-2 small text-danger';
+                    exportMetaMessage.innerHTML = '<div class="alert alert-danger mt-2">Error: ' + data.error + '</div>';
+                }
+            })
+            .catch(error => {
+                exportMetaBtn.disabled = false;
+                exportMetaBtn.innerHTML = '<i class="fas fa-file-export me-1"></i>Export Meta';
+                exportStatus.textContent = 'Request failed';
+                exportStatus.className = 'ms-2 small text-danger';
+                exportMetaMessage.innerHTML = '<div class="alert alert-danger mt-2">Error: ' + error + '</div>';
+            });
+        });
+    }
+    
+    function checkExportStatus() {
+        fetch(`/sites/{{ site.id }}/meta/check-export-status/`)
+            .then(response => response.json())
+            .then(data => {
+                let statusText = '';
+                let statusClass = '';
+                console.log(data.message);
+                console.log(data.status);
+                // exit;
+                // return;
+                
+                switch (data.status) {
+                    case 'running':
+                        statusText = 'Export running...';
+                        statusClass = 'text-info';
+                        setTimeout(checkExportStatus, 5000);
+                        break;
+                    case 'completed':
+                        statusText = 'Export completed';
+                        statusClass = 'text-success';
+                        exportMetaBtn.disabled = false;
+                        exportMetaBtn.innerHTML = '<i class="fas fa-file-export me-1"></i>Export Meta';
+                        exportMetaMessage.innerHTML = '<div class="alert alert-success mt-2">' + data.message + '</div>';
+                        break;
+                    case 'failed':
+                        statusText = 'Export failed';
+                        statusClass = 'text-danger';
+                        exportMetaBtn.disabled = false;
+                        exportMetaBtn.innerHTML = '<i class="fas fa-file-export me-1"></i>Export Meta';
+                        exportMetaMessage.innerHTML = '<div class="alert alert-danger mt-2">' + data.message + '</div>';
+                        break;
+                    default:
+                        statusText = '';
+                        statusClass = '';
+                }
+                
+                exportStatus.textContent = statusText;
+                exportStatus.className = `ms-2 small ${statusClass}`;
+            })
+            .catch(error => {
+                console.error('Export status check failed:', error);
+            });
+    }
+
+    // Import Meta button handler
+    const importMetaBtn = document.getElementById('import-meta-btn');
+    const importMetaStatus = document.getElementById('import-meta-status');
+    const importMetaMessage = document.getElementById('import-meta-message');
+    
+    if (importMetaBtn) {
+        importMetaBtn.addEventListener('click', function() {
+            importMetaBtn.disabled = true;
+            importMetaBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Running Script...';
+            importMetaStatus.textContent = 'Starting import...';
+            importMetaStatus.className = 'ms-2 small text-info';
+            importMetaMessage.innerHTML = '';
+            
+            // Run the script via terminal command
+            fetch('/sites/{{ site.id }}/meta/run-import-script/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    importMetaMessage.innerHTML = '<div class="alert alert-info mt-2">Import script is running. This may take several minutes...</div>';
+                    // Start polling for status
+                    checkImportStatus();
+                } else {
+                    importMetaBtn.disabled = false;
+                    importMetaBtn.innerHTML = '<i class="fas fa-file-import me-1"></i>Import Meta';
+                    importMetaStatus.textContent = 'Failed to start';
+                    importMetaStatus.className = 'ms-2 small text-danger';
+                    importMetaMessage.innerHTML = '<div class="alert alert-danger mt-2">Error: ' + data.error + '</div>';
+                }
+            })
+            .catch(error => {
+                importMetaBtn.disabled = false;
+                importMetaBtn.innerHTML = '<i class="fas fa-file-import me-1"></i>Import Meta';
+                importMetaStatus.textContent = 'Request failed';
+                importMetaStatus.className = 'ms-2 small text-danger';
+                importMetaMessage.innerHTML = '<div class="alert alert-danger mt-2">Error: ' + error + '</div>';
+            });
+        });
+    }
+    
+    function checkImportStatus() {
+        fetch(`/sites/{{ site.id }}/meta/check-import-status/`)
+            .then(response => response.json())
+            .then(data => {
+                let statusText = '';
+                let statusClass = '';
+                console.log(data.message);
+                console.log(data.status);
+                // exit;
+                
+                switch (data.status) {
+                    case 'running':
+                        statusText = 'Import running...';
+                        statusClass = 'text-info';
+                        setTimeout(checkImportStatus, 5000);
+                        break;
+                    case 'failed':
+                        statusText = 'Import failed';
+                        statusClass = 'text-danger';
+                        importMetaBtn.disabled = false;
+                        importMetaBtn.innerHTML = '<i class="fas fa-file-import me-1"></i>Import Meta';
+                        importMetaMessage.innerHTML = '<div class="alert alert-danger mt-2">' + data.message + '</div>';
+                        break;
+                    default:
+                        statusText = '';
+                        statusClass = '';
+                }
+                
+                importMetaStatus.textContent = statusText;
+                importMetaStatus.className = `ms-2 small ${statusClass}`;
+            })
+            .catch(error => {
+                console.error('Import status check failed:', error);
+            });
+    }
 
     // File upload status polling
     const fileUploadStatus = document.getElementById('file-upload-status');
