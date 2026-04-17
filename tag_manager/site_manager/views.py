@@ -2288,14 +2288,90 @@ def process_blocks(page, sitename, instance_id, blocks_folder):
 @login_required
 def import_file_attribute(request, site_id):
     """
-    Trigger file attribute import automation for a site. No file upload required.
-    Shows only an Import button and triggers the process on submit.
+    Trigger complete Step 6 workflow: Scan HTML → Generate CSV → Convert to JSON → Update WebBuilder
+    Shows only an Import button and triggers the complete process on submit.
     """
     site = get_object_or_404(SiteListDetails, pk=site_id)
     if request.method == 'POST':
-        threading.Thread(target=run_import_file_attribute, args=(site,)).start()
-        messages.info(request, 'File attribute import started. You can navigate away; the process will continue in the background.')
+        try:
+            # Start background thread for complete workflow (HTML scan → CSV → JSON → WebBuilder import)
+            threading.Thread(target=run_step6_workflow, args=(site,)).start()
+            messages.info(request, 'Step 6 workflow started! This will scan HTML files, generate JSON configurations, and update WebBuilder. You can navigate away; the process will continue in the background.')
+        except Exception as e:
+            messages.error(request, f'Error starting Step 6 workflow: {str(e)}')
     return render(request, 'site_manager/import_file_attribute.html', {'site': site})
+
+
+def run_step6_workflow(site):
+    """
+    Complete Step 6 workflow: HTML scanning → CSV generation → JSON conversion → WebBuilder import
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+    from django.conf import settings
+    
+    try:
+        print(f"Starting Step 6 workflow for site: {site.website_url}")
+        
+        # Define paths
+        base_dir = Path(settings.BASE_DIR)
+        html_root = base_dir / 'site_manager' / 'static' / 'httrack_export'
+        csv_path = base_dir / 'site_manager' / 'sites' / 'pfizer_assets.csv'
+        final_files_dir = base_dir / 'site_manager' / 'static' / 'block_import' / 'data' / 'files'
+        final_pages_dir = base_dir / 'site_manager' / 'static' / 'block_import' / 'data' / 'pages'
+        
+        # Step 1: Run extract_assets_csv.py
+        print("Step 1: Scanning HTML files...")
+        extract_script = base_dir / 'site_manager' / 'management' / 'commands' / 'extract_assets_csv.py'
+        
+        if html_root.exists():
+            result = subprocess.run([
+                sys.executable, str(extract_script),
+                '--root', str(html_root),
+                '--output', str(csv_path)
+            ], capture_output=True, text=True, cwd=base_dir)
+            
+            if result.returncode == 0:
+                print(f"✓ HTML scanning completed")
+            else:
+                print(f"✗ HTML scanning failed: {result.stderr}")
+                return
+        else:
+            print(f"✗ HTML directory not found: {html_root}")
+            return
+        
+        # Step 2: Run csv_to_json_step6.py with output directly to data directories
+        print("Step 2: Converting CSV to JSON...")
+        csv_script = base_dir / 'site_manager' / 'management' / 'commands' / 'csv_to_json_step6.py'
+        
+        # Generate JSON files directly in final data directories
+        result = subprocess.run([
+            sys.executable, str(csv_script),
+            '--csv', str(csv_path),
+            '--output', str(final_files_dir.parent)  # Output to block_import/data directory
+        ], capture_output=True, text=True, cwd=base_dir)
+        
+        if result.returncode == 0:
+            print(f"✓ JSON conversion completed")
+            print(f"✓ Files generated directly in: {final_files_dir}")
+            print(f"✓ Pages generated directly in: {final_pages_dir}")
+        else:
+            print(f"✗ JSON conversion failed: {result.stderr}")
+            return
+        
+        print(f"✓ Step 6 JSON preparation completed!")
+        print(f"Starting WebBuilder file attribute import...")
+        
+        # Step 3: Trigger WebBuilder import using existing logic
+        run_import_file_attribute(site)
+        
+        print(f"✓ Step 6 workflow completed successfully!")
+        
+    except Exception as e:
+        print(f"✗ Step 6 workflow failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 def run_import_file_attribute(site_id):
@@ -2308,7 +2384,16 @@ def run_import_file_attribute(site_id):
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=False)  # Show browser window
+            # Detect Chrome executable path based on OS (Windows vs MAC/Linux)
+            import platform
+            if platform.system() == 'Darwin':  # macOS
+                chrome_path = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+                browser = p.chromium.launch(headless=False, executable_path=chrome_path)
+            elif platform.system() == 'Linux':
+                chrome_path = '/usr/bin/google-chrome'
+                browser = p.chromium.launch(headless=False, executable_path=chrome_path)
+            else:  # Windows
+                browser = p.chromium.launch(headless=False)  # Auto-detect on Windows
             page = browser.new_page()
 
             # Login steps
@@ -2332,8 +2417,19 @@ def run_import_file_attribute(site_id):
         logging.error(f"Error in run_import_file_attribute: {e}")
 
 def process_files(page, sitename, instance_id, files_folder, pages_folder):
+    try:
+        _process_files_internal(page, sitename, instance_id, files_folder, pages_folder)
+    except Exception as e:
+        print(f"\n❌ ERROR in process_files: {e}")
+        import traceback
+        print(traceback.format_exc())
+        raise
+
+def _process_files_internal(page, sitename, instance_id, files_folder, pages_folder):
     # Navigate to Content > Files
-    page.goto(f"https://{sitename}/builder/website/{instance_id}?panel=left-sidebar-settings--file-manager")
+    target_url = f"https://webbuilder.pfizer/builder/website/{instance_id}?panel=left-sidebar-settings--file-manager"
+    print(f"DEBUG: Navigating to {target_url}")
+    page.goto(target_url)
     page.wait_for_timeout(5000)
 
     skipped_file_csv = f"v2_{instance_id}_skipped_files.csv"
@@ -2450,17 +2546,29 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                         page.locator(f'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div/div[2]/table/tbody/tr[{index}]/td[7]/div/span[1]/a/i').click()
                         page.wait_for_timeout(2000)
 
-                        # Paste the pages data in the file config
-                        for key, value in f_pages.items():
-                            pages_count = len(f_pages)
-                            if pages_count <= 1:
-                                # attach_page = page.locator('xpath=//*[@id="attachToAll"]')
-                                if page.locator('xpath=//*[@id="attachToAll"]').is_visible():
-                                    page.locator('xpath=//*[@id="attachToAll"]').click()
-                                    page.wait_for_timeout(1000)
-                            else:
+                        # Get total number of pages available
+                        total_pages = len([f for f in os.listdir(pages_folder) if f.endswith(".json")])
+                        file_pages_count = len(f_pages)
+                        print(f"DEBUG: File '{f_name}' attached to {file_pages_count} out of {total_pages} pages")
+                        
+                        # Check if file is attached to ALL pages
+                        if file_pages_count == total_pages:
+                            print(f"DEBUG: File '{f_name}' attached to ALL pages - clicking 'Attach to All'")
+                            if page.locator('xpath=//*[@id="attachToAll"]').is_visible():
+                                page.locator('xpath=//*[@id="attachToAll"]').click()
+                                page.wait_for_timeout(1000)
+                        else:
+                            print(f"DEBUG: File '{f_name}' attached to {file_pages_count} pages only - using 'Individual Pages'")
+                            if page.locator('xpath=//*[@id="attachToIndividual"]').is_visible():
+                                page.locator('xpath=//*[@id="attachToIndividual"]').click()
+                                page.wait_for_timeout(1000)
+                                
+                                # Click to open page selection
+                                page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]').click()
+                                page.wait_for_timeout(500)
+                                
+                                # Add each page
                                 for page_path in os.listdir(pages_folder):
-                                    # print(index)
                                     if page_path.endswith(".json"):
                                         page_file_path = os.path.join(pages_folder, page_path)
                                         with open(page_file_path, "r", encoding="utf-8") as f:
@@ -2468,69 +2576,196 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                                             p_title = page_data['settings']['title']
                                             p_uuid = page_data['settings']['uuid']
 
-                                        if key == p_uuid and page.locator('xpath=//*[@id="attachToIndividual"]').is_visible():
-                                            page.locator('xpath=//*[@id="attachToIndividual"]').click() #click on Individial Pages Radio Button
-                                            if pages_count == 2:
-                                                # Locate all <li> elements inside the specified <ul>
-                                                li_locator = page.locator('xpath=/html/body/div[1]/div[1]/div[7]/div/div/div[2]/div/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[3]/ul/li/span')
-                                                span_texts = li_locator.all_text_contents()
-
-                                                if p_title in span_texts:
-                                                    page.locator('xpath=//*[@id="attachToIndividual"]').click()  # Click on Individual Pages Radio Button
-                                                    page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]').click()
-                                                    add_individual_pages = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]/input')
-                                                    add_individual_pages.fill(p_title)
-                                                    page.keyboard.press("Enter")
-                                                    page.wait_for_timeout(700)
-                                                else:
-                                                    page.locator('xpath=//*[@id="attachToAll"]').click()
-                                                    page.wait_for_timeout(1000)
-
-                                            elif pages_count > 2:
-                                                page.locator('xpath=//*[@id="attachToIndividual"]').click()  # Click on Individual Pages Radio Button
-                                                page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]').click()
-                                                add_individual_pages = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]/input')
-                                                add_individual_pages.fill(p_title)
-                                                page.keyboard.press("Enter")
-                                                page.wait_for_timeout(700)
+                                        # Check if this page should be attached
+                                        if p_uuid in f_pages:
+                                            print(f"DEBUG: Adding page '{p_title}' to file '{f_name}'")
+                                            add_individual_pages = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]/input')
+                                            add_individual_pages.fill(p_title)
+                                            page.keyboard.press("Enter")
+                                            page.wait_for_timeout(700)
 
 
                         # Paste file details in field
 
                         # Only proceed if header or footer is set and the section is visible
-                        # if page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[3]').is_visible():
                         if page.locator("#fileplacementHeader").is_visible():
-                            if (f_header_str != "0" or f_footer_str != "0"):
+                            print(f"DEBUG: Header={f_header}, Footer={f_footer}")
+                            # Check if header or footer is True
+                            if f_header or f_footer:
                                 # Scope to the specific div containing the radio buttons
                                 placement_section = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[3]')
-                                # Determine which value to select
-                                if f_header_str != "0":
+                                
+                                # Determine which value to select based on boolean values
+                                if f_header and not f_footer:
                                     placement_value = "header"
-                                elif f_footer_str != "0":
+                                    print(f"DEBUG: Setting placement to Header")
+                                elif f_footer and not f_header:
                                     placement_value = "footer"
+                                    print(f"DEBUG: Setting placement to Footer")
+                                elif f_header and f_footer:
+                                    # If both are true, prefer header
+                                    placement_value = "header"
+                                    print(f"DEBUG: Both header and footer true, setting to Header")
                                 else:
                                     placement_value = "none"
-                                # Select the correct radio button within the scoped section
-                                placement_radio = placement_section.locator(f'input[type="radio"][value="{placement_value}"]')
-                                placement_radio.click(force=True)
+                                    print(f"DEBUG: Setting placement to None")
+                                
+                                # Try multiple methods to select the radio button
+                                try:
+                                    # Method 1: Try to find radio by value and click with force
+                                    placement_radio = placement_section.locator(f'input[type="radio"][value="{placement_value}"]')
+                                    if placement_radio.count() > 0:
+                                        print(f"DEBUG: Found radio button for {placement_value}, clicking...")
+                                        placement_radio.scroll_into_view_if_needed()
+                                        page.wait_for_timeout(500)
+                                        placement_radio.click(force=True)
+                                        page.wait_for_timeout(500)
+                                    else:
+                                        print(f"DEBUG: Radio button with value='{placement_value}' not found")
+                                        
+                                    # Method 2: Try to find by ID pattern (header/footer/none)
+                                    radio_id = f"fileplacement{placement_value.capitalize()}"
+                                    radio_by_id = page.locator(f'#{radio_id}')
+                                    if radio_by_id.count() > 0:
+                                        print(f"DEBUG: Found radio by ID #{radio_id}, clicking...")
+                                        radio_by_id.scroll_into_view_if_needed()
+                                        page.wait_for_timeout(500)
+                                        radio_by_id.click(force=True)
+                                        page.wait_for_timeout(500)
+                                    
+                                    # Method 3: Try clicking the associated label
+                                    label_xpath = f'xpath=//label[@for="fileplacement{placement_value.capitalize()}"]'
+                                    label = page.locator(label_xpath)
+                                    if label.count() > 0:
+                                        print(f"DEBUG: Found label for {placement_value}, clicking...")
+                                        label.scroll_into_view_if_needed()
+                                        page.wait_for_timeout(500)
+                                        label.click(force=True)
+                                        page.wait_for_timeout(500)
+                                    
+                                    # Verify selection
+                                    selected_radio = page.locator(f'input[type="radio"][value="{placement_value}"]:checked')
+                                    if selected_radio.count() > 0:
+                                        print(f"DEBUG: Successfully selected {placement_value}")
+                                    else:
+                                        print(f"WARNING: Could not verify {placement_value} was selected")
+                                        
+                                except Exception as e:
+                                    print(f"ERROR selecting placement: {e}")
+                                
                                 page.wait_for_timeout(1000)
                         else:
                             print("No Header or Footer Element Found")
 
-                        if f_async != False:
-                            async_field = page.locator('xpath=//*[@id="cssLoadingAsync"]') # for css file
-                            if async_field.is_visible():
-                                async_field.click()
+                        # Handle CSS Loading for CSS files using radio buttons
+                        # Options: Default (id="cssLoadingDefault"), async, Preload, Hybrid
+                        # Handle async/defer for JS files
+                        css_loading_value = data["details"].get("attributes", "").lower().strip()
+                        file_ext = f_name.lower().split('.')[-1] if '.' in f_name else ''
+                        
+                        if file_ext == 'css':
+                            # For CSS files - handle CSS Loading radio buttons
+                            print(f"DEBUG: CSS file detected, CSS Loading raw attribute='{css_loading_value}'")
+                            
+                            # Map CSV attributes to radio button IDs
+                            # Blank/empty -> cssLoadingDefault
+                            # async -> cssLoadingAsync
+                            # preload -> cssLoadingPreload  
+                            # hybrid -> cssLoadingHybrid
+                            css_loading_radio_map = {
+                                '': 'cssLoadingDefault',
+                                'default': 'cssLoadingDefault',
+                                'async': 'cssLoadingAsync',
+                                'preload': 'cssLoadingPreload',
+                                'hybrid': 'cssLoadingHybrid',
+                                'defer': 'cssLoadingAsync'  # defer maps to async for CSS
+                            }
+                            
+                            # Determine which radio button to select
+                            if css_loading_value in css_loading_radio_map:
+                                radio_id = css_loading_radio_map[css_loading_value]
+                                print(f"DEBUG: Will click CSS Loading radio: '{radio_id}' (from attributes='{css_loading_value}')")
+                            else:
+                                radio_id = 'cssLoadingDefault'  # Default for blank or unrecognized
+                                print(f"DEBUG: Will click CSS Loading radio: 'cssLoadingDefault' (attributes='{css_loading_value}' not recognized, using default)")
+                            
+                            # Try multiple methods to find and click the radio button
+                            radio_clicked = False
+                            
+                            # Method 1: Direct ID lookup
+                            try:
+                                radio_button = page.locator(f'#{radio_id}').first
+                                if radio_button.count() > 0:
+                                    radio_button.click()
+                                    print(f"✓ Successfully clicked CSS Loading radio by ID: #{radio_id}")
+                                    radio_clicked = True
+                            except Exception as e:
+                                print(f"DEBUG: Could not click by ID #{radio_id}: {e}")
+                            
+                            # Method 2: Find by name and value attributes
+                            if not radio_clicked:
+                                try:
+                                    radio_value = radio_id.replace('cssLoading', '').lower()
+                                    radio_button = page.locator(f'input[name="cssLoading"][value="{radio_value}"]').first
+                                    if radio_button.count() > 0:
+                                        radio_button.click()
+                                        print(f"✓ Successfully clicked CSS Loading radio by name/value: cssLoading={radio_value}")
+                                        radio_clicked = True
+                                except Exception as e:
+                                    print(f"DEBUG: Could not click by name/value: {e}")
+                            
+                            # Method 3: Find all CSS Loading radios and click the right one by checking value
+                            if not radio_clicked:
+                                try:
+                                    all_radios = page.locator('input[name="cssLoading"]').all()
+                                    target_value = radio_id.replace('cssLoading', '').lower()
+                                    for radio in all_radios:
+                                        val = radio.get_attribute('value')
+                                        if val and val.lower() == target_value:
+                                            radio.click()
+                                            print(f"✓ Successfully clicked CSS Loading radio by iteration: value={val}")
+                                            radio_clicked = True
+                                            break
+                                except Exception as e:
+                                    print(f"DEBUG: Could not click by iteration: {e}")
+                            
+                            # Method 4: Click associated label
+                            if not radio_clicked:
+                                try:
+                                    # Try to find label associated with the radio ID
+                                    label = page.locator(f'label[for="{radio_id}"]').first
+                                    if label.count() > 0:
+                                        label.click()
+                                        print(f"✓ Successfully clicked CSS Loading via label[for='{radio_id}']")
+                                        radio_clicked = True
+                                except Exception as e:
+                                    print(f"DEBUG: Could not click by label: {e}")
+                            
+                            if radio_clicked:
                                 page.wait_for_timeout(1000)
-                            elif page.locator('xpath=//*[@id="fileloadasAsync"]').is_visible():
-                                page.locator('xpath=//*[@id="fileloadasAsync"]').click() # for js or any other files
-                                page.wait_for_timeout(1000)
-                        elif page.locator('xpath=//*[@id="fileloadasDefer"]').is_visible():
-                            page.locator('xpath=//*[@id="fileloadasDefer"]').click()
-                            page.locator('xpath=//*[@id="fileloadasDefer"]')
-                            page.wait_for_timeout(1000)
+                            else:
+                                print(f"WARNING: Could not click CSS Loading radio for '{radio_id}' on file '{f_name}'")
+                                
+                        elif file_ext == 'js':
+                            # For JS files - handle async/defer checkboxes
+                            print(f"DEBUG: JS file detected, attributes='{css_loading_value}'")
+                            
+                            if 'async' in css_loading_value:
+                                print("DEBUG: Setting JS to async")
+                                async_js_field = page.locator('xpath=//*[@id="fileloadasAsync"]').first
+                                if async_js_field.count() > 0:
+                                    async_js_field.click()
+                                    page.wait_for_timeout(1000)
+                            elif 'defer' in css_loading_value:
+                                print("DEBUG: Setting JS to defer")
+                                defer_js_field = page.locator('xpath=//*[@id="fileloadasDefer"]').first
+                                if defer_js_field.count() > 0:
+                                    defer_js_field.click()
+                                    page.wait_for_timeout(1000)
+                            else:
+                                print("DEBUG: No async/defer for JS, leaving as default")
                         else:
-                            page.wait_for_timeout(1000)
+                            page.wait_for_timeout(500)
 
                         weight_field = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[2]/input')
                         if weight_field.is_visible():
@@ -2544,26 +2779,27 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                             modular_field.click()
                             page.wait_for_timeout(1000)
 
-                        path_field = page.locator("input[name='filepath']")
-                        if f_path_str and f_path_str != "None":
-                            path_field.click()
-                            page.keyboard.press("Control+A")
-                            path_field.fill(f_path_str)
-                            page.wait_for_timeout(1000)
+                        # NOTE: File Path and Category fields are NOT updated per requirements
+                        # path_field = page.locator("input[name='filepath']")
+                        # if f_path_str and f_path_str != "None":
+                        #     path_field.click()
+                        #     page.keyboard.press("Control+A")
+                        #     path_field.fill(f_path_str)
+                        #     page.wait_for_timeout(1000)
 
-                        category_span = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
-                        if category_span.is_visible():
-                            span_text = category_span.inner_text().strip()
-                            # Check if f_category_str has a value (not empty and not None)
-                            if f_category_str and f_category_str.strip() and f_category_str != span_text and f_category_str.strip() != "None":
-                                category_field = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
-                                category_field.click()
-                                page.wait_for_timeout(1000)
-                                category_fill = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/input')
-                                category_fill.fill(f_category_str)
-                                page.wait_for_timeout(700)
-                                page.keyboard.press("Enter")
-                                page.wait_for_timeout(1000)
+                        # NOTE: Category field is NOT updated per requirements
+                        # category_span = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
+                        # if category_span.is_visible():
+                        #     span_text = category_span.inner_text().strip()
+                        #     if f_category_str and f_category_str.strip() and f_category_str != span_text and f_category_str.strip() != "None":
+                        #         category_field = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
+                        #         category_field.click()
+                        #         page.wait_for_timeout(1000)
+                        #         category_fill = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/input')
+                        #         category_fill.fill(f_category_str)
+                        #         page.wait_for_timeout(700)
+                        #         page.keyboard.press("Enter")
+                        #         page.wait_for_timeout(1000)
 
                         if f_private != False:
                             private_field = page.locator('xpath=//*[@id="privateFile"]')
