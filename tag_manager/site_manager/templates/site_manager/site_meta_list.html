@@ -13,45 +13,6 @@
             <p class="text-muted mb-0">
                 <i class="fas fa-globe me-2"></i>{{ site.website_url }}
             </p>
-            {% if site.webbuilder_site_url %}
-                <a href="{{ site.webbuilder_site_url }}" class="btn btn-primary mt-3 mb-2" target="_blank" rel="noopener noreferrer">
-                    View Webbuilder Site
-                </a>
-            {% else %}
-                <div id="webbuilder-site-action" class="mt-3 mb-2">
-                    <button id="create-webbuilder-site-btn" class="btn btn-success">Create Webbuilder Site</button>
-                </div>
-                <div id="webbuilder-site-message" class="mt-2"></div>
-                <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const btn = document.getElementById('create-webbuilder-site-btn');
-                    if (btn) {
-                        btn.addEventListener('click', function() {
-                            btn.disabled = true;
-                            btn.textContent = 'Creating...';
-                            fetch("{% url 'trigger_webbuilder_site_creation' site.id %}", {
-                                method: "POST",
-                                headers: {'X-CSRFToken': '{{ csrf_token }}'},
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    document.getElementById('webbuilder-site-message').innerHTML =
-                                        '<div class="alert alert-success">Webbuilder site created! ID: ' + data.site_id + '</div>';
-                                    document.getElementById('webbuilder-site-action').innerHTML =
-                                        '<a href="' + data.site_url + '" class="btn btn-primary" target="_blank" rel="noopener noreferrer">View Webbuilder Site</a>';
-                                } else {
-                                    btn.disabled = false;
-                                    btn.textContent = 'Create Webbuilder Site';
-                                    document.getElementById('webbuilder-site-message').innerHTML =
-                                        '<div class="alert alert-danger">Error: ' + data.error + '</div>';
-                                }
-                            });
-                        });
-                    }
-                });
-                </script>
-            {% endif %}
         </div>
         <div style="width:100%;max-width:600px;">
             <!-- Step 1: Export -->
@@ -71,9 +32,62 @@
                 </div>
                 <div id="export-meta-message" class="mt-2"></div>
             </div>
-            <!-- Step 2: File Upload -->
+            <!-- Step 2: Create/View Webbuilder site -->
             <div class="mb-4 p-4 border rounded bg-white shadow-sm">
-                <h4 class="mb-3 fw-bold text-dark">Step 2: <span class="text-info">File Upload to WebBuilder</span></h4>
+                {% if site.webbuilder_site_id %}
+                    <h4 class="mb-3 fw-bold text-dark">Step 2: <span class="text-primary">View Webbuilder Site</span></h4>
+                    <div class="mb-3 text-muted" style="font-size:1rem;">
+                        View web builder instance that is created from exported meta tags details.
+                    </div>
+                    <a href="https://webbuilder.pfizer/builder/website/{{ site.webbuilder_site_id }}/" class="btn btn-outline-primary fw-semibold" target="_blank" rel="noopener noreferrer">
+                        <i class="fas fa-eye me-1"></i>View Webbuilder Site
+                    </a>
+                {% else %}
+                    <h4 class="mb-3 fw-bold text-dark">Step 2: <span class="text-primary">Create Webbuilder Site</span></h4>
+                    <div class="mb-3 text-muted" style="font-size:1rem;">
+                        Create a web builder instance from the extracted HTML files.
+                    </div>
+                    <div id="webbuilder-site-action" class="mt-3 mb-2">
+                        <button id="create-webbuilder-site-btn" class="btn btn-outline-primary fw-semibold">
+                            <i class="fas fa-plus me-1"></i>Create Webbuilder Site</button>
+                    </div>
+                    <div id="webbuilder-site-message" class="mt-2"></div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const btn = document.getElementById('create-webbuilder-site-btn');
+                            if (btn) {
+                                btn.addEventListener('click', function () {
+                                    btn.disabled = true;
+                                    btn.textContent = 'Creating...';
+                                    fetch("{% url 'trigger_webbuilder_site_creation' site.id %}", {
+                                        method: "POST",
+                                        headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                                    })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                btn.disabled = true;
+                                                btn.textContent = 'Create Webbuilder Site';
+                                                document.getElementById('webbuilder-site-message').innerHTML =
+                                                    '<div class="alert alert-success">Webbuilder site created! ID: ' + data.site_id + '</div>';
+                                                document.getElementById('webbuilder-site-action').innerHTML =
+                                                    '<a href="https://webbuilder.pfizer/builder/website/' + data.site_id + '/" class="btn btn-outline-primary fw-semibold" target="_blank" rel="noopener noreferrer"><i class="fas fa-eye me-1"></i>View Webbuilder Site</a>';
+                                            } else {
+                                                btn.disabled = false;
+                                                btn.textContent = 'Create Webbuilder Site';
+                                                document.getElementById('webbuilder-site-message').innerHTML =
+                                                    '<div class="alert alert-danger">Error: ' + data.error + '</div>';
+                                            }
+                                        });
+                                });
+                            }
+                        });
+                    </script>
+                {% endif %}
+            </div>
+            <!-- Step 3: File Upload -->
+            <div class="mb-4 p-4 border rounded bg-white shadow-sm">
+                <h4 class="mb-3 fw-bold text-dark">Step 3: <span class="text-info">File Upload to WebBuilder</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Upload files directly to WebBuilder using automated browser automation. This step handles bulk file uploads to your WebBuilder instance.
                 </div>
@@ -84,9 +98,9 @@
                     <span id="file-upload-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
                 </div>
             </div>
-            <!-- Step 3: Import -->
+            <!-- Step 4: Import Meta data -->
             <div class="p-4 border rounded bg-white shadow-sm">
-                <h4 class="mb-3 fw-bold text-dark">Step 3: <span class="text-success">Import Meta Data</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 4: <span class="text-success">Import Meta Data</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     After exporting and downloading, you can import a new or updated meta data CSV file for this site.
                 </div>
@@ -98,9 +112,9 @@
                 </div>
                 <div id="import-meta-message" class="mt-2"></div>
             </div>
-            <!-- Step 4: Block Import -->
+            <!-- Step 5: Block Import -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
-                <h4 class="mb-3 fw-bold text-dark">Step 4: <span class="text-info">Block Import</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 5: <span class="text-info">Block Import</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Import block data for this site using Web-builder Export Archive. This is useful for advanced block-level migration.
                 </div>
@@ -110,9 +124,9 @@
                     </a>
                 </div>
             </div>
-            <!-- Step 5: Pages Import -->
+            <!-- Step 6: Pages Import -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
-                <h4 class="mb-3 fw-bold text-dark">Step 5: <span class="text-primary">Pages Import</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 6: <span class="text-primary">Pages Import</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Import page data for this site using Web-builder Export Archive. This will automate the import of all pages for the selected site.
                 </div>
@@ -122,9 +136,9 @@
                     </a>
                 </div>
             </div>
-            <!-- Step 6: File Attribute Import -->
+            <!-- Step 7: File Attribute Import -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
-                <h4 class="mb-3 fw-bold text-dark">Step 6: <span class="text-warning">File Attribute Import</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 7: <span class="text-warning">File Attribute Import</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Import file attribute data for this site using Web-builder Export Archive. Use this to update or migrate file-level attributes in bulk.
                 </div>
