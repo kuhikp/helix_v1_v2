@@ -22,7 +22,7 @@ It is designed from your requirements:
 
 This new project already includes your reference inputs:
 - `reference/helix_components_html_output.csv`
-- `reference/input_site/HTTRACKER Site Folder 1/` // this is the HTML folder so generated from the HTTRACKER. This will act as the input for the conversion script and the output will be in a new folder that you can then import to the Webbuilder using the importer script.
+- `reference/input_site/www.knowpneumonia.sg/` // this is the HTML folder so generated from the HTTRACKER. This will act as the input for the conversion script and the output will be in a new folder that you can then import to the Webbuilder using the importer script.
 
 ## Project Structure
 
@@ -103,9 +103,54 @@ PASSWORD=your_webbuilder_password
 INSTANCE_ID=your_webbuilder_instance_id
 ```
 
+9. If you are using a GitHub Business account and need PAT authentication, generate PAT first using the detailed section below and then set:
+
+```env
+GITHUB_COPILOT_TOKEN=
+GITHUB_TOKEN=your_business_pat_here
+API_BASE_URL=https://models.inference.ai.azure.com
+```
+
+Important:
+- Token precedence in this project is: `GITHUB_COPILOT_TOKEN` first, then `GITHUB_TOKEN`.
+- If you want PAT to be used, keep `GITHUB_COPILOT_TOKEN` empty in `.env`.
+
 Notes:
 - By default, the script now updates HTML files in the input folder itself with permalink values before any model scanning/conversion starts.
 - Use `--skip-permalink-preprocess` if you want to bypass this pre-step.
+
+## Generate PAT for GitHub Business Account (Detailed)
+
+Use these steps when your organization policy requires a PAT instead of a Copilot token.
+
+1. Sign in to the GitHub account that is part of your Business/Enterprise organization.
+2. Open GitHub `Settings`.
+3. Go to `Developer settings`.
+4. Open `Personal access tokens`.
+5. Click `Fine-grained tokens`.
+6. Click `Generate new token`.
+7. Add a clear token name, for example: `helix-backend-converter`.
+8. Set an expiration based on organization policy (short-lived is recommended).
+9. Under `Resource owner`, select the account/organization allowed by your business policy.
+10. Under access settings, select the minimum required repository scope based on your org policy (`Only select repositories` is preferred when available).
+11. Under permissions, grant the minimum required permission for model inference (for GitHub Models this is typically `Models: Read`).
+12. Click `Generate token` and copy it immediately (GitHub shows it only once).
+13. If your organization enforces SSO/SAML, authorize this token for the organization:
+    - Open your token details page.
+    - Click `Configure SSO` (or equivalent org authorization action).
+    - Authorize the token for the required organization.
+14. Put the token into `.env` as `GITHUB_TOKEN` and keep `GITHUB_COPILOT_TOKEN` empty.
+15. Validate the token by listing models:
+
+```bash
+python src/convert_html_to_helix_backend.py \
+  --input-folder reference/input_site/www.knowpneumonia.sg \
+  --output-folder output_html \
+  --components-csv reference/helix_components_html_output.csv \
+  --list-models
+```
+
+If model listing fails with 401/403, the most common issue is missing SSO authorization or insufficient token permissions.
 
 ## Model Options
 
