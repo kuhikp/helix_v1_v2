@@ -357,20 +357,12 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 let statusText = '';
                 let statusClass = '';
-                console.log(data.message);
-                console.log(data.status);
-                // exit;
-                // return;
                 
                 switch (data.status) {
                     case 'running':
-                        statusText = 'Export running...';
-                        statusClass = 'text-info';
                         setTimeout(checkExportStatus, 5000);
                         break;
                     case 'completed':
-                        statusText = 'Export completed';
-                        statusClass = 'text-success';
                         exportMetaBtn.disabled = false;
                         exportMetaBtn.innerHTML = '<i class="fas fa-file-export me-1"></i>Export Meta';
                         exportMetaMessage.innerHTML = '<div class="alert alert-success mt-2">' + data.message + '</div>';
@@ -446,19 +438,17 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 let statusText = '';
                 let statusClass = '';
-                console.log(data.message);
-                console.log(data.status);
-                // exit;
                 
                 switch (data.status) {
                     case 'running':
-                        statusText = 'Import running...';
-                        statusClass = 'text-info';
                         setTimeout(checkImportStatus, 5000);
                         break;
+                    case 'completed':
+                        importMetaBtn.disabled = false;
+                        importMetaBtn.innerHTML = '<i class="fas fa-file-import me-1"></i>Import Meta';
+                        importMetaMessage.innerHTML = '<div class="alert alert-success mt-2">' + data.message + '</div>';
+                        break;
                     case 'failed':
-                        statusText = 'Import failed';
-                        statusClass = 'text-danger';
                         importMetaBtn.disabled = false;
                         importMetaBtn.innerHTML = '<i class="fas fa-file-import me-1"></i>Import Meta';
                         importMetaMessage.innerHTML = '<div class="alert alert-danger mt-2">' + data.message + '</div>';

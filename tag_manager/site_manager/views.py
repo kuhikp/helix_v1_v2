@@ -1758,7 +1758,6 @@ def run_import_script(request, site_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)})
 
-# @login_required
 @require_POST
 def run_export_script(request,site_id):
     """
@@ -1767,8 +1766,7 @@ def run_export_script(request,site_id):
     site = get_object_or_404(SiteListDetails, pk=site_id)
     # status_file = os.path.join(settings.BASE_DIR, f"site_meta_export.status")
     status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
-    # print("I am there in views.py")
-    # exit()
+
     try:
         # Write initial status
         with open(status_file, 'w') as f:
@@ -1808,7 +1806,6 @@ def run_export_script(request,site_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)})
 
-@login_required
 def check_export_status(request, site_id):
     """
     Check the status of the export process for a given site_id.
@@ -1914,36 +1911,6 @@ def export_site_meta(request, site_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Failed to start export: {e}'})
     return JsonResponse({'success': True, 'message': 'Export started.'})
-
-@login_required
-def check_export_status(request, site_id):
-    """
-    Check the status of the export process for a given site_id.
-    Returns JSON: {"ready": bool, "status": str, "progress": int, "running": bool}
-    """
-    output_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.csv")
-    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
-    status = 'not_started'
-    progress = 0
-    running = False
-    if os.path.exists(status_file):
-        with open(status_file, 'r') as f:
-            try:
-                status_data = json.load(f)
-                status = status_data.get('status', 'not_started')
-                progress = status_data.get('progress', 0)
-                pid = status_data.get('pid')
-                if pid:
-                    # Check if process is still running
-                    try:
-                        os.kill(pid, 0)
-                        running = True
-                    except OSError:
-                        running = False
-            except Exception:
-                pass
-    is_ready = os.path.exists(output_file)
-    return JsonResponse({'ready': is_ready, 'status': status, 'progress': progress, 'running': running})
 
 @login_required
 @require_POST
