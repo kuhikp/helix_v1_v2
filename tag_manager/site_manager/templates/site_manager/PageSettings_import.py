@@ -158,7 +158,7 @@ print(f"✅ Excel file saved at: {xlsx_path}")
 
 # extract sitemap to excel
 def extract_sitemap_to_excel(
-    sitemap_path="www.eczee.fr/sitemap.xml",
+    sitemap_path="/Users/sbws_user/Documents/Webbuilder/20April/TagManger/helix_v1_v2/tag_manager/site_manager/static/site_manager/samples/www.eczee.fr/sitemap.xml",
     output_path="excel_output/sitemap_data.xlsx"):
     '''
     Parses sitemap.xml and writes loc, title (from local HTML), priority,
@@ -223,8 +223,8 @@ def extract_sitemap_to_excel(
 
 # USERNAME = os.getenv("LOGIN_USERNAME")
 # PASSWORD = os.getenv("LOGIN_PASSWORD")
-LOGIN_URL = os.getenv("LOGIN_URL")
-Instance_URL = os.getenv("Instance")
+LOGIN_URL = os.getenv("SITENAME")
+Instance_URL = os.getenv("INSTANCE_ID")
 Pages = os.getenv("JSON_FOLDER")
 
 # For Mac & windows
