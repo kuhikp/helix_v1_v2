@@ -37,4 +37,5 @@ urlpatterns = [
     path('<int:site_id>/file/import/', views.import_file, name='import_file'),
     path('<int:site_id>/meta/export/status/', views.export_status, name='export_status'),
     path('<int:site_id>/pages/import/', views.pages_import_view, name='pages_import'),
+     path('<int:site_id>/page-setting/import/', views.import_page_setting, name='import_page_setting'),
 ]

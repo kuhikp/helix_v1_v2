@@ -3118,3 +3118,39 @@ def clear_file_upload_status(request, site_id):
             'success': False, 
             'message': f'Error clearing status: {str(e)}'
         })
+@login_required
+def import_page_setting(request, site_id):
+    """
+    View to handle page setting import for a given site.
+    Shows Import and Cancel buttons. Triggers the process on submit.
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    if request.method == 'POST':
+        threading.Thread(target=run_import_page_setting, args=(site,)).start()
+        messages.info(request, 'Page setting import started. You can navigate away; the process will continue in the background.')
+    return render(request, 'site_manager/import_page_setting.html', {'site': site})
+
+
+def run_import_page_setting(site):
+    """
+    Background function to handle page setting import logic.
+    """
+    try:
+        pages_folder = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data', 'pages')
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=False)
+            page = browser.new_page()
+
+            page.goto("https://webbuilder.pfizer/webbuilder/dashboard")
+            page.click('xpath=//*[@id="app"]/div[1]/div[1]/div[1]/div/div[2]/a')
+            page.wait_for_load_state("networkidle")
+
+            if page.locator('xpath=//*[@id="username"]').is_visible():
+                page.fill('xpath=//*[@id="username"]', username)
+                page.fill('xpath=//*[@id="password"]', password)
+                page.press('xpath=//*[@id="password"]', "Enter")
+            page.wait_for_timeout(2000)
+
+            browser.close()
+    except Exception as e:
+        logging.error(f"Error in run_import_page_setting: {e}")
