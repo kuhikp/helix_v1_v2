@@ -72,7 +72,7 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "When Brandkit variables are defined on a page level:", "Field Name": "loginPage", "Type": "custom_multiselect_single", "Default Value": "Attach Global Brandkit variables after page-level"},
 
     # # -- multilingual --
-    {"Panel Type": "left-sidebar-settings--multilingual", "Field Label": "Enable multilingual", "Field Name": "enable_multilingual", "Type": "checkbox", "Default Value": "unchecked"},
+    {"Panel Type": "left-sidebar-settings--multilingual-manager", "Field Label": "Enable multilingual", "Field Name": "enable_multilingual", "Type": "checkbox", "Default Value": "unchecked"},
     
     # # ── performance ──
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "", "Field Name": "_token", "Type": "hidden", "Default Value": ""},
