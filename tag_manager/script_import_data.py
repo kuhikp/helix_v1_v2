@@ -99,6 +99,12 @@ try:
             field_name = csv_row['Field Name']
             field_type = csv_row['Type']
             value = csv_row['Value']
+            
+            # Skip if no value is present
+            if not value or value.strip() == '':
+                print(f"⊘ Skipping {field_name or 'unnamed field'} - no value")
+                continue
+            
             if (field_type == 'multiselect' or field_type == 'custom_multiselect') and field_name in MULTISELECT_FIELDS:
                 values = multiselect_values[(v2_site_id, panel_type)][field_name]
                 value = ','.join(sorted(set(values), key=values.index))
