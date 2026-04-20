@@ -9,13 +9,24 @@ from webdriver_manager.chrome import ChromeDriverManager
 import csv
 import os
 import time
+import json
 from dotenv import load_dotenv
 from rapidfuzz import fuzz
 
 chrome_options = Options()
+# Uncomment the line below to run in headless mode (no browser window)
+# chrome_options.add_argument('--headless=new')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
 load_dotenv()
-service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# Try system chromedriver first, then fall back to ChromeDriverManager
+try:
+    driver = webdriver.Chrome(options=chrome_options)
+except:
+    service = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
+
 wait = WebDriverWait(driver, 10)
 
 PANEL_WAIT_TIME = 10
@@ -39,20 +50,35 @@ try:
             driver.find_element(By.ID, "password").send_keys(PASSWORD)
             driver.find_element(By.ID, "submit_button").click()
             time.sleep(5)
-    except Exception:
-        input("Please login manually and press Enter to continue...")
+    except Exception as e:
+        print(f"Login attempt failed: {e}")
+        # Check if we're already logged in by looking for webbuilder in URL
+        if 'webbuilder.pfizer' in driver.current_url and 'authorization' not in driver.current_url:
+            print("Already logged in, continuing...")
+        else:
+            print("ERROR: Automatic login failed. Please check credentials in .env file.")
+            print(f"Current URL: {driver.current_url}")
+            raise Exception("Automatic login failed and manual login is not available in automated mode")
 
-    input_folder = "Webbuilder_extracted_settings"
+    # Load data from website.json instead of CSV files
+    input_file = os.environ.get('JSONPATH')
     panel_data = defaultdict(list)
-    for filename in os.listdir(input_folder):
-        if not filename.endswith(".csv"):
-            continue
-        filepath = os.path.join(input_folder, filename)
-        with open(filepath, 'r', encoding='utf-8') as infile:
-            reader = csv.DictReader(infile)
-            for row in reader:
-                key = (row['v2_site_id'], row['Panel Type'])
-                panel_data[key].append(row)
+    
+    with open(input_file, 'r', encoding='utf-8') as f:
+        json_data = json.load(f)
+    
+    # Convert JSON format to the same structure as CSV reader
+    for item in json_data:
+        row = {
+            'v2_site_id': item.get('v2_site_id', ''),
+            'Panel Type': item.get('Panel Type', ''),
+            'Field Label': item.get('Field Label', ''),
+            'Field Name': item.get('Field Name', ''),
+            'Type': item.get('Type', ''),
+            'Value': item.get('Value', '')
+        }
+        key = (row['v2_site_id'], row['Panel Type'])
+        panel_data[key].append(row)
     multiselect_values = defaultdict(lambda: defaultdict(list))
     for (v2_site_id, panel_type), fields in panel_data.items():
         for csv_row in fields:
@@ -73,6 +99,12 @@ try:
             field_name = csv_row['Field Name']
             field_type = csv_row['Type']
             value = csv_row['Value']
+            
+            # Skip if no value is present
+            if not value or value.strip() == '':
+                print(f"⊘ Skipping {field_name or 'unnamed field'} - no value")
+                continue
+            
             if (field_type == 'multiselect' or field_type == 'custom_multiselect') and field_name in MULTISELECT_FIELDS:
                 values = multiselect_values[(v2_site_id, panel_type)][field_name]
                 value = ','.join(sorted(set(values), key=values.index))

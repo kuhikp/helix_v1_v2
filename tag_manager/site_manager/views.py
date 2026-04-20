@@ -47,8 +47,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Load environment variables from .env file
 load_dotenv()
-# Initialize logger
-logger = logging.getLogger(__name__)
 
 username = os.getenv('USERNAME')
 password = os.getenv('PASSWORD')
@@ -1700,29 +1698,128 @@ def trigger_webbuilder_site_creation(request, site_id):
             )
             output = result.stdout.strip().splitlines()
             # Extract the site ID from the URL using regex
-            url = None
-            webbuilder_site_id = None
-            for line in output:
-                match = re.search(r'https?://[^\s]*/website/(\d+)/?', line)
-                if match:
-                    webbuilder_site_id = int(match.group(1))
-                    url = line.strip()
-                    break
-            if webbuilder_site_id:
+            url = output[-1]
+            match = re.search(r'/website/(\d+)/', url)
+            if match:
+                webbuilder_site_id = int(match.group(1))
                 site.webbuilder_site_id = webbuilder_site_id
-                site.webbuilder_site_url = url
+                site.webbuilder_site_url = url  # Save the full URL
                 site.save()
                 return JsonResponse({"success": True, "site_id": webbuilder_site_id, "site_url": url})
             else:
-                # Include full output in error for easier debugging
-                full_output = "\n".join(output)
-                return JsonResponse({"success": False, "error": f"Site ID not found in script output:\n{full_output}"})
+                return JsonResponse({"success": False, "error": "Site ID not found in URL output: " + url})
         except subprocess.CalledProcessError as e:
             error_message = e.stderr or str(e)
             return JsonResponse({"success": False, "error": error_message})
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)})
     return JsonResponse({"success": False, "error": "Invalid request"})
+
+@login_required
+@require_POST
+def run_import_script(request, site_id):
+    """
+    AJAX endpoint to run script_import_data.py for importing meta data.
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_import.status")
+    
+    try:
+        # Write initial status
+        with open(status_file, 'w') as f:
+            json.dump({'status': 'running', 'message': 'Import script is running...'}, f)
+        
+        # Run the script_import_data.py in a background thread
+        script_path = os.path.join(settings.BASE_DIR, 'script_import_data.py')
+        
+        def run_script():
+            try:
+                result = subprocess.run(
+                    [sys.executable, script_path],
+                    capture_output=True,
+                    text=True,
+                    cwd=settings.BASE_DIR
+                )
+                if result.returncode == 0:
+                    status = {'status': 'completed', 'message': 'Import completed successfully.'}
+                else:
+                    status = {'status': 'failed', 'message': result.stderr or 'Import failed.'}
+                with open(status_file, 'w') as f:
+                    json.dump(status, f)
+            except Exception as e:
+                with open(status_file, 'w') as f:
+                    json.dump({'status': 'failed', 'message': str(e)}, f)
+        
+        thread = threading.Thread(target=run_script)
+        thread.daemon = True
+        thread.start()
+        
+        return JsonResponse({"success": True, "message": "Import script started successfully."})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+@require_POST
+def run_export_script(request,site_id):
+    """
+    AJAX endpoint to run script_to_export.py for exporting meta data.
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    # status_file = os.path.join(settings.BASE_DIR, f"site_meta_export.status")
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
+
+    try:
+        # Write initial status
+        with open(status_file, 'w') as f:
+            json.dump({'status': 'running', 'message': 'Export script is running...'}, f)
+        
+        # Run the script_to_export.py in a background thread
+        script_path = os.path.join(settings.BASE_DIR, 'script_to_export.py')
+        
+        def run_script():
+            try:
+                result = subprocess.run(
+                    [sys.executable, script_path],
+                    capture_output=True,
+                    text=True,
+                    cwd=settings.BASE_DIR
+                )
+                print("Export script completed with return code:", result.returncode)
+                if result.returncode == 0:
+                    time.sleep(5)  # Ensure file is fully written before checking
+                    print("I am there in export script success block")
+                    status = {'status': 'completed', 'message': 'Export completed successfully.'}
+                else:
+                    status = {'status': 'failed', 'message': result.stderr or 'Export failed.'}
+                with open(status_file, 'w') as f:
+                    json.dump(status, f)
+            except Exception as e:
+                with open(status_file, 'w') as f:
+                    json.dump({'status': 'failed', 'message': str(e)}, f)
+
+            print(status_file)
+        
+        thread = threading.Thread(target=run_script)
+        thread.daemon = True
+        thread.start()
+        
+        return JsonResponse({"success": True, "message": "Export script started successfully."})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+def check_export_status(request, site_id):
+    """
+    Check the status of the export process for a given site_id.
+    Returns JSON: {"status": str, "message": str}
+    """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
+    status = {'status': 'not_started', 'message': 'No export in progress.'}
+    if os.path.exists(status_file):
+        with open(status_file, 'r') as f:
+            try:
+                status = json.load(f)
+            except Exception:
+                pass
+    return JsonResponse(status)
 
 def import_webbuilder_config(request, site_id):
     """Handle CSV upload and import webbuilder config for a site using script_import_data.py."""
@@ -1814,36 +1911,6 @@ def export_site_meta(request, site_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Failed to start export: {e}'})
     return JsonResponse({'success': True, 'message': 'Export started.'})
-
-@login_required
-def check_export_status(request, site_id):
-    """
-    Check the status of the export process for a given site_id.
-    Returns JSON: {"ready": bool, "status": str, "progress": int, "running": bool}
-    """
-    output_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.csv")
-    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
-    status = 'not_started'
-    progress = 0
-    running = False
-    if os.path.exists(status_file):
-        with open(status_file, 'r') as f:
-            try:
-                status_data = json.load(f)
-                status = status_data.get('status', 'not_started')
-                progress = status_data.get('progress', 0)
-                pid = status_data.get('pid')
-                if pid:
-                    # Check if process is still running
-                    try:
-                        os.kill(pid, 0)
-                        running = True
-                    except OSError:
-                        running = False
-            except Exception:
-                pass
-    is_ready = os.path.exists(output_file)
-    return JsonResponse({'ready': is_ready, 'status': status, 'progress': progress, 'running': running})
 
 @login_required
 @require_POST
