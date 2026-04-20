@@ -159,7 +159,7 @@ STATICFILES_DIRS = [
 ]
 
 # Static root for production
-STATIC_ROOT = BASE_DIR / os.getenv('STATIC_DIR')
+STATIC_ROOT = BASE_DIR / os.getenv('STATIC_DIR', 'staticfiles')
 
 # Caching Configuration - Disabled for Development
 # https://docs.djangoproject.com/en/5.2/topics/cache/

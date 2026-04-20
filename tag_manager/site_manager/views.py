@@ -41,7 +41,8 @@ from tag_manager_component.models import Tag, TagMapper
 from tag_manager_component.views import get_website_complexity
 from playwright.sync_api import sync_playwright
 from dotenv import load_dotenv
-from common_block_extractor import extract_common_blocks, write_blocks_as_json
+from .common_block_extractor import extract_common_blocks
+from .common_block_to_json import write_blocks_as_json
 
 # Disable SSL warnings for sites with certificate issues
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -2100,12 +2101,24 @@ def run_import_block(site_id):
 
     print(f"{len(common_blocks)} common blocks generated for import.")
 
-        # Call the main processing functions in synchronous order
-        process_blocks(page, sitename, instance_id,
-                       blocks_folder=os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import',
-                       'data','modules'))
+    # Call the main processing functions in synchronous order
+        
+    process_blocks(
+                page,
+                sitename,
+                instance_id,
+                blocks_folder=os.path.join(
+                    settings.BASE_DIR,
+                    'site_manager',
+                    'static',
+                    'block_import',
+                    'data',
+                    'modules'
+                )
+    )       
 
-        browser.close()
+
+    browser.close()
 
 def create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach, b_auto_attach_location,
                  b_auto_attach_exceptions, b_auto_attach_to_error_pages, b_css, b_html):
