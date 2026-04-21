@@ -128,3 +128,4 @@ openpyxl==3.1.2
 
 rapidfuzz
 playwright
+openai
