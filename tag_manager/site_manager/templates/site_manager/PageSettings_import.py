@@ -1,11 +1,10 @@
 import os
 import re
-import os
 import time
 import json
 import unicodedata
 from bs4 import BeautifulSoup
-from httpx import TimeoutException
+
 from openpyxl import Workbook
 from urllib.parse import parse_qs, urlparse
 from dotenv import load_dotenv
@@ -19,7 +18,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
 
 
@@ -34,7 +33,10 @@ EXCEL_TITLE_COLUMN = "Title"
 Excel_File ="excel_output/html_pages_data.xlsx"
 Sitemap_Excel_File = "excel_output/sitemap_data.xlsx"
 GCMA_PATTERN = re.compile(r"\b[A-Z]{2,4}-[A-Z]{2,4}-[A-Z]{2,4}-\d{3,4}\b")
+sitemap_path = os.path.join(os.getenv("HTML_FOLDER"), "sitemap.xml")
 
+# ✅ Normalize Windows path
+HTML_Files_Folder = os.path.normpath(HTML_Files_Folder)
 # Create output folder if it doesn't exist
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -89,6 +91,7 @@ def normalize_keywords(keyword_string):
     return ", ".join(sorted(set(keywords)))
 
 def extract_html_data(html_file_path):
+
     with open(html_file_path, "r", encoding="utf-8", errors="ignore") as file:
         soup = BeautifulSoup(file, "html.parser")
 
@@ -157,9 +160,7 @@ print("✅ All HTML files processed successfully.")
 print(f"✅ Excel file saved at: {xlsx_path}")
 
 # extract sitemap to excel
-def extract_sitemap_to_excel(
-    sitemap_path="/Users/sbws_user/Documents/Webbuilder/20April/TagManger/helix_v1_v2/tag_manager/site_manager/static/site_manager/samples/www.eczee.fr/sitemap.xml",
-    output_path="excel_output/sitemap_data.xlsx"):
+def extract_sitemap_to_excel(sitemap_path, output_path="excel_output/sitemap_data.xlsx"):
     '''
     Parses sitemap.xml and writes loc, title (from local HTML), priority,
     and changefreq to an Excel file.
@@ -223,12 +224,17 @@ def extract_sitemap_to_excel(
 
 # USERNAME = os.getenv("LOGIN_USERNAME")
 # PASSWORD = os.getenv("LOGIN_PASSWORD")
-LOGIN_URL = os.getenv("SITENAME")
-Instance_URL = os.getenv("INSTANCE_ID")
-Pages = os.getenv("JSON_FOLDER")
-
+sitename = os.getenv("SITENAME")
+instance = os.getenv("INSTANCE_ID")
+#Pages = os.getenv("JSON_FOLDER")
+LOGIN_URL = f"https://{sitename}/login"
+# Validate required env vars before building URLs
+if not sitename:
+    raise ValueError("SITENAME is not set in your .env file. Add: SITENAME=your-domain.com")
+if not instance:
+    raise ValueError("INSTANCE_ID is not set in your .env file. Add: INSTANCE_ID=your-instance-id")
+INSTANCE_URL = f"https://{sitename}/builder/website/{instance}"
 # For Mac & windows
-driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
 
 def webbuilder_login():
     driver.maximize_window()
@@ -357,7 +363,7 @@ def update_language_in_webbuilder(driver, wait, excel_language):
 def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_language_map):
     print(f"✏️ Editing page in Webbuilder: {page_slug}")
     
-    driver.get(Instance_URL)
+    driver.get(INSTANCE_URL)
     driver.execute_script("document.body.style.zoom='80%'")
     
     wait = WebDriverWait(driver,20)
@@ -535,7 +541,7 @@ def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_la
 
 def Seo_setting_update(seo_normalize_title,original_title,description_map,keyword_map,priority_map, changefreq_map):
     
-    driver.get(Instance_URL)
+    driver.get(INSTANCE_URL)
     driver.execute_script("document.body.style.zoom='80%'")
 
     wait = WebDriverWait(driver,20)
@@ -658,9 +664,10 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
             )
         )
 
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});",seo_keywords_input)
 
         # ✅ Clear existing text safely
-        seo_keywords_input.click()
+        driver.execute_script("arguments[0].click();", seo_keywords_input)
         seo_keywords_input.send_keys(Keys.CONTROL, "a")
         seo_keywords_input.send_keys(Keys.COMMAND, "a")
         seo_keywords_input.send_keys(Keys.BACKSPACE)
@@ -997,7 +1004,7 @@ def process_seo_settings_for_all_pages(html_root_folder,title_map,description_ma
                 # ✅ If page not found → skip safely
                 if not page_found:
                     print("➡️ Skipping Page Settings and moving to next page\n")
-                    print("*********************************** Page Setting New page *************************************")
+                    print("*********************************** SEO Setting New page *************************************")
                     continue
 
             else:
@@ -1217,7 +1224,8 @@ def update_404_page_in_webbuilder():
 
 ################## Main Function ####################
 if __name__ == "__main__":
-    extract_sitemap_to_excel()
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    extract_sitemap_to_excel(sitemap_path)
     webbuilder_login()
     global title_map,gcma_map,normalized_page_title, page_slug
     title_map = load_titles_from_excel()
@@ -1226,6 +1234,6 @@ if __name__ == "__main__":
     description_map = load_description_map_from_excel()
     keyword_map = load_keyword_map_from_excel()
     priority_map, changefreq_map = load_sitemap_map()
-    #process_html_pages_by_path(HTML_Files_Folder,title_map,gcma_map,page_language_map)
+    process_html_pages_by_path(HTML_Files_Folder,title_map,gcma_map,page_language_map)
     process_seo_settings_for_all_pages(HTML_Files_Folder,title_map,description_map,keyword_map,priority_map, changefreq_map)
-    #update_404_page_in_webbuilder()
+    update_404_page_in_webbuilder()
