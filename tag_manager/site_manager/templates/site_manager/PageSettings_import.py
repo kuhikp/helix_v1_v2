@@ -26,17 +26,16 @@ from selenium.webdriver.common.action_chains import ActionChains
 load_dotenv()        #loads .env file
 
 # Folder containing HTML files
-HTML_Files_Folder = os.getenv("HTML_FOLDER")
 OUTPUT_FOLDER = "excel_output"
 OUTPUT_XLSX = "html_pages_data.xlsx"
 EXCEL_TITLE_COLUMN = "Title"
 Excel_File ="excel_output/html_pages_data.xlsx"
 Sitemap_Excel_File = "excel_output/sitemap_data.xlsx"
 GCMA_PATTERN = re.compile(r"\b[A-Z]{2,4}-[A-Z]{2,4}-[A-Z]{2,4}-\d{3,4}\b")
-sitemap_path = os.path.join(os.getenv("HTML_FOLDER"), "sitemap.xml")
-
-# ✅ Normalize Windows path
+# ✅ Normalize Windows path - fix escape sequences that became tabs
+HTML_Files_Folder = os.getenv("HTML_FOLDER").replace("\t", "\\t")
 HTML_Files_Folder = os.path.normpath(HTML_Files_Folder)
+sitemap_path = os.path.join(HTML_Files_Folder, "sitemap.xml")
 # Create output folder if it doesn't exist
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -489,7 +488,7 @@ def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_la
     
     # Update the GCMA code of the individual pages.
     try:
-        wait = WebDriverWait(driver, 20)
+        wait = WebDriverWait(driver,5)
 
         # 1️⃣ Locate the Title input field
         gcma_input = wait.until(
@@ -520,7 +519,7 @@ def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_la
         print("❌ Could not locate the GCMA Code input field")
 
     #Update the Language of the pages
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver,5)
 
     # 🔹 Get language for this page from Excel
     excel_language = page_language_map.get(original_title)
@@ -531,9 +530,28 @@ def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_la
         print("ℹ️ Language empty in Excel — defaulting to English (en)")
     update_language_in_webbuilder(driver, wait, excel_language)
 
-    # Save the changes
-    save_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[normalize-space()='Save']")))
-    save_button.click()
+    # Save the changes - wait for modal and try multiple selectors
+    time.sleep(2)  # Wait for settings modal to fully open
+    save_button = None
+    save_selectors = [
+        (By.XPATH, "//button[translate(normalize-space(),'SAVE','save')='save']"),
+        (By.XPATH, "//button[contains(@class,'tw-bg-blue-500') and contains(translate(.,'SAVE','save'),'save')]"),
+        (By.CSS_SELECTOR, "button.tw-bg-blue-500"),
+        (By.XPATH, "//button[@type='button' and contains(translate(.,'SAVE','save'),'save')]"),
+    ]
+    for by, selector in save_selectors:
+        try:
+            save_button = WebDriverWait(driver,5).until(EC.element_to_be_clickable((by, selector)))
+            if save_button:
+                print(f"✅ Save button found with: {selector}")
+                break
+        except:
+            continue
+    if not save_button:
+        raise Exception("Could not find Save button")
+    driver.execute_script("arguments[0].scrollIntoView({block:'center'});", save_button)
+    time.sleep(0.5)
+    driver.execute_script("arguments[0].click();", save_button)
     print("✅ Save button clicked")
     print("*********************************** Page Setting New page *************************************")
     time.sleep(2)
@@ -544,7 +562,7 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
     driver.get(INSTANCE_URL)
     driver.execute_script("document.body.style.zoom='80%'")
 
-    wait = WebDriverWait(driver,20)
+    wait = WebDriverWait(driver,8)
     # Hamburger menu
     SEO_hamburg = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "fa-bars")))
     SEO_hamburg.click()
@@ -597,7 +615,7 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
 
     print("✅ Seo Settings clicked")
     time.sleep(2)
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver,5)
     # Update the SEO Title of the individual pages.
     try:
 
@@ -654,7 +672,7 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
     except TimeoutException:
         print("❌ SEO Description field not found")
 
-    wait = WebDriverWait(driver, 10)
+    wait = WebDriverWait(driver, 5)
     # Update the SEO Keywords
     try:
         
@@ -796,9 +814,25 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
     except Exception as e:
         print(f"❌ Error updating Change Frequency: {e}")
 
-    # Save the changes
-    save_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[normalize-space()='Save']")))
-
+    # Save the changes - wait for modal and try multiple selectors
+    time.sleep(2)  # Wait for settings modal to fully open
+    save_button = None
+    save_selectors = [
+        (By.XPATH, "//button[translate(normalize-space(),'SAVE','save')='save']"),
+        (By.XPATH, "//button[contains(@class,'tw-bg-blue-500') and contains(translate(.,'SAVE','save'),'save')]"),
+        (By.CSS_SELECTOR, "button.tw-bg-blue-500"),
+        (By.XPATH, "//button[@type='button' and contains(translate(.,'SAVE','save'),'save')]"),
+    ]
+    for by, selector in save_selectors:
+        try:
+            save_button = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((by, selector)))
+            if save_button:
+                print(f"✅ Save button found with: {selector}")
+                break
+        except:
+            continue
+    if not save_button:
+        raise Exception("Could not find Save button")
     driver.execute_script("arguments[0].scrollIntoView({block:'center'});", save_button)
     time.sleep(0.5)
     driver.execute_script("arguments[0].click();", save_button)
