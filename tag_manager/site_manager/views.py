@@ -3897,3 +3897,79 @@ def clear_file_upload_status(request, site_id):
             'success': False, 
             'message': f'Error clearing status: {str(e)}'
         })
+@login_required
+def import_page_setting(request, site_id):
+    """
+    View to handle page setting import for a given site.
+    On POST, runs PageSettings_import.py in a background thread and tracks status via a status file.
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_page_setting_import.status")
+
+    if request.method == 'POST':
+        # Write initial running status
+        with open(status_file, 'w') as f:
+            json.dump({'status': 'running', 'message': 'Page setting import is in progress...', 'output': ''}, f)
+
+        # Run the script in a background thread
+        thread = threading.Thread(target=run_import_page_setting, args=(site_id, status_file))
+        thread.daemon = True
+        thread.start()
+
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'message': 'Page setting import started.'})
+
+        messages.info(request, 'Page setting import started. You can check the status below.')
+
+    return render(request, 'site_manager/import_page_setting.html', {'site': site})
+
+
+def run_import_page_setting(site_id, status_file):
+    """
+    Background function that runs PageSettings_import.py via subprocess and writes status to a file.
+    """
+    try:
+        script_path = os.path.join(
+            settings.BASE_DIR,
+            'site_manager', 'templates', 'site_manager', 'PageSettings_import.py'
+        )
+        result = subprocess.run(
+            [sys.executable, script_path],
+            capture_output=True,
+            text=True,
+            cwd=settings.BASE_DIR
+        )
+        if result.returncode == 0:
+            status = {
+                'status': 'completed',
+                'message': 'Page setting import completed successfully.',
+                'output': result.stdout
+            }
+        else:
+            status = {
+                'status': 'failed',
+                'message': result.stderr or 'Page setting import failed.',
+                'output': result.stdout
+            }
+    except Exception as e:
+        status = {'status': 'failed', 'message': str(e), 'output': ''}
+
+    with open(status_file, 'w') as f:
+        json.dump(status, f)
+
+
+@login_required
+def check_page_setting_import_status(request, site_id):
+    """
+    AJAX endpoint to check the status of PageSettings_import.py for a given site_id.
+    Returns JSON: {"status": str, "message": str, "output": str}
+    """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_page_setting_import.status")
+    status = {'status': 'not_started', 'message': 'No import in progress.', 'output': ''}
+    if os.path.exists(status_file):
+        with open(status_file, 'r') as f:
+            try:
+                status = json.load(f)
+            except Exception:
+                pass
+    return JsonResponse(status)
