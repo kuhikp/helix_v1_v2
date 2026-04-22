@@ -1,11 +1,14 @@
 # Standard library imports
 import csv
+import importlib.util
 import json
 import logging
 import re
+import shlex
 import threading
 import time
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from urllib.parse import urlparse
 import subprocess
 import sys
@@ -2355,14 +2358,90 @@ def process_blocks(page, sitename, instance_id, blocks_folder):
 @login_required
 def import_file_attribute(request, site_id):
     """
-    Trigger file attribute import automation for a site. No file upload required.
-    Shows only an Import button and triggers the process on submit.
+    Trigger complete Step 6 workflow: Scan HTML → Generate CSV → Convert to JSON → Update WebBuilder
+    Shows only an Import button and triggers the complete process on submit.
     """
     site = get_object_or_404(SiteListDetails, pk=site_id)
     if request.method == 'POST':
-        threading.Thread(target=run_import_file_attribute, args=(site,)).start()
-        messages.info(request, 'File attribute import started. You can navigate away; the process will continue in the background.')
+        try:
+            # Start background thread for complete workflow (HTML scan → CSV → JSON → WebBuilder import)
+            threading.Thread(target=run_step6_workflow, args=(site,)).start()
+            messages.info(request, 'Step 6 workflow started! This will scan HTML files, generate JSON configurations, and update WebBuilder. You can navigate away; the process will continue in the background.')
+        except Exception as e:
+            messages.error(request, f'Error starting Step 6 workflow: {str(e)}')
     return render(request, 'site_manager/import_file_attribute.html', {'site': site})
+
+
+def run_step6_workflow(site):
+    """
+    Complete Step 6 workflow: HTML scanning → CSV generation → JSON conversion → WebBuilder import
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+    from django.conf import settings
+    
+    try:
+        print(f"Starting Step 6 workflow for site: {site.website_url}")
+        
+        # Define paths
+        base_dir = Path(settings.BASE_DIR)
+        html_root = base_dir / 'site_manager' / 'static' / 'httrack_export'
+        csv_path = base_dir / 'site_manager' / 'sites' / 'pfizer_assets.csv'
+        final_files_dir = base_dir / 'site_manager' / 'static' / 'block_import' / 'data' / 'files'
+        final_pages_dir = base_dir / 'site_manager' / 'static' / 'block_import' / 'data' / 'pages'
+        
+        # Step 1: Run extract_assets_csv.py
+        print("Step 1: Scanning HTML files...")
+        extract_script = base_dir / 'site_manager' / 'management' / 'commands' / 'extract_assets_csv.py'
+        
+        if html_root.exists():
+            result = subprocess.run([
+                sys.executable, str(extract_script),
+                '--root', str(html_root),
+                '--output', str(csv_path)
+            ], capture_output=True, text=True, cwd=base_dir)
+            
+            if result.returncode == 0:
+                print(f"✓ HTML scanning completed")
+            else:
+                print(f"✗ HTML scanning failed: {result.stderr}")
+                return
+        else:
+            print(f"✗ HTML directory not found: {html_root}")
+            return
+        
+        # Step 2: Run csv_to_json_step6.py with output directly to data directories
+        print("Step 2: Converting CSV to JSON...")
+        csv_script = base_dir / 'site_manager' / 'management' / 'commands' / 'csv_to_json_step6.py'
+        
+        # Generate JSON files directly in final data directories
+        result = subprocess.run([
+            sys.executable, str(csv_script),
+            '--csv', str(csv_path),
+            '--output', str(final_files_dir.parent)  # Output to block_import/data directory
+        ], capture_output=True, text=True, cwd=base_dir)
+        
+        if result.returncode == 0:
+            print(f"✓ JSON conversion completed")
+            print(f"✓ Files generated directly in: {final_files_dir}")
+            print(f"✓ Pages generated directly in: {final_pages_dir}")
+        else:
+            print(f"✗ JSON conversion failed: {result.stderr}")
+            return
+        
+        print(f"✓ Step 6 JSON preparation completed!")
+        print(f"Starting WebBuilder file attribute import...")
+        
+        # Step 3: Trigger WebBuilder import using existing logic
+        run_import_file_attribute(site)
+        
+        print(f"✓ Step 6 workflow completed successfully!")
+        
+    except Exception as e:
+        print(f"✗ Step 6 workflow failed: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 def run_import_file_attribute(site_id):
@@ -2399,8 +2478,19 @@ def run_import_file_attribute(site_id):
         logging.error(f"Error in run_import_file_attribute: {e}")
 
 def process_files(page, sitename, instance_id, files_folder, pages_folder):
+    try:
+        _process_files_internal(page, sitename, instance_id, files_folder, pages_folder)
+    except Exception as e:
+        print(f"\n❌ ERROR in process_files: {e}")
+        import traceback
+        print(traceback.format_exc())
+        raise
+
+def _process_files_internal(page, sitename, instance_id, files_folder, pages_folder):
     # Navigate to Content > Files
-    page.goto(f"https://{sitename}/builder/website/{instance_id}?panel=left-sidebar-settings--file-manager")
+    target_url = f"https://webbuilder.pfizer/builder/website/{instance_id}?panel=left-sidebar-settings--file-manager"
+    print(f"DEBUG: Navigating to {target_url}")
+    page.goto(target_url)
     page.wait_for_timeout(5000)
 
     skipped_file_csv = f"v2_{instance_id}_skipped_files.csv"
@@ -2517,17 +2607,29 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                         page.locator(f'xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div/div[2]/table/tbody/tr[{index}]/td[7]/div/span[1]/a/i').click()
                         page.wait_for_timeout(2000)
 
-                        # Paste the pages data in the file config
-                        for key, value in f_pages.items():
-                            pages_count = len(f_pages)
-                            if pages_count <= 1:
-                                # attach_page = page.locator('xpath=//*[@id="attachToAll"]')
-                                if page.locator('xpath=//*[@id="attachToAll"]').is_visible():
-                                    page.locator('xpath=//*[@id="attachToAll"]').click()
-                                    page.wait_for_timeout(1000)
-                            else:
+                        # Get total number of pages available
+                        total_pages = len([f for f in os.listdir(pages_folder) if f.endswith(".json")])
+                        file_pages_count = len(f_pages)
+                        print(f"DEBUG: File '{f_name}' attached to {file_pages_count} out of {total_pages} pages")
+                        
+                        # Check if file is attached to ALL pages
+                        if file_pages_count == total_pages:
+                            print(f"DEBUG: File '{f_name}' attached to ALL pages - clicking 'Attach to All'")
+                            if page.locator('xpath=//*[@id="attachToAll"]').is_visible():
+                                page.locator('xpath=//*[@id="attachToAll"]').click()
+                                page.wait_for_timeout(1000)
+                        else:
+                            print(f"DEBUG: File '{f_name}' attached to {file_pages_count} pages only - using 'Individual Pages'")
+                            if page.locator('xpath=//*[@id="attachToIndividual"]').is_visible():
+                                page.locator('xpath=//*[@id="attachToIndividual"]').click()
+                                page.wait_for_timeout(1000)
+                                
+                                # Click to open page selection
+                                page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]').click()
+                                page.wait_for_timeout(500)
+                                
+                                # Add each page
                                 for page_path in os.listdir(pages_folder):
-                                    # print(index)
                                     if page_path.endswith(".json"):
                                         page_file_path = os.path.join(pages_folder, page_path)
                                         with open(page_file_path, "r", encoding="utf-8") as f:
@@ -2535,69 +2637,196 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                                             p_title = page_data['settings']['title']
                                             p_uuid = page_data['settings']['uuid']
 
-                                        if key == p_uuid and page.locator('xpath=//*[@id="attachToIndividual"]').is_visible():
-                                            page.locator('xpath=//*[@id="attachToIndividual"]').click() #click on Individial Pages Radio Button
-                                            if pages_count == 2:
-                                                # Locate all <li> elements inside the specified <ul>
-                                                li_locator = page.locator('xpath=/html/body/div[1]/div[1]/div[7]/div/div/div[2]/div/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[3]/ul/li/span')
-                                                span_texts = li_locator.all_text_contents()
-
-                                                if p_title in span_texts:
-                                                    page.locator('xpath=//*[@id="attachToIndividual"]').click()  # Click on Individual Pages Radio Button
-                                                    page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]').click()
-                                                    add_individual_pages = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]/input')
-                                                    add_individual_pages.fill(p_title)
-                                                    page.keyboard.press("Enter")
-                                                    page.wait_for_timeout(700)
-                                                else:
-                                                    page.locator('xpath=//*[@id="attachToAll"]').click()
-                                                    page.wait_for_timeout(1000)
-
-                                            elif pages_count > 2:
-                                                page.locator('xpath=//*[@id="attachToIndividual"]').click()  # Click on Individual Pages Radio Button
-                                                page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]').click()
-                                                add_individual_pages = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]/input')
-                                                add_individual_pages.fill(p_title)
-                                                page.keyboard.press("Enter")
-                                                page.wait_for_timeout(700)
+                                        # Check if this page should be attached
+                                        if p_uuid in f_pages:
+                                            print(f"DEBUG: Adding page '{p_title}' to file '{f_name}'")
+                                            add_individual_pages = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[2]/div[3]/div/div[2]/input')
+                                            add_individual_pages.fill(p_title)
+                                            page.keyboard.press("Enter")
+                                            page.wait_for_timeout(700)
 
 
                         # Paste file details in field
 
                         # Only proceed if header or footer is set and the section is visible
-                        # if page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[3]').is_visible():
                         if page.locator("#fileplacementHeader").is_visible():
-                            if (f_header_str != "0" or f_footer_str != "0"):
+                            print(f"DEBUG: Header={f_header}, Footer={f_footer}")
+                            # Check if header or footer is True
+                            if f_header or f_footer:
                                 # Scope to the specific div containing the radio buttons
                                 placement_section = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[2]/div[3]')
-                                # Determine which value to select
-                                if f_header_str != "0":
+                                
+                                # Determine which value to select based on boolean values
+                                if f_header and not f_footer:
                                     placement_value = "header"
-                                elif f_footer_str != "0":
+                                    print(f"DEBUG: Setting placement to Header")
+                                elif f_footer and not f_header:
                                     placement_value = "footer"
+                                    print(f"DEBUG: Setting placement to Footer")
+                                elif f_header and f_footer:
+                                    # If both are true, prefer header
+                                    placement_value = "header"
+                                    print(f"DEBUG: Both header and footer true, setting to Header")
                                 else:
                                     placement_value = "none"
-                                # Select the correct radio button within the scoped section
-                                placement_radio = placement_section.locator(f'input[type="radio"][value="{placement_value}"]')
-                                placement_radio.click(force=True)
+                                    print(f"DEBUG: Setting placement to None")
+                                
+                                # Try multiple methods to select the radio button
+                                try:
+                                    # Method 1: Try to find radio by value and click with force
+                                    placement_radio = placement_section.locator(f'input[type="radio"][value="{placement_value}"]')
+                                    if placement_radio.count() > 0:
+                                        print(f"DEBUG: Found radio button for {placement_value}, clicking...")
+                                        placement_radio.scroll_into_view_if_needed()
+                                        page.wait_for_timeout(500)
+                                        placement_radio.click(force=True)
+                                        page.wait_for_timeout(500)
+                                    else:
+                                        print(f"DEBUG: Radio button with value='{placement_value}' not found")
+                                        
+                                    # Method 2: Try to find by ID pattern (header/footer/none)
+                                    radio_id = f"fileplacement{placement_value.capitalize()}"
+                                    radio_by_id = page.locator(f'#{radio_id}')
+                                    if radio_by_id.count() > 0:
+                                        print(f"DEBUG: Found radio by ID #{radio_id}, clicking...")
+                                        radio_by_id.scroll_into_view_if_needed()
+                                        page.wait_for_timeout(500)
+                                        radio_by_id.click(force=True)
+                                        page.wait_for_timeout(500)
+                                    
+                                    # Method 3: Try clicking the associated label
+                                    label_xpath = f'xpath=//label[@for="fileplacement{placement_value.capitalize()}"]'
+                                    label = page.locator(label_xpath)
+                                    if label.count() > 0:
+                                        print(f"DEBUG: Found label for {placement_value}, clicking...")
+                                        label.scroll_into_view_if_needed()
+                                        page.wait_for_timeout(500)
+                                        label.click(force=True)
+                                        page.wait_for_timeout(500)
+                                    
+                                    # Verify selection
+                                    selected_radio = page.locator(f'input[type="radio"][value="{placement_value}"]:checked')
+                                    if selected_radio.count() > 0:
+                                        print(f"DEBUG: Successfully selected {placement_value}")
+                                    else:
+                                        print(f"WARNING: Could not verify {placement_value} was selected")
+                                        
+                                except Exception as e:
+                                    print(f"ERROR selecting placement: {e}")
+                                
                                 page.wait_for_timeout(1000)
                         else:
                             print("No Header or Footer Element Found")
 
-                        if f_async != False:
-                            async_field = page.locator('xpath=//*[@id="cssLoadingAsync"]') # for css file
-                            if async_field.is_visible():
-                                async_field.click()
+                        # Handle CSS Loading for CSS files using radio buttons
+                        # Options: Default (id="cssLoadingDefault"), async, Preload, Hybrid
+                        # Handle async/defer for JS files
+                        css_loading_value = data["details"].get("attributes", "").lower().strip()
+                        file_ext = f_name.lower().split('.')[-1] if '.' in f_name else ''
+                        
+                        if file_ext == 'css':
+                            # For CSS files - handle CSS Loading radio buttons
+                            print(f"DEBUG: CSS file detected, CSS Loading raw attribute='{css_loading_value}'")
+                            
+                            # Map CSV attributes to radio button IDs
+                            # Blank/empty -> cssLoadingDefault
+                            # async -> cssLoadingAsync
+                            # preload -> cssLoadingPreload  
+                            # hybrid -> cssLoadingHybrid
+                            css_loading_radio_map = {
+                                '': 'cssLoadingDefault',
+                                'default': 'cssLoadingDefault',
+                                'async': 'cssLoadingAsync',
+                                'preload': 'cssLoadingPreload',
+                                'hybrid': 'cssLoadingHybrid',
+                                'defer': 'cssLoadingAsync'  # defer maps to async for CSS
+                            }
+                            
+                            # Determine which radio button to select
+                            if css_loading_value in css_loading_radio_map:
+                                radio_id = css_loading_radio_map[css_loading_value]
+                                print(f"DEBUG: Will click CSS Loading radio: '{radio_id}' (from attributes='{css_loading_value}')")
+                            else:
+                                radio_id = 'cssLoadingDefault'  # Default for blank or unrecognized
+                                print(f"DEBUG: Will click CSS Loading radio: 'cssLoadingDefault' (attributes='{css_loading_value}' not recognized, using default)")
+                            
+                            # Try multiple methods to find and click the radio button
+                            radio_clicked = False
+                            
+                            # Method 1: Direct ID lookup
+                            try:
+                                radio_button = page.locator(f'#{radio_id}').first
+                                if radio_button.count() > 0:
+                                    radio_button.click()
+                                    print(f"✓ Successfully clicked CSS Loading radio by ID: #{radio_id}")
+                                    radio_clicked = True
+                            except Exception as e:
+                                print(f"DEBUG: Could not click by ID #{radio_id}: {e}")
+                            
+                            # Method 2: Find by name and value attributes
+                            if not radio_clicked:
+                                try:
+                                    radio_value = radio_id.replace('cssLoading', '').lower()
+                                    radio_button = page.locator(f'input[name="cssLoading"][value="{radio_value}"]').first
+                                    if radio_button.count() > 0:
+                                        radio_button.click()
+                                        print(f"✓ Successfully clicked CSS Loading radio by name/value: cssLoading={radio_value}")
+                                        radio_clicked = True
+                                except Exception as e:
+                                    print(f"DEBUG: Could not click by name/value: {e}")
+                            
+                            # Method 3: Find all CSS Loading radios and click the right one by checking value
+                            if not radio_clicked:
+                                try:
+                                    all_radios = page.locator('input[name="cssLoading"]').all()
+                                    target_value = radio_id.replace('cssLoading', '').lower()
+                                    for radio in all_radios:
+                                        val = radio.get_attribute('value')
+                                        if val and val.lower() == target_value:
+                                            radio.click()
+                                            print(f"✓ Successfully clicked CSS Loading radio by iteration: value={val}")
+                                            radio_clicked = True
+                                            break
+                                except Exception as e:
+                                    print(f"DEBUG: Could not click by iteration: {e}")
+                            
+                            # Method 4: Click associated label
+                            if not radio_clicked:
+                                try:
+                                    # Try to find label associated with the radio ID
+                                    label = page.locator(f'label[for="{radio_id}"]').first
+                                    if label.count() > 0:
+                                        label.click()
+                                        print(f"✓ Successfully clicked CSS Loading via label[for='{radio_id}']")
+                                        radio_clicked = True
+                                except Exception as e:
+                                    print(f"DEBUG: Could not click by label: {e}")
+                            
+                            if radio_clicked:
                                 page.wait_for_timeout(1000)
-                            elif page.locator('xpath=//*[@id="fileloadasAsync"]').is_visible():
-                                page.locator('xpath=//*[@id="fileloadasAsync"]').click() # for js or any other files
-                                page.wait_for_timeout(1000)
-                        elif page.locator('xpath=//*[@id="fileloadasDefer"]').is_visible():
-                            page.locator('xpath=//*[@id="fileloadasDefer"]').click()
-                            page.locator('xpath=//*[@id="fileloadasDefer"]')
-                            page.wait_for_timeout(1000)
+                            else:
+                                print(f"WARNING: Could not click CSS Loading radio for '{radio_id}' on file '{f_name}'")
+                                
+                        elif file_ext == 'js':
+                            # For JS files - handle async/defer checkboxes
+                            print(f"DEBUG: JS file detected, attributes='{css_loading_value}'")
+                            
+                            if 'async' in css_loading_value:
+                                print("DEBUG: Setting JS to async")
+                                async_js_field = page.locator('xpath=//*[@id="fileloadasAsync"]').first
+                                if async_js_field.count() > 0:
+                                    async_js_field.click()
+                                    page.wait_for_timeout(1000)
+                            elif 'defer' in css_loading_value:
+                                print("DEBUG: Setting JS to defer")
+                                defer_js_field = page.locator('xpath=//*[@id="fileloadasDefer"]').first
+                                if defer_js_field.count() > 0:
+                                    defer_js_field.click()
+                                    page.wait_for_timeout(1000)
+                            else:
+                                print("DEBUG: No async/defer for JS, leaving as default")
                         else:
-                            page.wait_for_timeout(1000)
+                            page.wait_for_timeout(500)
 
                         weight_field = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[2]/input')
                         if weight_field.is_visible():
@@ -2611,26 +2840,27 @@ def process_files(page, sitename, instance_id, files_folder, pages_folder):
                             modular_field.click()
                             page.wait_for_timeout(1000)
 
-                        path_field = page.locator("input[name='filepath']")
-                        if f_path_str and f_path_str != "None":
-                            path_field.click()
-                            page.keyboard.press("Control+A")
-                            path_field.fill(f_path_str)
-                            page.wait_for_timeout(1000)
+                        # NOTE: File Path and Category fields are NOT updated per requirements
+                        # path_field = page.locator("input[name='filepath']")
+                        # if f_path_str and f_path_str != "None":
+                        #     path_field.click()
+                        #     page.keyboard.press("Control+A")
+                        #     path_field.fill(f_path_str)
+                        #     page.wait_for_timeout(1000)
 
-                        category_span = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
-                        if category_span.is_visible():
-                            span_text = category_span.inner_text().strip()
-                            # Check if f_category_str has a value (not empty and not None)
-                            if f_category_str and f_category_str.strip() and f_category_str != span_text and f_category_str.strip() != "None":
-                                category_field = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
-                                category_field.click()
-                                page.wait_for_timeout(1000)
-                                category_fill = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/input')
-                                category_fill.fill(f_category_str)
-                                page.wait_for_timeout(700)
-                                page.keyboard.press("Enter")
-                                page.wait_for_timeout(1000)
+                        # NOTE: Category field is NOT updated per requirements
+                        # category_span = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
+                        # if category_span.is_visible():
+                        #     span_text = category_span.inner_text().strip()
+                        #     if f_category_str and f_category_str.strip() and f_category_str != span_text and f_category_str.strip() != "None":
+                        #         category_field = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/span')
+                        #         category_field.click()
+                        #         page.wait_for_timeout(1000)
+                        #         category_fill = page.locator('xpath=//*[@id="webbuilder-editor-content-wrapper"]/div/div[1]/div/div/div[3]/div[2]/div/div[2]/div/div/div/div/div/form/div[2]/div[3]/div[3]/div/div[2]/input')
+                        #         category_fill.fill(f_category_str)
+                        #         page.wait_for_timeout(700)
+                        #         page.keyboard.press("Enter")
+                        #         page.wait_for_timeout(1000)
 
                         if f_private != False:
                             private_field = page.locator('xpath=//*[@id="privateFile"]')
@@ -2761,39 +2991,588 @@ def export_status(request, site_id):
 @login_required
 def pages_import_view(request, site_id):
     """
-    View for importing pages for a given site. Handles POST to trigger import_pages_func.py.
+    Landing page for Helix conversion and pages import actions.
     """
     site = get_object_or_404(SiteListDetails, pk=site_id)
-    if request.method == 'POST':
-        try:
-            # Run the import_pages_func.py script
-            result = subprocess.run([
-                'python3', 'import_pages_func.py', str(site_id)
-            ], capture_output=True, text=True, check=True)
-            messages.success(request, f"Pages import completed successfully. Output: {result.stdout}")
-        except subprocess.CalledProcessError as e:
-            messages.error(request, f"Pages import failed: {e.stderr or e.output or str(e)}")
-        except Exception as e:
-            messages.error(request, f"Unexpected error: {str(e)}")
-        return redirect('pages_import', site_id=site.id)
     return render(request, 'site_manager/pages_import.html', {'site': site})
+
+
+HELIX_MODEL_OPTIONS = [
+    'gpt-4o',
+    'gpt-4o-mini',
+    'claude-sonnet-4-6',
+    'claude-sonnet-4',
+]
+
+PAGES_IMPORT_ACTIONS = {
+    'convert': {
+        'title': 'Convert to Helix',
+        'description': 'Convert source HTML pages into Helix-compatible output.',
+        'icon': 'fa-wand-magic-sparkles',
+        'submit_btn_class': 'btn-primary',
+    },
+    'import': {
+        'title': 'Import Pages',
+        'description': 'Import converted Helix HTML pages into Webbuilder.',
+        'icon': 'fa-file-import',
+        'submit_btn_class': 'btn-success',
+    },
+}
+
+
+def _env_bool(env_key, default=False):
+    value = os.getenv(env_key)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _is_module_available(module_name):
+    try:
+        return importlib.util.find_spec(module_name) is not None
+    except Exception:
+        return False
+
+
+def _is_placeholder_secret(value):
+    secret = (value or '').strip()
+    if not secret:
+        return False
+
+    lowered = secret.lower()
+    known_placeholders = {
+        'your_github_personal_access_token',
+        'your_github_token',
+        'your_api_token',
+        'your_token',
+        'replace_me',
+        'changeme',
+        '<token>',
+    }
+
+    if lowered in known_placeholders:
+        return True
+    if lowered.startswith('your_'):
+        return True
+    if lowered.startswith('<') and lowered.endswith('>'):
+        return True
+    return False
+
+
+def _has_valid_model_token():
+    copilot_token = (os.getenv('GITHUB_COPILOT_TOKEN') or '').strip()
+    pat_token = (os.getenv('GITHUB_TOKEN') or '').strip()
+
+    if copilot_token and not _is_placeholder_secret(copilot_token):
+        return True
+    if pat_token and not _is_placeholder_secret(pat_token):
+        return True
+    return False
+
+
+def _normalize_to_absolute_path(raw_path, fallback_path):
+    """Normalize configured paths and resolve relative values from BASE_DIR."""
+    selected = (raw_path or '').strip()
+    path = Path(selected) if selected else Path(fallback_path)
+    path = path.expanduser()
+    if not path.is_absolute():
+        path = Path(settings.BASE_DIR) / path
+    return str(path.resolve())
+
+
+def _is_checked(post_data, key, default=False):
+    if post_data is None:
+        return default
+    return (post_data.get(key) or '').strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _build_pages_import_defaults():
+    project_root = Path(settings.BASE_DIR).resolve().parent
+
+    default_converter_script = Path(settings.BASE_DIR) / 'site_manager' / 'convert_html_to_helix_backend.py'
+    default_import_script = Path(settings.BASE_DIR) / 'site_manager' / 'import_pages_to_helix_backend.py'
+    default_input_folder = project_root / 'reference' / 'input_site'
+    default_components_csv = project_root / 'reference' / 'helix_components_html_output.csv'
+    default_output_folder = project_root / 'generated_helix_output'
+    default_analysis_cache = project_root / 'temp' / 'component_analysis_cache.txt'
+    default_manual_csv = project_root / 'manual_page_intervention.csv'
+
+    return {
+        'converter_script_path': _normalize_to_absolute_path(
+            os.getenv('HELIX_CONVERTER_SCRIPT_PATH'),
+            default_converter_script,
+        ),
+        'import_script_path': _normalize_to_absolute_path(
+            os.getenv('HELIX_IMPORT_SCRIPT_PATH'),
+            default_import_script,
+        ),
+        'converter_input_folder': _normalize_to_absolute_path(
+            os.getenv('HELIX_CONVERTER_INPUT_FOLDER'),
+            default_input_folder,
+        ),
+        'converter_output_folder': _normalize_to_absolute_path(
+            os.getenv('HELIX_CONVERTER_OUTPUT_FOLDER'),
+            default_output_folder,
+        ),
+        'import_input_folder': _normalize_to_absolute_path(
+            os.getenv('HELIX_IMPORT_INPUT_FOLDER'),
+            default_output_folder,
+        ),
+        'components_csv': _normalize_to_absolute_path(
+            os.getenv('HELIX_COMPONENTS_CSV_PATH'),
+            default_components_csv,
+        ),
+        'analysis_cache_file': _normalize_to_absolute_path(
+            os.getenv('HELIX_ANALYSIS_CACHE_FILE'),
+            default_analysis_cache,
+        ),
+        'manual_intervention_csv': _normalize_to_absolute_path(
+            os.getenv('HELIX_MANUAL_INTERVENTION_CSV'),
+            default_manual_csv,
+        ),
+        'model': (os.getenv('HELIX_MODEL') or 'gpt-4o').strip(),
+        'temperature': (os.getenv('HELIX_TEMPERATURE') or '0.4').strip(),
+        'copy_non_html': _env_bool('HELIX_COPY_NON_HTML', True),
+        'show_model_output': _env_bool('HELIX_SHOW_MODEL_OUTPUT', False),
+        'skip_existing': _env_bool('HELIX_SKIP_EXISTING', False),
+        'skip_model_analysis': _env_bool('HELIX_SKIP_MODEL_ANALYSIS', False),
+        # Keep permalink preprocessing enabled by default so Playwright browser opens.
+        'skip_permalink_preprocess': False,
+        'import_headless': _env_bool('HELIX_IMPORT_HEADLESS', False),
+        'instance_id_override': (os.getenv('HELIX_INSTANCE_ID_OVERRIDE') or '').strip(),
+        'input_site_url': (os.getenv('HELIX_INPUT_SITE_URL') or '').strip(),
+        'output_site_url': (os.getenv('HELIX_OUTPUT_SITE_URL') or '').strip(),
+    }
+
+
+def _build_pages_import_form_data(post_data=None):
+    defaults = _build_pages_import_defaults()
+    source = post_data if post_data is not None else {}
+
+    selected_model = (source.get('model') if post_data else defaults['model']) or HELIX_MODEL_OPTIONS[0]
+    selected_model = selected_model.strip()
+    if selected_model not in HELIX_MODEL_OPTIONS:
+        selected_model = HELIX_MODEL_OPTIONS[0]
+
+    return {
+        'converter_script_path': defaults['converter_script_path'],
+        'import_script_path': defaults['import_script_path'],
+        'converter_input_folder': (source.get('converter_input_folder') if post_data else defaults['converter_input_folder']) or '',
+        'converter_output_folder': (source.get('converter_output_folder') if post_data else defaults['converter_output_folder']) or '',
+        'import_input_folder': (source.get('import_input_folder') if post_data else defaults['import_input_folder']) or '',
+        'components_csv': (source.get('components_csv') if post_data else defaults['components_csv']) or '',
+        'analysis_cache_file': (source.get('analysis_cache_file') if post_data else defaults['analysis_cache_file']) or '',
+        'manual_intervention_csv': (source.get('manual_intervention_csv') if post_data else defaults['manual_intervention_csv']) or '',
+        'model': selected_model,
+        'temperature': (source.get('temperature') if post_data else defaults['temperature']) or '0.4',
+        'copy_non_html': _is_checked(post_data, 'copy_non_html', defaults['copy_non_html']),
+        'show_model_output': _is_checked(post_data, 'show_model_output', defaults['show_model_output']),
+        'skip_existing': _is_checked(post_data, 'skip_existing', defaults['skip_existing']),
+        'skip_model_analysis': _is_checked(post_data, 'skip_model_analysis', defaults['skip_model_analysis']),
+        'skip_permalink_preprocess': _is_checked(post_data, 'skip_permalink_preprocess', defaults['skip_permalink_preprocess']),
+        'import_headless': _is_checked(post_data, 'import_headless', defaults['import_headless']),
+        'instance_id_override': (source.get('instance_id_override') if post_data else defaults['instance_id_override']) or '',
+        'input_site_url': (source.get('input_site_url') if post_data else defaults['input_site_url']) or '',
+        'output_site_url': (source.get('output_site_url') if post_data else defaults['output_site_url']) or '',
+    }
+
+
+def _validate_pages_import_form(action, form_data):
+    errors = []
+
+    if action == 'convert':
+        if not _has_valid_model_token():
+            errors.append(
+                "Set a valid GITHUB_COPILOT_TOKEN or GITHUB_TOKEN in .env before running Convert to Helix."
+            )
+
+        if not _is_module_available('openai'):
+            errors.append("Python package 'openai' is required for Convert to Helix.")
+
+        if not form_data['skip_permalink_preprocess'] and not _is_module_available('playwright'):
+            errors.append(
+                "Python package 'playwright' is required unless 'Skip permalink preprocess' is enabled."
+            )
+
+        if not Path(form_data['converter_script_path']).exists():
+            errors.append(f"Converter script not found: {form_data['converter_script_path']}")
+
+        input_folder = Path(form_data['converter_input_folder']).expanduser()
+        if not input_folder.exists() or not input_folder.is_dir():
+            errors.append(f"Converter input folder not found: {form_data['converter_input_folder']}")
+
+        components_csv = Path(form_data['components_csv']).expanduser()
+        if not components_csv.exists() or not components_csv.is_file():
+            errors.append(f"Components CSV not found: {form_data['components_csv']}")
+
+        if not (form_data['model'] or '').strip():
+            errors.append('Model is required for conversion.')
+
+        try:
+            float(form_data['temperature'])
+        except (TypeError, ValueError):
+            errors.append('Temperature must be a numeric value (for example: 0.4).')
+
+        try:
+            Path(form_data['converter_output_folder']).expanduser().mkdir(parents=True, exist_ok=True)
+        except Exception as output_error:
+            errors.append(f"Unable to create output folder: {output_error}")
+
+        analysis_cache = (form_data['analysis_cache_file'] or '').strip()
+        if analysis_cache:
+            try:
+                Path(analysis_cache).expanduser().parent.mkdir(parents=True, exist_ok=True)
+            except Exception as cache_error:
+                errors.append(f"Unable to create analysis cache location: {cache_error}")
+
+    elif action == 'import':
+        if not _is_module_available('playwright'):
+            errors.append("Python package 'playwright' is required for Import Pages.")
+
+        if not Path(form_data['import_script_path']).exists():
+            errors.append(f"Import script not found: {form_data['import_script_path']}")
+
+        input_folder = Path(form_data['import_input_folder']).expanduser()
+        if not input_folder.exists() or not input_folder.is_dir():
+            errors.append(f"Import input folder not found: {form_data['import_input_folder']}")
+
+        manual_csv = (form_data['manual_intervention_csv'] or '').strip()
+        if not manual_csv:
+            errors.append('Manual intervention CSV path is required.')
+        else:
+            try:
+                Path(manual_csv).expanduser().parent.mkdir(parents=True, exist_ok=True)
+            except Exception as csv_error:
+                errors.append(f"Unable to create manual intervention CSV directory: {csv_error}")
+    else:
+        errors.append('Unsupported action selected.')
+
+    return errors
+
+
+def _build_pages_import_command(action, form_data):
+    if action == 'convert':
+        command = [
+            sys.executable,
+            form_data['converter_script_path'],
+            '--input-folder', form_data['converter_input_folder'],
+            '--output-folder', form_data['converter_output_folder'],
+            '--components-csv', form_data['components_csv'],
+            '--model', form_data['model'],
+            '--temperature', str(form_data['temperature']),
+        ]
+
+        if form_data['copy_non_html']:
+            command.append('--copy-non-html')
+        if form_data['show_model_output']:
+            command.append('--show-model-output')
+        if form_data['skip_existing']:
+            command.append('--skip-existing')
+        if form_data['skip_model_analysis']:
+            command.append('--skip-model-analysis')
+        if form_data['skip_permalink_preprocess']:
+            command.append('--skip-permalink-preprocess')
+
+        analysis_cache_file = (form_data['analysis_cache_file'] or '').strip()
+        if analysis_cache_file:
+            command.extend(['--analysis-cache-file', analysis_cache_file])
+
+        return command
+
+    if action == 'import':
+        command = [
+            sys.executable,
+            form_data['import_script_path'],
+            '--input-folder', form_data['import_input_folder'],
+            '--manual-intervention-csv', form_data['manual_intervention_csv'],
+        ]
+
+        if form_data['import_headless']:
+            command.append('--headless')
+
+        instance_id_override = (form_data['instance_id_override'] or '').strip()
+        if instance_id_override:
+            command.extend(['--instance-id', instance_id_override])
+
+        return command
+
+    raise ValueError('Unsupported action selected.')
+
+
+def _tail_output(text, max_lines=20, max_chars=1600):
+    if not text:
+        return ''
+    lines = [line for line in text.strip().splitlines() if line.strip()]
+    if not lines:
+        return ''
+    joined = '\n'.join(lines[-max_lines:])
+    return joined[-max_chars:]
+
+
+def _stream_subprocess_logs(action_key, command, runtime_env):
+    env = dict(runtime_env)
+    env['PYTHONUNBUFFERED'] = '1'
+
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        cwd=settings.BASE_DIR,
+        env=env,
+        bufsize=1,
+    )
+
+    collected_lines = []
+    if process.stdout is not None:
+        for raw_line in process.stdout:
+            line = raw_line.rstrip('\r\n')
+            if not line:
+                continue
+            print(f"[{action_key}] {line}", flush=True)
+            logger.info("[%s] %s", action_key, line)
+            collected_lines.append(line)
+
+    return_code = process.wait()
+    return return_code, '\n'.join(collected_lines).strip()
+
+
+def _format_elapsed(seconds):
+    seconds = max(0, int(seconds or 0))
+    hours, rem = divmod(seconds, 3600)
+    minutes, secs = divmod(rem, 60)
+    if hours:
+        return f"{hours}h {minutes}m {secs}s"
+    if minutes:
+        return f"{minutes}m {secs}s"
+    return f"{secs}s"
+
+
+def _pages_action_status_file(site_id, action_key):
+    return os.path.join(settings.BASE_DIR, f"site_{site_id}_pages_{action_key}.status")
+
+
+def _read_pages_action_status(site_id, action_key):
+    status_file = _pages_action_status_file(site_id, action_key)
+    default_status = {
+        'status': 'not_started',
+        'message': 'No process started yet.',
+        'action': action_key,
+        'site_id': site_id,
+        'start_time': None,
+        'end_time': None,
+        'elapsed_human': '0s',
+        'output': '',
+    }
+
+    if not os.path.exists(status_file):
+        return default_status
+
+    try:
+        with open(status_file, 'r') as status_handle:
+            loaded_status = json.load(status_handle)
+            if not isinstance(loaded_status, dict):
+                return default_status
+            merged_status = {**default_status, **loaded_status}
+    except Exception:
+        return default_status
+
+    if merged_status.get('start_time'):
+        if merged_status.get('status') == 'running':
+            elapsed_seconds = int(time.time() - float(merged_status['start_time']))
+        else:
+            elapsed_seconds = int((merged_status.get('end_time') or time.time()) - float(merged_status['start_time']))
+        merged_status['elapsed_seconds'] = max(0, elapsed_seconds)
+        merged_status['elapsed_human'] = _format_elapsed(elapsed_seconds)
+    else:
+        merged_status['elapsed_seconds'] = 0
+        merged_status['elapsed_human'] = '0s'
+
+    return merged_status
+
+
+def _write_pages_action_status(site_id, action_key, status_payload):
+    status_file = _pages_action_status_file(site_id, action_key)
+    with open(status_file, 'w') as status_handle:
+        json.dump(status_payload, status_handle)
+
+
+def _run_pages_action_in_background(site_id, action_key, command, runtime_env):
+    action_title = PAGES_IMPORT_ACTIONS[action_key]['title']
+    command_preview = ' '.join(shlex.quote(part) for part in command)
+    start_time = time.time()
+
+    running_status = {
+        'status': 'running',
+        'message': f"{action_title} is running...",
+        'action': action_key,
+        'site_id': site_id,
+        'command': command_preview,
+        'start_time': start_time,
+        'end_time': None,
+        'output': '',
+    }
+    _write_pages_action_status(site_id, action_key, running_status)
+    logger.info("Pages action '%s' started. Command: %s", action_key, command_preview)
+    if action_key == 'convert' and '--skip-permalink-preprocess' not in command:
+        logger.info("Convert to Helix Playwright step is running in headed mode (browser window should open).")
+
+    try:
+        return_code, merged_logs = _stream_subprocess_logs(action_key, command, runtime_env)
+        end_time = time.time()
+
+        if return_code == 0:
+            output_summary = _tail_output(merged_logs)
+            completed_status = {
+                'status': 'completed',
+                'message': f"{action_title} completed successfully.",
+                'action': action_key,
+                'site_id': site_id,
+                'command': command_preview,
+                'start_time': start_time,
+                'end_time': end_time,
+                'output': output_summary,
+                'return_code': return_code,
+            }
+            _write_pages_action_status(site_id, action_key, completed_status)
+            logger.info("Pages action '%s' completed. Command: %s", action_key, command_preview)
+        else:
+            error_summary = _tail_output(merged_logs)
+            failed_status = {
+                'status': 'failed',
+                'message': f"{action_title} failed with exit code {return_code}.",
+                'action': action_key,
+                'site_id': site_id,
+                'command': command_preview,
+                'start_time': start_time,
+                'end_time': end_time,
+                'output': error_summary,
+                'return_code': return_code,
+            }
+            _write_pages_action_status(site_id, action_key, failed_status)
+            logger.error(
+                "Pages action '%s' failed (rc=%s). Command: %s | Error: %s",
+                action_key,
+                return_code,
+                command_preview,
+                error_summary,
+            )
+    except Exception as run_error:
+        end_time = time.time()
+        failed_status = {
+            'status': 'failed',
+            'message': f"Unexpected error while running {action_title}.",
+            'action': action_key,
+            'site_id': site_id,
+            'command': command_preview,
+            'start_time': start_time,
+            'end_time': end_time,
+            'output': str(run_error),
+        }
+        _write_pages_action_status(site_id, action_key, failed_status)
+        logger.exception("Unexpected error executing pages action '%s': %s", action_key, run_error)
+
+
+@login_required
+def pages_import_action(request, site_id, action):
     """
-    View for importing pages for a given site. Handles POST to trigger import_pages_func.py.
+    Execute Helix conversion/import scripts via UI-driven configuration.
     """
     site = get_object_or_404(SiteListDetails, pk=site_id)
-    if request.method == 'POST':
-        try:
-            # Run the import_pages_func.py script
-            result = subprocess.run([
-                'python3', 'import_pages_func.py', str(site_id)
-            ], capture_output=True, text=True, check=True)
-            messages.success(request, f"Pages import completed successfully. Output: {result.stdout}")
-        except subprocess.CalledProcessError as e:
-            messages.error(request, f"Pages import failed: {e.stderr or e.output or str(e)}")
-        except Exception as e:
-            messages.error(request, f"Unexpected error: {str(e)}")
+    action_key = (action or '').strip().lower()
+
+    if action_key not in PAGES_IMPORT_ACTIONS:
+        messages.error(request, 'Invalid action selected for Pages Import.')
         return redirect('pages_import', site_id=site.id)
-    return render(request, 'site_manager/pages_import.html', {'site': site})
+
+    if request.method == 'POST':
+        form_data = _build_pages_import_form_data(request.POST)
+        validation_errors = _validate_pages_import_form(action_key, form_data)
+
+        if validation_errors:
+            for validation_error in validation_errors:
+                messages.error(request, validation_error)
+        else:
+            current_status = _read_pages_action_status(site.id, action_key)
+            if current_status.get('status') == 'running':
+                messages.warning(request, f"{PAGES_IMPORT_ACTIONS[action_key]['title']} is already running.")
+                return redirect('pages_import_action', site_id=site.id, action=action_key)
+
+            command = _build_pages_import_command(action_key, form_data)
+            runtime_env = os.environ.copy()
+
+            input_site_url = (form_data.get('input_site_url') or '').strip()
+            output_site_url = (form_data.get('output_site_url') or '').strip()
+            if input_site_url:
+                runtime_env['HELIX_INPUT_SITE_URL'] = input_site_url
+                runtime_env['INPUT_SITE_URL'] = input_site_url
+            if output_site_url:
+                runtime_env['HELIX_OUTPUT_SITE_URL'] = output_site_url
+                runtime_env['OUTPUT_SITE_URL'] = output_site_url
+
+            try:
+                thread = threading.Thread(
+                    target=_run_pages_action_in_background,
+                    args=(site.id, action_key, command, runtime_env),
+                )
+                thread.daemon = True
+                thread.start()
+                messages.info(request, f"{PAGES_IMPORT_ACTIONS[action_key]['title']} started. Track progress in the status panel.")
+
+                return redirect('pages_import_action', site_id=site.id, action=action_key)
+
+            except Exception as run_error:
+                logger.exception("Unexpected error executing pages action '%s': %s", action_key, run_error)
+                messages.error(request, f"Unexpected error while running script: {run_error}")
+
+    form_data = _build_pages_import_form_data(request.POST if request.method == 'POST' else None)
+
+    command_preview = ''
+    try:
+        preview_command = _build_pages_import_command(action_key, form_data)
+        command_preview = ' '.join(shlex.quote(part) for part in preview_command)
+    except Exception:
+        command_preview = ''
+
+    current_status = _read_pages_action_status(site.id, action_key)
+
+    return render(request, 'site_manager/pages_import_action.html', {
+        'site': site,
+        'action': action_key,
+        'action_config': PAGES_IMPORT_ACTIONS[action_key],
+        'model_options': HELIX_MODEL_OPTIONS,
+        'form_data': form_data,
+        'command_preview': command_preview,
+        'action_status': current_status,
+        'status_api_url': f"/sites/{site.id}/pages/import/{action_key}/status/",
+        'status_clear_url': f"/sites/{site.id}/pages/import/{action_key}/clear-status/",
+    })
+
+
+@login_required
+@require_GET
+def pages_import_action_status(request, site_id, action):
+    action_key = (action or '').strip().lower()
+    if action_key not in PAGES_IMPORT_ACTIONS:
+        return JsonResponse({'status': 'failed', 'message': 'Invalid action.'}, status=400)
+
+    return JsonResponse(_read_pages_action_status(site_id, action_key))
+
+
+@login_required
+@require_POST
+def clear_pages_import_action_status(request, site_id, action):
+    action_key = (action or '').strip().lower()
+    if action_key not in PAGES_IMPORT_ACTIONS:
+        return JsonResponse({'success': False, 'message': 'Invalid action.'}, status=400)
+
+    status_file = _pages_action_status_file(site_id, action_key)
+    try:
+        if os.path.exists(status_file):
+            os.remove(status_file)
+        return JsonResponse({'success': True, 'message': 'Status cleared.'})
+    except Exception as clear_error:
+        return JsonResponse({'success': False, 'message': f'Unable to clear status: {clear_error}'}, status=500)
 
 @login_required
 def file_upload_meta(request, site_id):

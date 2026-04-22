@@ -1,0 +1,423 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}{{ action_config.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-9">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                <div>
+                    <h2 class="mb-2 text-primary">
+                        <i class="fas {{ action_config.icon }} me-2"></i>{{ action_config.title }}
+                    </h2>
+                    <p class="mb-0 text-muted">
+                        {{ action_config.description }} for <strong>{{ site.website_url }}</strong>
+                    </p>
+                </div>
+                <a href="{% url 'pages_import' site.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Pages Import
+                </a>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-lg-5">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label" for="input_site_url">Input Site URL (optional)</label>
+                                <input
+                                    type="url"
+                                    class="form-control"
+                                    id="input_site_url"
+                                    name="input_site_url"
+                                    value="{{ form_data.input_site_url }}"
+                                    placeholder="https://example-source-site.com"
+                                >
+                                <div class="form-text">This value is passed as runtime env for traceability.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="output_site_url">Output Site URL (optional)</label>
+                                <input
+                                    type="url"
+                                    class="form-control"
+                                    id="output_site_url"
+                                    name="output_site_url"
+                                    value="{{ form_data.output_site_url }}"
+                                    placeholder="https://example-helix-site.com"
+                                >
+                                <div class="form-text">Useful for documenting migration source and target.</div>
+                            </div>
+                        </div>
+
+                        {% if action == 'convert' %}
+                        <div class="border rounded p-3 p-md-4 mb-4 bg-light-subtle">
+                            <h5 class="mb-3">Conversion Configuration</h5>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="converter_script_path">Converter Script Path</label>
+                                <input type="text" class="form-control" id="converter_script_path" value="{{ form_data.converter_script_path }}" readonly>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="converter_input_folder">HTML Reference Folder Path</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="converter_input_folder"
+                                        name="converter_input_folder"
+                                        value="{{ form_data.converter_input_folder }}"
+                                        placeholder="/Users/your-user/Project/reference/input_site/site-folder"
+                                        required
+                                    >
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="converter_output_folder">Converted Output Folder Path</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="converter_output_folder"
+                                        name="converter_output_folder"
+                                        value="{{ form_data.converter_output_folder }}"
+                                        placeholder="/Users/your-user/Project/generated_helix_output"
+                                        required
+                                    >
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="components_csv">Components CSV Path</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="components_csv"
+                                        name="components_csv"
+                                        value="{{ form_data.components_csv }}"
+                                        placeholder="/Users/your-user/Project/reference/helix_components_html_output.csv"
+                                        required
+                                    >
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="analysis_cache_file">Analysis Cache File Path (optional)</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="analysis_cache_file"
+                                        name="analysis_cache_file"
+                                        value="{{ form_data.analysis_cache_file }}"
+                                        placeholder="/Users/your-user/Project/temp/component_analysis_cache.txt"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-8">
+                                    <label class="form-label d-block">Model</label>
+                                    <div class="d-flex flex-wrap gap-3">
+                                        {% for option in model_options %}
+                                        <div class="form-check">
+                                            <input
+                                                class="form-check-input"
+                                                type="radio"
+                                                name="model"
+                                                id="model_{{ forloop.counter }}"
+                                                value="{{ option }}"
+                                                {% if form_data.model == option %}checked{% endif %}
+                                            >
+                                            <label class="form-check-label" for="model_{{ forloop.counter }}">{{ option }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label" for="temperature">Temperature</label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        min="0"
+                                        max="2"
+                                        class="form-control"
+                                        id="temperature"
+                                        name="temperature"
+                                        value="{{ form_data.temperature }}"
+                                        required
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mt-3">
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="copy_non_html" name="copy_non_html" {% if form_data.copy_non_html %}checked{% endif %}>
+                                        <label class="form-check-label" for="copy_non_html">Copy non-HTML assets</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="show_model_output" name="show_model_output" {% if form_data.show_model_output %}checked{% endif %}>
+                                        <label class="form-check-label" for="show_model_output">Show model output preview</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="skip_existing" name="skip_existing" {% if form_data.skip_existing %}checked{% endif %}>
+                                        <label class="form-check-label" for="skip_existing">Skip existing outputs</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="skip_model_analysis" name="skip_model_analysis" {% if form_data.skip_model_analysis %}checked{% endif %}>
+                                        <label class="form-check-label" for="skip_model_analysis">Skip model analysis</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="skip_permalink_preprocess" name="skip_permalink_preprocess" {% if form_data.skip_permalink_preprocess %}checked{% endif %}>
+                                        <label class="form-check-label" for="skip_permalink_preprocess">Skip permalink preprocess</label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="small text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        When permalink preprocessing is enabled, Playwright runs in browser mode so the window is visible.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% elif action == 'import' %}
+                        <div class="border rounded p-3 p-md-4 mb-4 bg-light-subtle">
+                            <h5 class="mb-3">Import Configuration</h5>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="import_script_path">Import Script Path</label>
+                                <input type="text" class="form-control" id="import_script_path" value="{{ form_data.import_script_path }}" readonly>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="import_input_folder">Converted HTML Folder Path</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="import_input_folder"
+                                        name="import_input_folder"
+                                        value="{{ form_data.import_input_folder }}"
+                                        placeholder="/Users/your-user/Project/generated_helix_output"
+                                        required
+                                    >
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="manual_intervention_csv">Manual Intervention CSV Path</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="manual_intervention_csv"
+                                        name="manual_intervention_csv"
+                                        value="{{ form_data.manual_intervention_csv }}"
+                                        placeholder="/Users/your-user/Project/manual_page_intervention.csv"
+                                        required
+                                    >
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="instance_id_override">Instance ID Override (optional)</label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="instance_id_override"
+                                        name="instance_id_override"
+                                        value="{{ form_data.instance_id_override }}"
+                                        placeholder="Leave empty to use INSTANCE_ID from .env"
+                                    >
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" value="1" id="import_headless" name="import_headless" {% if form_data.import_headless %}checked{% endif %}>
+                                        <label class="form-check-label" for="import_headless">Run import browser headless</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <button type="submit" class="btn {{ action_config.submit_btn_class }} px-4">
+                                <i class="fas {{ action_config.icon }} me-1"></i>{{ action_config.title }}
+                            </button>
+                            <a href="{% url 'pages_import' site.id %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+
+                    <div class="mt-4">
+                        <div class="card border">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-chart-line me-2"></i>Execution Progress
+                                </h6>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="clear-pages-action-status-btn">
+                                    <i class="fas fa-broom me-1"></i>Clear
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="pages-action-status-display">
+                                    {% if action_status.status == 'running' %}
+                                    <div class="text-info text-center">
+                                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                        <p class="mb-1"><strong>{{ action_config.title }} is running</strong></p>
+                                        <p class="small mb-0">Elapsed: {{ action_status.elapsed_human }}</p>
+                                    </div>
+                                    {% elif action_status.status == 'completed' %}
+                                    <div class="text-success">
+                                        <p class="mb-1"><i class="fas fa-check-circle me-1"></i><strong>{{ action_status.message }}</strong></p>
+                                        <p class="small text-muted mb-2">Elapsed: {{ action_status.elapsed_human }}</p>
+                                        {% if action_status.output %}
+                                        <pre class="bg-light border rounded p-2 small mb-0" style="white-space: pre-wrap; word-break: break-word;">{{ action_status.output }}</pre>
+                                        {% endif %}
+                                    </div>
+                                    {% elif action_status.status == 'failed' %}
+                                    <div class="text-danger">
+                                        <p class="mb-1"><i class="fas fa-times-circle me-1"></i><strong>{{ action_status.message }}</strong></p>
+                                        <p class="small text-muted mb-2">Elapsed: {{ action_status.elapsed_human }}</p>
+                                        {% if action_status.output %}
+                                        <pre class="bg-light border rounded p-2 small mb-0" style="white-space: pre-wrap; word-break: break-word;">{{ action_status.output }}</pre>
+                                        {% endif %}
+                                    </div>
+                                    {% else %}
+                                    <div class="text-muted text-center">
+                                        <i class="fas fa-clock fa-2x mb-2"></i>
+                                        <p class="mb-0">No process started yet.</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if command_preview %}
+                    <div class="mt-4">
+                        <h6 class="mb-2">Command Preview</h6>
+                        <pre class="bg-body-tertiary border rounded p-3 small mb-0" style="white-space: pre-wrap; word-break: break-word;">{{ command_preview }}</pre>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusDisplay = document.getElementById('pages-action-status-display');
+    const clearBtn = document.getElementById('clear-pages-action-status-btn');
+    const statusApiUrl = '{{ status_api_url }}';
+    const clearStatusUrl = '{{ status_clear_url }}';
+    const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
+    let pollHandle = null;
+
+    function escapeHtml(text) {
+        const temp = document.createElement('div');
+        temp.textContent = text || '';
+        return temp.innerHTML;
+    }
+
+    function renderStatus(data) {
+        const status = data.status || 'not_started';
+        const elapsed = data.elapsed_human || '0s';
+        const message = escapeHtml(data.message || 'No process started yet.');
+        const output = data.output ? `<pre class="bg-light border rounded p-2 small mb-0" style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(data.output)}</pre>` : '';
+
+        if (status === 'running') {
+            statusDisplay.innerHTML = `
+                <div class="text-info text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                    <p class="mb-1"><strong>${message}</strong></p>
+                    <p class="small mb-0">Elapsed: ${elapsed}</p>
+                </div>
+            `;
+            startPolling();
+            return;
+        }
+
+        if (status === 'completed') {
+            statusDisplay.innerHTML = `
+                <div class="text-success">
+                    <p class="mb-1"><i class="fas fa-check-circle me-1"></i><strong>${message}</strong></p>
+                    <p class="small text-muted mb-2">Elapsed: ${elapsed}</p>
+                    ${output}
+                </div>
+            `;
+            stopPolling();
+            return;
+        }
+
+        if (status === 'failed') {
+            statusDisplay.innerHTML = `
+                <div class="text-danger">
+                    <p class="mb-1"><i class="fas fa-times-circle me-1"></i><strong>${message}</strong></p>
+                    <p class="small text-muted mb-2">Elapsed: ${elapsed}</p>
+                    ${output}
+                </div>
+            `;
+            stopPolling();
+            return;
+        }
+
+        statusDisplay.innerHTML = `
+            <div class="text-muted text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <p class="mb-0">No process started yet.</p>
+            </div>
+        `;
+        stopPolling();
+    }
+
+    function fetchStatus() {
+        fetch(statusApiUrl)
+            .then(response => response.json())
+            .then(data => {
+                renderStatus(data);
+            })
+            .catch(() => {
+                statusDisplay.innerHTML = `
+                    <div class="text-danger text-center">
+                        <i class="fas fa-exclamation-circle fa-2x mb-2"></i>
+                        <p class="mb-0">Unable to fetch status.</p>
+                    </div>
+                `;
+            });
+    }
+
+    function startPolling() {
+        if (pollHandle) {
+            return;
+        }
+        pollHandle = window.setInterval(fetchStatus, 3000);
+    }
+
+    function stopPolling() {
+        if (!pollHandle) {
+            return;
+        }
+        window.clearInterval(pollHandle);
+        pollHandle = null;
+    }
+
+    clearBtn.addEventListener('click', function() {
+        fetch(clearStatusUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(() => {
+                fetchStatus();
+            });
+    });
+
+    fetchStatus();
+});
+</script>
+{% endblock %}
