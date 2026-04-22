@@ -20,6 +20,8 @@ urlpatterns = [
     path('export-sites-csv/', views.export_sites_csv, name='export_sites_csv'),
     path('cleanup-site-data/', views.cleanup_site_data, name='cleanup_site_data'),
     path('<int:site_id>/meta/create-webbuilder/', views.trigger_webbuilder_site_creation, name='trigger_webbuilder_site_creation'),
+    path('<int:site_id>/meta/run-import-script/', views.run_import_script, name='run_import_script'),
+    path('<int:site_id>/meta/run-export-script/', views.run_export_script, name='run_export_script'),
     path('<int:site_id>/meta/export/', views.export_meta_page, name='export_meta_page'),
     path('<int:site_id>/meta/export/start/', views.export_site_meta, name='export_site_meta'),
     path('<int:site_id>/meta/file-upload/', views.file_upload_meta, name='file_upload_meta'),
@@ -35,4 +37,7 @@ urlpatterns = [
     path('<int:site_id>/file/import/', views.import_file, name='import_file'),
     path('<int:site_id>/meta/export/status/', views.export_status, name='export_status'),
     path('<int:site_id>/pages/import/', views.pages_import_view, name='pages_import'),
+    path('<int:site_id>/pages/import/<str:action>/', views.pages_import_action, name='pages_import_action'),
+    path('<int:site_id>/pages/import/<str:action>/status/', views.pages_import_action_status, name='pages_import_action_status'),
+    path('<int:site_id>/pages/import/<str:action>/clear-status/', views.clear_pages_import_action_status, name='clear_pages_import_action_status'),
 ]

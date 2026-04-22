@@ -1,0 +1,26 @@
+Fallback component summary:
+- Prioritize mapping images, links, buttons, headings, forms, and accordions to Helix components.
+- Preserve content order and keep original semantic sections when no direct component mapping is clear.
+- Keep existing IDs; add missing IDs with project ID rule.
+- Use explicit closing tags for all custom components.
+- Available component examples (first items):
+  - Button
+  - External Link
+  - Accordion Primary
+  - Accordion Secondary
+  - Accordion Custom
+  - Site GCMA
+  - Page GCMA
+  - 2 Columns
+  - 2 Columns Side By Side
+  - 1 Column
+  - 3 Columns
+  - 2 Columns 66/33
+  - 3 Columns 1-3up
+  - Grix 1-2-4up
+  - Grid 4up
+  - Grid 2-4up
+  - Grid 1up-by-2up-3up
+  - Subgrid 2 Columns
+  - Subgrid 3 Columns
+  - Subgrid 4 Columns

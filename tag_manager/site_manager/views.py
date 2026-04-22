@@ -1,11 +1,14 @@
 # Standard library imports
 import csv
+import importlib.util
 import json
 import logging
 import re
+import shlex
 import threading
 import time
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from urllib.parse import urlparse
 import subprocess
 import sys
@@ -47,8 +50,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Load environment variables from .env file
 load_dotenv()
-# Initialize logger
-logger = logging.getLogger(__name__)
 
 username = os.getenv('USERNAME')
 password = os.getenv('PASSWORD')
@@ -1700,29 +1701,128 @@ def trigger_webbuilder_site_creation(request, site_id):
             )
             output = result.stdout.strip().splitlines()
             # Extract the site ID from the URL using regex
-            url = None
-            webbuilder_site_id = None
-            for line in output:
-                match = re.search(r'https?://[^\s]*/website/(\d+)/?', line)
-                if match:
-                    webbuilder_site_id = int(match.group(1))
-                    url = line.strip()
-                    break
-            if webbuilder_site_id:
+            url = output[-1]
+            match = re.search(r'/website/(\d+)/', url)
+            if match:
+                webbuilder_site_id = int(match.group(1))
                 site.webbuilder_site_id = webbuilder_site_id
-                site.webbuilder_site_url = url
+                site.webbuilder_site_url = url  # Save the full URL
                 site.save()
                 return JsonResponse({"success": True, "site_id": webbuilder_site_id, "site_url": url})
             else:
-                # Include full output in error for easier debugging
-                full_output = "\n".join(output)
-                return JsonResponse({"success": False, "error": f"Site ID not found in script output:\n{full_output}"})
+                return JsonResponse({"success": False, "error": "Site ID not found in URL output: " + url})
         except subprocess.CalledProcessError as e:
             error_message = e.stderr or str(e)
             return JsonResponse({"success": False, "error": error_message})
         except Exception as e:
             return JsonResponse({"success": False, "error": str(e)})
     return JsonResponse({"success": False, "error": "Invalid request"})
+
+@login_required
+@require_POST
+def run_import_script(request, site_id):
+    """
+    AJAX endpoint to run script_import_data.py for importing meta data.
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_import.status")
+    
+    try:
+        # Write initial status
+        with open(status_file, 'w') as f:
+            json.dump({'status': 'running', 'message': 'Import script is running...'}, f)
+        
+        # Run the script_import_data.py in a background thread
+        script_path = os.path.join(settings.BASE_DIR, 'script_import_data.py')
+        
+        def run_script():
+            try:
+                result = subprocess.run(
+                    [sys.executable, script_path],
+                    capture_output=True,
+                    text=True,
+                    cwd=settings.BASE_DIR
+                )
+                if result.returncode == 0:
+                    status = {'status': 'completed', 'message': 'Import completed successfully.'}
+                else:
+                    status = {'status': 'failed', 'message': result.stderr or 'Import failed.'}
+                with open(status_file, 'w') as f:
+                    json.dump(status, f)
+            except Exception as e:
+                with open(status_file, 'w') as f:
+                    json.dump({'status': 'failed', 'message': str(e)}, f)
+        
+        thread = threading.Thread(target=run_script)
+        thread.daemon = True
+        thread.start()
+        
+        return JsonResponse({"success": True, "message": "Import script started successfully."})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+@require_POST
+def run_export_script(request,site_id):
+    """
+    AJAX endpoint to run script_to_export.py for exporting meta data.
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    # status_file = os.path.join(settings.BASE_DIR, f"site_meta_export.status")
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
+
+    try:
+        # Write initial status
+        with open(status_file, 'w') as f:
+            json.dump({'status': 'running', 'message': 'Export script is running...'}, f)
+        
+        # Run the script_to_export.py in a background thread
+        script_path = os.path.join(settings.BASE_DIR, 'script_to_export.py')
+        
+        def run_script():
+            try:
+                result = subprocess.run(
+                    [sys.executable, script_path],
+                    capture_output=True,
+                    text=True,
+                    cwd=settings.BASE_DIR
+                )
+                print("Export script completed with return code:", result.returncode)
+                if result.returncode == 0:
+                    time.sleep(5)  # Ensure file is fully written before checking
+                    print("I am there in export script success block")
+                    status = {'status': 'completed', 'message': 'Export completed successfully.'}
+                else:
+                    status = {'status': 'failed', 'message': result.stderr or 'Export failed.'}
+                with open(status_file, 'w') as f:
+                    json.dump(status, f)
+            except Exception as e:
+                with open(status_file, 'w') as f:
+                    json.dump({'status': 'failed', 'message': str(e)}, f)
+
+            print(status_file)
+        
+        thread = threading.Thread(target=run_script)
+        thread.daemon = True
+        thread.start()
+        
+        return JsonResponse({"success": True, "message": "Export script started successfully."})
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+def check_export_status(request, site_id):
+    """
+    Check the status of the export process for a given site_id.
+    Returns JSON: {"status": str, "message": str}
+    """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
+    status = {'status': 'not_started', 'message': 'No export in progress.'}
+    if os.path.exists(status_file):
+        with open(status_file, 'r') as f:
+            try:
+                status = json.load(f)
+            except Exception:
+                pass
+    return JsonResponse(status)
 
 def import_webbuilder_config(request, site_id):
     """Handle CSV upload and import webbuilder config for a site using script_import_data.py."""
@@ -1814,36 +1914,6 @@ def export_site_meta(request, site_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': f'Failed to start export: {e}'})
     return JsonResponse({'success': True, 'message': 'Export started.'})
-
-@login_required
-def check_export_status(request, site_id):
-    """
-    Check the status of the export process for a given site_id.
-    Returns JSON: {"ready": bool, "status": str, "progress": int, "running": bool}
-    """
-    output_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.csv")
-    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_meta_export.status")
-    status = 'not_started'
-    progress = 0
-    running = False
-    if os.path.exists(status_file):
-        with open(status_file, 'r') as f:
-            try:
-                status_data = json.load(f)
-                status = status_data.get('status', 'not_started')
-                progress = status_data.get('progress', 0)
-                pid = status_data.get('pid')
-                if pid:
-                    # Check if process is still running
-                    try:
-                        os.kill(pid, 0)
-                        running = True
-                    except OSError:
-                        running = False
-            except Exception:
-                pass
-    is_ready = os.path.exists(output_file)
-    return JsonResponse({'ready': is_ready, 'status': status, 'progress': progress, 'running': running})
 
 @login_required
 @require_POST
@@ -2921,39 +2991,588 @@ def export_status(request, site_id):
 @login_required
 def pages_import_view(request, site_id):
     """
-    View for importing pages for a given site. Handles POST to trigger import_pages_func.py.
+    Landing page for Helix conversion and pages import actions.
     """
     site = get_object_or_404(SiteListDetails, pk=site_id)
-    if request.method == 'POST':
-        try:
-            # Run the import_pages_func.py script
-            result = subprocess.run([
-                'python3', 'import_pages_func.py', str(site_id)
-            ], capture_output=True, text=True, check=True)
-            messages.success(request, f"Pages import completed successfully. Output: {result.stdout}")
-        except subprocess.CalledProcessError as e:
-            messages.error(request, f"Pages import failed: {e.stderr or e.output or str(e)}")
-        except Exception as e:
-            messages.error(request, f"Unexpected error: {str(e)}")
-        return redirect('pages_import', site_id=site.id)
     return render(request, 'site_manager/pages_import.html', {'site': site})
+
+
+HELIX_MODEL_OPTIONS = [
+    'gpt-4o',
+    'gpt-4o-mini',
+    'claude-sonnet-4-6',
+    'claude-sonnet-4',
+]
+
+PAGES_IMPORT_ACTIONS = {
+    'convert': {
+        'title': 'Convert to Helix',
+        'description': 'Convert source HTML pages into Helix-compatible output.',
+        'icon': 'fa-wand-magic-sparkles',
+        'submit_btn_class': 'btn-primary',
+    },
+    'import': {
+        'title': 'Import Pages',
+        'description': 'Import converted Helix HTML pages into Webbuilder.',
+        'icon': 'fa-file-import',
+        'submit_btn_class': 'btn-success',
+    },
+}
+
+
+def _env_bool(env_key, default=False):
+    value = os.getenv(env_key)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _is_module_available(module_name):
+    try:
+        return importlib.util.find_spec(module_name) is not None
+    except Exception:
+        return False
+
+
+def _is_placeholder_secret(value):
+    secret = (value or '').strip()
+    if not secret:
+        return False
+
+    lowered = secret.lower()
+    known_placeholders = {
+        'your_github_personal_access_token',
+        'your_github_token',
+        'your_api_token',
+        'your_token',
+        'replace_me',
+        'changeme',
+        '<token>',
+    }
+
+    if lowered in known_placeholders:
+        return True
+    if lowered.startswith('your_'):
+        return True
+    if lowered.startswith('<') and lowered.endswith('>'):
+        return True
+    return False
+
+
+def _has_valid_model_token():
+    copilot_token = (os.getenv('GITHUB_COPILOT_TOKEN') or '').strip()
+    pat_token = (os.getenv('GITHUB_TOKEN') or '').strip()
+
+    if copilot_token and not _is_placeholder_secret(copilot_token):
+        return True
+    if pat_token and not _is_placeholder_secret(pat_token):
+        return True
+    return False
+
+
+def _normalize_to_absolute_path(raw_path, fallback_path):
+    """Normalize configured paths and resolve relative values from BASE_DIR."""
+    selected = (raw_path or '').strip()
+    path = Path(selected) if selected else Path(fallback_path)
+    path = path.expanduser()
+    if not path.is_absolute():
+        path = Path(settings.BASE_DIR) / path
+    return str(path.resolve())
+
+
+def _is_checked(post_data, key, default=False):
+    if post_data is None:
+        return default
+    return (post_data.get(key) or '').strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _build_pages_import_defaults():
+    project_root = Path(settings.BASE_DIR).resolve().parent
+
+    default_converter_script = Path(settings.BASE_DIR) / 'site_manager' / 'convert_html_to_helix_backend.py'
+    default_import_script = Path(settings.BASE_DIR) / 'site_manager' / 'import_pages_to_helix_backend.py'
+    default_input_folder = project_root / 'reference' / 'input_site'
+    default_components_csv = project_root / 'reference' / 'helix_components_html_output.csv'
+    default_output_folder = project_root / 'generated_helix_output'
+    default_analysis_cache = project_root / 'temp' / 'component_analysis_cache.txt'
+    default_manual_csv = project_root / 'manual_page_intervention.csv'
+
+    return {
+        'converter_script_path': _normalize_to_absolute_path(
+            os.getenv('HELIX_CONVERTER_SCRIPT_PATH'),
+            default_converter_script,
+        ),
+        'import_script_path': _normalize_to_absolute_path(
+            os.getenv('HELIX_IMPORT_SCRIPT_PATH'),
+            default_import_script,
+        ),
+        'converter_input_folder': _normalize_to_absolute_path(
+            os.getenv('HELIX_CONVERTER_INPUT_FOLDER'),
+            default_input_folder,
+        ),
+        'converter_output_folder': _normalize_to_absolute_path(
+            os.getenv('HELIX_CONVERTER_OUTPUT_FOLDER'),
+            default_output_folder,
+        ),
+        'import_input_folder': _normalize_to_absolute_path(
+            os.getenv('HELIX_IMPORT_INPUT_FOLDER'),
+            default_output_folder,
+        ),
+        'components_csv': _normalize_to_absolute_path(
+            os.getenv('HELIX_COMPONENTS_CSV_PATH'),
+            default_components_csv,
+        ),
+        'analysis_cache_file': _normalize_to_absolute_path(
+            os.getenv('HELIX_ANALYSIS_CACHE_FILE'),
+            default_analysis_cache,
+        ),
+        'manual_intervention_csv': _normalize_to_absolute_path(
+            os.getenv('HELIX_MANUAL_INTERVENTION_CSV'),
+            default_manual_csv,
+        ),
+        'model': (os.getenv('HELIX_MODEL') or 'gpt-4o').strip(),
+        'temperature': (os.getenv('HELIX_TEMPERATURE') or '0.4').strip(),
+        'copy_non_html': _env_bool('HELIX_COPY_NON_HTML', True),
+        'show_model_output': _env_bool('HELIX_SHOW_MODEL_OUTPUT', False),
+        'skip_existing': _env_bool('HELIX_SKIP_EXISTING', False),
+        'skip_model_analysis': _env_bool('HELIX_SKIP_MODEL_ANALYSIS', False),
+        # Keep permalink preprocessing enabled by default so Playwright browser opens.
+        'skip_permalink_preprocess': False,
+        'import_headless': _env_bool('HELIX_IMPORT_HEADLESS', False),
+        'instance_id_override': (os.getenv('HELIX_INSTANCE_ID_OVERRIDE') or '').strip(),
+        'input_site_url': (os.getenv('HELIX_INPUT_SITE_URL') or '').strip(),
+        'output_site_url': (os.getenv('HELIX_OUTPUT_SITE_URL') or '').strip(),
+    }
+
+
+def _build_pages_import_form_data(post_data=None):
+    defaults = _build_pages_import_defaults()
+    source = post_data if post_data is not None else {}
+
+    selected_model = (source.get('model') if post_data else defaults['model']) or HELIX_MODEL_OPTIONS[0]
+    selected_model = selected_model.strip()
+    if selected_model not in HELIX_MODEL_OPTIONS:
+        selected_model = HELIX_MODEL_OPTIONS[0]
+
+    return {
+        'converter_script_path': defaults['converter_script_path'],
+        'import_script_path': defaults['import_script_path'],
+        'converter_input_folder': (source.get('converter_input_folder') if post_data else defaults['converter_input_folder']) or '',
+        'converter_output_folder': (source.get('converter_output_folder') if post_data else defaults['converter_output_folder']) or '',
+        'import_input_folder': (source.get('import_input_folder') if post_data else defaults['import_input_folder']) or '',
+        'components_csv': (source.get('components_csv') if post_data else defaults['components_csv']) or '',
+        'analysis_cache_file': (source.get('analysis_cache_file') if post_data else defaults['analysis_cache_file']) or '',
+        'manual_intervention_csv': (source.get('manual_intervention_csv') if post_data else defaults['manual_intervention_csv']) or '',
+        'model': selected_model,
+        'temperature': (source.get('temperature') if post_data else defaults['temperature']) or '0.4',
+        'copy_non_html': _is_checked(post_data, 'copy_non_html', defaults['copy_non_html']),
+        'show_model_output': _is_checked(post_data, 'show_model_output', defaults['show_model_output']),
+        'skip_existing': _is_checked(post_data, 'skip_existing', defaults['skip_existing']),
+        'skip_model_analysis': _is_checked(post_data, 'skip_model_analysis', defaults['skip_model_analysis']),
+        'skip_permalink_preprocess': _is_checked(post_data, 'skip_permalink_preprocess', defaults['skip_permalink_preprocess']),
+        'import_headless': _is_checked(post_data, 'import_headless', defaults['import_headless']),
+        'instance_id_override': (source.get('instance_id_override') if post_data else defaults['instance_id_override']) or '',
+        'input_site_url': (source.get('input_site_url') if post_data else defaults['input_site_url']) or '',
+        'output_site_url': (source.get('output_site_url') if post_data else defaults['output_site_url']) or '',
+    }
+
+
+def _validate_pages_import_form(action, form_data):
+    errors = []
+
+    if action == 'convert':
+        if not _has_valid_model_token():
+            errors.append(
+                "Set a valid GITHUB_COPILOT_TOKEN or GITHUB_TOKEN in .env before running Convert to Helix."
+            )
+
+        if not _is_module_available('openai'):
+            errors.append("Python package 'openai' is required for Convert to Helix.")
+
+        if not form_data['skip_permalink_preprocess'] and not _is_module_available('playwright'):
+            errors.append(
+                "Python package 'playwright' is required unless 'Skip permalink preprocess' is enabled."
+            )
+
+        if not Path(form_data['converter_script_path']).exists():
+            errors.append(f"Converter script not found: {form_data['converter_script_path']}")
+
+        input_folder = Path(form_data['converter_input_folder']).expanduser()
+        if not input_folder.exists() or not input_folder.is_dir():
+            errors.append(f"Converter input folder not found: {form_data['converter_input_folder']}")
+
+        components_csv = Path(form_data['components_csv']).expanduser()
+        if not components_csv.exists() or not components_csv.is_file():
+            errors.append(f"Components CSV not found: {form_data['components_csv']}")
+
+        if not (form_data['model'] or '').strip():
+            errors.append('Model is required for conversion.')
+
+        try:
+            float(form_data['temperature'])
+        except (TypeError, ValueError):
+            errors.append('Temperature must be a numeric value (for example: 0.4).')
+
+        try:
+            Path(form_data['converter_output_folder']).expanduser().mkdir(parents=True, exist_ok=True)
+        except Exception as output_error:
+            errors.append(f"Unable to create output folder: {output_error}")
+
+        analysis_cache = (form_data['analysis_cache_file'] or '').strip()
+        if analysis_cache:
+            try:
+                Path(analysis_cache).expanduser().parent.mkdir(parents=True, exist_ok=True)
+            except Exception as cache_error:
+                errors.append(f"Unable to create analysis cache location: {cache_error}")
+
+    elif action == 'import':
+        if not _is_module_available('playwright'):
+            errors.append("Python package 'playwright' is required for Import Pages.")
+
+        if not Path(form_data['import_script_path']).exists():
+            errors.append(f"Import script not found: {form_data['import_script_path']}")
+
+        input_folder = Path(form_data['import_input_folder']).expanduser()
+        if not input_folder.exists() or not input_folder.is_dir():
+            errors.append(f"Import input folder not found: {form_data['import_input_folder']}")
+
+        manual_csv = (form_data['manual_intervention_csv'] or '').strip()
+        if not manual_csv:
+            errors.append('Manual intervention CSV path is required.')
+        else:
+            try:
+                Path(manual_csv).expanduser().parent.mkdir(parents=True, exist_ok=True)
+            except Exception as csv_error:
+                errors.append(f"Unable to create manual intervention CSV directory: {csv_error}")
+    else:
+        errors.append('Unsupported action selected.')
+
+    return errors
+
+
+def _build_pages_import_command(action, form_data):
+    if action == 'convert':
+        command = [
+            sys.executable,
+            form_data['converter_script_path'],
+            '--input-folder', form_data['converter_input_folder'],
+            '--output-folder', form_data['converter_output_folder'],
+            '--components-csv', form_data['components_csv'],
+            '--model', form_data['model'],
+            '--temperature', str(form_data['temperature']),
+        ]
+
+        if form_data['copy_non_html']:
+            command.append('--copy-non-html')
+        if form_data['show_model_output']:
+            command.append('--show-model-output')
+        if form_data['skip_existing']:
+            command.append('--skip-existing')
+        if form_data['skip_model_analysis']:
+            command.append('--skip-model-analysis')
+        if form_data['skip_permalink_preprocess']:
+            command.append('--skip-permalink-preprocess')
+
+        analysis_cache_file = (form_data['analysis_cache_file'] or '').strip()
+        if analysis_cache_file:
+            command.extend(['--analysis-cache-file', analysis_cache_file])
+
+        return command
+
+    if action == 'import':
+        command = [
+            sys.executable,
+            form_data['import_script_path'],
+            '--input-folder', form_data['import_input_folder'],
+            '--manual-intervention-csv', form_data['manual_intervention_csv'],
+        ]
+
+        if form_data['import_headless']:
+            command.append('--headless')
+
+        instance_id_override = (form_data['instance_id_override'] or '').strip()
+        if instance_id_override:
+            command.extend(['--instance-id', instance_id_override])
+
+        return command
+
+    raise ValueError('Unsupported action selected.')
+
+
+def _tail_output(text, max_lines=20, max_chars=1600):
+    if not text:
+        return ''
+    lines = [line for line in text.strip().splitlines() if line.strip()]
+    if not lines:
+        return ''
+    joined = '\n'.join(lines[-max_lines:])
+    return joined[-max_chars:]
+
+
+def _stream_subprocess_logs(action_key, command, runtime_env):
+    env = dict(runtime_env)
+    env['PYTHONUNBUFFERED'] = '1'
+
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        cwd=settings.BASE_DIR,
+        env=env,
+        bufsize=1,
+    )
+
+    collected_lines = []
+    if process.stdout is not None:
+        for raw_line in process.stdout:
+            line = raw_line.rstrip('\r\n')
+            if not line:
+                continue
+            print(f"[{action_key}] {line}", flush=True)
+            logger.info("[%s] %s", action_key, line)
+            collected_lines.append(line)
+
+    return_code = process.wait()
+    return return_code, '\n'.join(collected_lines).strip()
+
+
+def _format_elapsed(seconds):
+    seconds = max(0, int(seconds or 0))
+    hours, rem = divmod(seconds, 3600)
+    minutes, secs = divmod(rem, 60)
+    if hours:
+        return f"{hours}h {minutes}m {secs}s"
+    if minutes:
+        return f"{minutes}m {secs}s"
+    return f"{secs}s"
+
+
+def _pages_action_status_file(site_id, action_key):
+    return os.path.join(settings.BASE_DIR, f"site_{site_id}_pages_{action_key}.status")
+
+
+def _read_pages_action_status(site_id, action_key):
+    status_file = _pages_action_status_file(site_id, action_key)
+    default_status = {
+        'status': 'not_started',
+        'message': 'No process started yet.',
+        'action': action_key,
+        'site_id': site_id,
+        'start_time': None,
+        'end_time': None,
+        'elapsed_human': '0s',
+        'output': '',
+    }
+
+    if not os.path.exists(status_file):
+        return default_status
+
+    try:
+        with open(status_file, 'r') as status_handle:
+            loaded_status = json.load(status_handle)
+            if not isinstance(loaded_status, dict):
+                return default_status
+            merged_status = {**default_status, **loaded_status}
+    except Exception:
+        return default_status
+
+    if merged_status.get('start_time'):
+        if merged_status.get('status') == 'running':
+            elapsed_seconds = int(time.time() - float(merged_status['start_time']))
+        else:
+            elapsed_seconds = int((merged_status.get('end_time') or time.time()) - float(merged_status['start_time']))
+        merged_status['elapsed_seconds'] = max(0, elapsed_seconds)
+        merged_status['elapsed_human'] = _format_elapsed(elapsed_seconds)
+    else:
+        merged_status['elapsed_seconds'] = 0
+        merged_status['elapsed_human'] = '0s'
+
+    return merged_status
+
+
+def _write_pages_action_status(site_id, action_key, status_payload):
+    status_file = _pages_action_status_file(site_id, action_key)
+    with open(status_file, 'w') as status_handle:
+        json.dump(status_payload, status_handle)
+
+
+def _run_pages_action_in_background(site_id, action_key, command, runtime_env):
+    action_title = PAGES_IMPORT_ACTIONS[action_key]['title']
+    command_preview = ' '.join(shlex.quote(part) for part in command)
+    start_time = time.time()
+
+    running_status = {
+        'status': 'running',
+        'message': f"{action_title} is running...",
+        'action': action_key,
+        'site_id': site_id,
+        'command': command_preview,
+        'start_time': start_time,
+        'end_time': None,
+        'output': '',
+    }
+    _write_pages_action_status(site_id, action_key, running_status)
+    logger.info("Pages action '%s' started. Command: %s", action_key, command_preview)
+    if action_key == 'convert' and '--skip-permalink-preprocess' not in command:
+        logger.info("Convert to Helix Playwright step is running in headed mode (browser window should open).")
+
+    try:
+        return_code, merged_logs = _stream_subprocess_logs(action_key, command, runtime_env)
+        end_time = time.time()
+
+        if return_code == 0:
+            output_summary = _tail_output(merged_logs)
+            completed_status = {
+                'status': 'completed',
+                'message': f"{action_title} completed successfully.",
+                'action': action_key,
+                'site_id': site_id,
+                'command': command_preview,
+                'start_time': start_time,
+                'end_time': end_time,
+                'output': output_summary,
+                'return_code': return_code,
+            }
+            _write_pages_action_status(site_id, action_key, completed_status)
+            logger.info("Pages action '%s' completed. Command: %s", action_key, command_preview)
+        else:
+            error_summary = _tail_output(merged_logs)
+            failed_status = {
+                'status': 'failed',
+                'message': f"{action_title} failed with exit code {return_code}.",
+                'action': action_key,
+                'site_id': site_id,
+                'command': command_preview,
+                'start_time': start_time,
+                'end_time': end_time,
+                'output': error_summary,
+                'return_code': return_code,
+            }
+            _write_pages_action_status(site_id, action_key, failed_status)
+            logger.error(
+                "Pages action '%s' failed (rc=%s). Command: %s | Error: %s",
+                action_key,
+                return_code,
+                command_preview,
+                error_summary,
+            )
+    except Exception as run_error:
+        end_time = time.time()
+        failed_status = {
+            'status': 'failed',
+            'message': f"Unexpected error while running {action_title}.",
+            'action': action_key,
+            'site_id': site_id,
+            'command': command_preview,
+            'start_time': start_time,
+            'end_time': end_time,
+            'output': str(run_error),
+        }
+        _write_pages_action_status(site_id, action_key, failed_status)
+        logger.exception("Unexpected error executing pages action '%s': %s", action_key, run_error)
+
+
+@login_required
+def pages_import_action(request, site_id, action):
     """
-    View for importing pages for a given site. Handles POST to trigger import_pages_func.py.
+    Execute Helix conversion/import scripts via UI-driven configuration.
     """
     site = get_object_or_404(SiteListDetails, pk=site_id)
-    if request.method == 'POST':
-        try:
-            # Run the import_pages_func.py script
-            result = subprocess.run([
-                'python3', 'import_pages_func.py', str(site_id)
-            ], capture_output=True, text=True, check=True)
-            messages.success(request, f"Pages import completed successfully. Output: {result.stdout}")
-        except subprocess.CalledProcessError as e:
-            messages.error(request, f"Pages import failed: {e.stderr or e.output or str(e)}")
-        except Exception as e:
-            messages.error(request, f"Unexpected error: {str(e)}")
+    action_key = (action or '').strip().lower()
+
+    if action_key not in PAGES_IMPORT_ACTIONS:
+        messages.error(request, 'Invalid action selected for Pages Import.')
         return redirect('pages_import', site_id=site.id)
-    return render(request, 'site_manager/pages_import.html', {'site': site})
+
+    if request.method == 'POST':
+        form_data = _build_pages_import_form_data(request.POST)
+        validation_errors = _validate_pages_import_form(action_key, form_data)
+
+        if validation_errors:
+            for validation_error in validation_errors:
+                messages.error(request, validation_error)
+        else:
+            current_status = _read_pages_action_status(site.id, action_key)
+            if current_status.get('status') == 'running':
+                messages.warning(request, f"{PAGES_IMPORT_ACTIONS[action_key]['title']} is already running.")
+                return redirect('pages_import_action', site_id=site.id, action=action_key)
+
+            command = _build_pages_import_command(action_key, form_data)
+            runtime_env = os.environ.copy()
+
+            input_site_url = (form_data.get('input_site_url') or '').strip()
+            output_site_url = (form_data.get('output_site_url') or '').strip()
+            if input_site_url:
+                runtime_env['HELIX_INPUT_SITE_URL'] = input_site_url
+                runtime_env['INPUT_SITE_URL'] = input_site_url
+            if output_site_url:
+                runtime_env['HELIX_OUTPUT_SITE_URL'] = output_site_url
+                runtime_env['OUTPUT_SITE_URL'] = output_site_url
+
+            try:
+                thread = threading.Thread(
+                    target=_run_pages_action_in_background,
+                    args=(site.id, action_key, command, runtime_env),
+                )
+                thread.daemon = True
+                thread.start()
+                messages.info(request, f"{PAGES_IMPORT_ACTIONS[action_key]['title']} started. Track progress in the status panel.")
+
+                return redirect('pages_import_action', site_id=site.id, action=action_key)
+
+            except Exception as run_error:
+                logger.exception("Unexpected error executing pages action '%s': %s", action_key, run_error)
+                messages.error(request, f"Unexpected error while running script: {run_error}")
+
+    form_data = _build_pages_import_form_data(request.POST if request.method == 'POST' else None)
+
+    command_preview = ''
+    try:
+        preview_command = _build_pages_import_command(action_key, form_data)
+        command_preview = ' '.join(shlex.quote(part) for part in preview_command)
+    except Exception:
+        command_preview = ''
+
+    current_status = _read_pages_action_status(site.id, action_key)
+
+    return render(request, 'site_manager/pages_import_action.html', {
+        'site': site,
+        'action': action_key,
+        'action_config': PAGES_IMPORT_ACTIONS[action_key],
+        'model_options': HELIX_MODEL_OPTIONS,
+        'form_data': form_data,
+        'command_preview': command_preview,
+        'action_status': current_status,
+        'status_api_url': f"/sites/{site.id}/pages/import/{action_key}/status/",
+        'status_clear_url': f"/sites/{site.id}/pages/import/{action_key}/clear-status/",
+    })
+
+
+@login_required
+@require_GET
+def pages_import_action_status(request, site_id, action):
+    action_key = (action or '').strip().lower()
+    if action_key not in PAGES_IMPORT_ACTIONS:
+        return JsonResponse({'status': 'failed', 'message': 'Invalid action.'}, status=400)
+
+    return JsonResponse(_read_pages_action_status(site_id, action_key))
+
+
+@login_required
+@require_POST
+def clear_pages_import_action_status(request, site_id, action):
+    action_key = (action or '').strip().lower()
+    if action_key not in PAGES_IMPORT_ACTIONS:
+        return JsonResponse({'success': False, 'message': 'Invalid action.'}, status=400)
+
+    status_file = _pages_action_status_file(site_id, action_key)
+    try:
+        if os.path.exists(status_file):
+            os.remove(status_file)
+        return JsonResponse({'success': True, 'message': 'Status cleared.'})
+    except Exception as clear_error:
+        return JsonResponse({'success': False, 'message': f'Unable to clear status: {clear_error}'}, status=500)
 
 @login_required
 def file_upload_meta(request, site_id):
