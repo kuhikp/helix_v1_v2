@@ -3,7 +3,7 @@
 Selenium script for file upload functionality to Pfizer WebBuilder
 Author: Generated for file upload automation
 """
-
+import shutil
 import os
 import time
 from selenium import webdriver
@@ -428,7 +428,64 @@ class PfizerWebBuilderUploader:
         except Exception as e:
             print(f"  - Error handling popup: {e}")
             # Continue anyway, popup handling is optional
+    def copy_files_from_httrack(self, source_folder='css'):
 
+    
+        try:
+            # Define source and destination paths
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            source_dir = os.path.join(base_dir, 'site_manager', 'static', 'httrack_export', source_folder)
+            dest_dir = os.path.join(base_dir, 'site_manager', 'static', 'files')
+            
+            print(f"\n=== Copying files from httrack_export/{source_folder} ===")
+            print(f"Source: {source_dir}")
+            print(f"Destination: {dest_dir}")
+            
+            # Check if source directory exists
+            if not os.path.exists(source_dir):
+                print(f"❌ Source directory does not exist: {source_dir}")
+                return 0, 0
+            
+            # Create destination directory if it doesn't exist
+            os.makedirs(dest_dir, exist_ok=True)
+            print(f"✓ Destination directory ready")
+            
+            # Get all files from source directory
+            source_path = Path(source_dir)
+            files = [f for f in source_path.iterdir() if f.is_file()]
+            
+            if not files:
+                print(f"⚠️  No files found in {source_dir}")
+                return 0, 0
+            
+            print(f"Found {len(files)} files to copy")
+            
+            copied_count = 0
+            skipped_count = 0
+            
+            for file in files:
+                dest_file = os.path.join(dest_dir, file.name)
+                
+                # Check if file already exists in destination
+                if os.path.exists(dest_file):
+                    print(f"  ⏭️  Skipped {file.name} (already exists)")
+                    skipped_count += 1
+                else:
+                    shutil.copy2(file, dest_file)
+                    print(f"  ✓ Copied {file.name}")
+                    copied_count += 1
+            
+            print(f"\n=== Copy Summary ===")
+            print(f"Total files: {len(files)}")
+            print(f"Copied: {copied_count}")
+            print(f"Skipped: {skipped_count}")
+            
+            return copied_count, skipped_count
+            
+        except Exception as e:
+            print(f"❌ Error copying files: {e}")
+            return 0, 0
+      
     def upload_file(self, file_path):
         """Upload a single file"""
         try:
@@ -547,6 +604,40 @@ def main():
         
         # Initialize uploader
         uploader = PfizerWebBuilderUploader(headless=False)
+        # Copy files from httrack_export directories to files directory
+        print("Step 0: Copying files from httrack_export...")
+        
+        total_copied = 0
+        total_skipped = 0
+        
+        # Copy CSS files
+        print("\n--- Copying CSS files ---")
+        copied, skipped = uploader.copy_files_from_httrack('css')
+        total_copied += copied
+        total_skipped += skipped
+        
+        # Copy JS files
+        print("\n--- Copying JS files ---")
+        copied, skipped = uploader.copy_files_from_httrack('js')
+        total_copied += copied
+        total_skipped += skipped
+
+        # Copy image files
+        print("\n--- Copying image files ---")
+        copied, skipped = uploader.copy_files_from_httrack('images')
+        total_copied += copied
+        total_skipped += skipped
+        
+        # Optional: Copy fonts if needed
+        # print("\n--- Copying font files ---")
+        # copied, skipped = uploader.copy_files_from_httrack('fonts')
+        # total_copied += copied
+        # total_skipped += skipped
+        
+        print(f"\n=== Total Files Copied: {total_copied}, Skipped: {total_skipped} ===\n")
+        
+        if total_copied == 0 and total_skipped == 0:
+            print("⚠️  No files were copied. Check source directories.")
         
         # Login process
         uploader.login()

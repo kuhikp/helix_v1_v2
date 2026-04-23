@@ -1,0 +1,159 @@
+{% extends 'authentication/base.html' %}
+
+{% block title %}Import Page Settings{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-cog me-2"></i>Import Page Settings</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">
+                        Import page settings for this site using Web-builder Export Archive.
+                        This will automate the import of all page settings for the selected site.
+                    </p>
+
+                    <form method="post" id="import-form">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success fw-semibold" id="import-btn">
+                            <i class="fas fa-upload me-1"></i>Import
+                        </button>
+                        <a href="{% url 'site_meta_list' site.id %}" class="btn btn-secondary ms-2">Cancel</a>
+                    </form>
+
+                    <!-- Status Section -->
+                    <div id="status-section" class="mt-4" style="display: none;">
+
+                        <div id="status-running" style="display: none;">
+                            <div class="alert alert-info d-flex align-items-center">
+                                <div class="spinner-border spinner-border-sm me-3" role="status"></div>
+                                <div>
+                                    <strong>Import in progress...</strong>
+                                    <div class="small text-muted mt-1">
+                                        This may take several minutes. You can navigate away — the process will continue in the background.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="status-completed" style="display: none;">
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Import completed successfully!</strong>
+                                <pre id="status-output" class="mt-2 small text-muted bg-light p-2 rounded" style="max-height: 200px; overflow-y: auto;"></pre>
+                            </div>
+                        </div>
+
+                        <div id="status-failed" style="display: none;">
+                            <div class="alert alert-danger">
+                                <i class="fas fa-times-circle me-2"></i>
+                                <strong>Import failed.</strong>
+                                <pre id="status-error" class="mt-2 small bg-light p-2 rounded" style="max-height: 200px; overflow-y: auto;"></pre>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {% if messages %}
+                        <div class="mt-3">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('import-form');
+    const importBtn = document.getElementById('import-btn');
+    const statusSection = document.getElementById('status-section');
+    const statusRunning = document.getElementById('status-running');
+    const statusCompleted = document.getElementById('status-completed');
+    const statusFailed = document.getElementById('status-failed');
+    const statusOutput = document.getElementById('status-output');
+    const statusError = document.getElementById('status-error');
+
+    let pollingInterval = null;
+
+    function showStatus(type, message, output) {
+        statusSection.style.display = 'block';
+        statusRunning.style.display = 'none';
+        statusCompleted.style.display = 'none';
+        statusFailed.style.display = 'none';
+
+        if (type === 'running') {
+            statusRunning.style.display = 'block';
+        } else if (type === 'completed') {
+            statusCompleted.style.display = 'block';
+            statusOutput.textContent = output || '';
+        } else if (type === 'failed') {
+            statusFailed.style.display = 'block';
+            statusError.textContent = message + (output ? '\n\n' + output : '');
+        }
+    }
+
+    function pollStatus() {
+        fetch("{% url 'check_page_setting_import_status' site.id %}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'running') {
+                    showStatus('running');
+                } else if (data.status === 'completed') {
+                    clearInterval(pollingInterval);
+                    importBtn.disabled = false;
+                    importBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Import';
+                    showStatus('completed', data.message, data.output);
+                } else if (data.status === 'failed') {
+                    clearInterval(pollingInterval);
+                    importBtn.disabled = false;
+                    importBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Import';
+                    showStatus('failed', data.message, data.output);
+                }
+            })
+            .catch(err => console.error('Status check failed:', err));
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        importBtn.disabled = true;
+        importBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Running...';
+        showStatus('running');
+
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                pollingInterval = setInterval(pollStatus, 5000);
+            } else {
+                importBtn.disabled = false;
+                importBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Import';
+                showStatus('failed', data.message || 'Failed to start import.', '');
+            }
+        })
+        .catch(err => {
+            importBtn.disabled = false;
+            importBtn.innerHTML = '<i class="fas fa-upload me-1"></i>Import';
+            showStatus('failed', 'Request error: ' + err, '');
+        });
+    });
+});
+</script>
+{% endblock %}
