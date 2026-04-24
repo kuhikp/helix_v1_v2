@@ -2096,32 +2096,32 @@ def run_import_block(site_id):
 
 
     # Generate common blocks
-    html_root = "/static/sitename"
+    # html_root = "/static/sitename"
 
-    common_blocks = extract_common_blocks(html_root)
+    # common_blocks = extract_common_blocks(html_root)
 
-    write_blocks_as_json(common_blocks, blocks_folder)
+    # write_blocks_as_json(common_blocks, blocks_folder)
 
-    print(f"{len(common_blocks)} common blocks generated for import.")
+    # print(f"{len(common_blocks)} common blocks generated for import.")
 
-    # Call the main processing functions in synchronous order
+    # # Call the main processing functions in synchronous order
         
-    process_blocks(
-                page,
-                sitename,
-                instance_id,
-                blocks_folder=os.path.join(
-                    settings.BASE_DIR,
-                    'site_manager',
-                    'static',
-                    'block_import',
-                    'data',
-                    'modules'
-                )
-    )       
+    # process_blocks(
+    #             page,
+    #             sitename,
+    #             instance_id,
+    #             blocks_folder=os.path.join(
+    #                 settings.BASE_DIR,
+    #                 'site_manager',
+    #                 'static',
+    #                 'block_import',
+    #                 'data',
+    #                 'modules'
+    #             )
+    # )       
 
 
-    browser.close()
+    # browser.close()
 
 def create_block(page, b_title, b_description, b_category, b_protected, b_files, b_auto_attach, b_auto_attach_location,
                  b_auto_attach_exceptions, b_auto_attach_to_error_pages, b_css, b_html):
@@ -2218,11 +2218,85 @@ def create_block(page, b_title, b_description, b_category, b_protected, b_files,
 
 def process_blocks(page, sitename, instance_id, blocks_folder):
     page.goto(f"https://{sitename}/builder/website/{instance_id}?panel=left-sidebar-settings--elements")
-    page.wait_for_timeout(10000)
+
+    wait_until="domcontentloaded",
+    timeout=60000
+
+    #page.wait_for_timeout(10000)
 
     skipped_csv = f"v2_{instance_id}_skipped_blocks.csv"
 
     for block_name in os.listdir(blocks_folder):
+
+        # Skip already processed files
+        if block_name.startswith("processed_"):
+            continue
+
+        block_path = os.path.join(blocks_folder, block_name)
+
+        # ==========================
+        # ✅ HTML FILE HANDLING
+        # ==========================
+        if block_name.endswith(".html"):
+            try:
+                print(f"Reading HTML File : '{block_name}'")
+
+                with open(block_path, "r", encoding="utf-8") as f:
+                    b_html = f.read()
+
+                # Defaults for HTML-only blocks
+                b_title = os.path.splitext(block_name)[0]
+                b_description = ""
+                b_category = "HTML Blocks"
+                b_protected = False
+                b_files = []
+                b_auto_attach = False
+                b_auto_attach_location = ""
+                b_auto_attach_exceptions = []
+                b_auto_attach_to_error_pages = False
+                b_css = ""
+
+                add_block_button = page.locator(
+                    'xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/div[1]/div[2]/a'
+                )
+                fresh_site_button = page.locator(
+                    'xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/a'
+                )
+
+                if add_block_button.is_visible():
+                    add_block_button.click()
+                elif fresh_site_button.is_visible():
+                    fresh_site_button.click()
+
+                page.wait_for_timeout(1000)
+
+                create_block(
+                    page,
+                    b_title,
+                    b_description,
+                    b_category,
+                    b_protected,
+                    b_files,
+                    b_auto_attach,
+                    b_auto_attach_location,
+                    b_auto_attach_exceptions,
+                    b_auto_attach_to_error_pages,
+                    b_css,
+                    b_html
+                )
+
+                # Rename after success
+                os.rename(block_path, os.path.join(blocks_folder, f"processed_{block_name}"))
+
+                print(f"'{b_title}' Created from HTML File '{block_name}'")
+                print("========================================")
+
+            except Exception as e:
+                print(f"Failed processing HTML file {block_name}: {e}")
+
+            continue  # ✅ important: move to next file
+
+
         # if block_name.endswith(".json"):
         if not block_name.endswith(".json") or block_name.startswith("processed_"):
             continue
