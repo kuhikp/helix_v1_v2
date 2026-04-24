@@ -71,9 +71,19 @@ The HelixBridge is a comprehensive web application that helps developers migrate
    .\venv\Scripts\activate
    ```
 
-3. Install the required dependencies:
+3. Upgrade pip (recommended):
+   ```bash
+   python -m pip install --upgrade pip
+   ```
+
+4. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
+   ```
+
+5. Install Chromium for Playwright (used for website analysis):
+   ```bash
+   python -m playwright install chromium
    ```
 
 ### Step 2: Database Setup
