@@ -7,9 +7,13 @@ class EmailBackend(BaseBackend):
         User = get_user_model()
         try:
             # Try to find user by email first, then by username
-            user = User.objects.get(
+            # Use filter().first() to handle duplicate users gracefully
+            user = User.objects.filter(
                 Q(email=username) | Q(username=username)
-            )
+            ).first()
+            
+            if not user:
+                return None
         except User.DoesNotExist:
             return None
 

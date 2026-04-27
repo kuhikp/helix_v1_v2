@@ -20,8 +20,6 @@ from bs4 import BeautifulSoup
 # ──────────────────────────────────────────────────────────────
 SITE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_manager", "static", "httrack_export")
 OUTPUT_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Webbuilder_extracted_settings", "site_config_export.json")
-# OUTPUT_JSON = os.environ.get('JSONPATH')
-# print(OUTPUT_JSON)
 
 
 # Load .env if present
@@ -72,12 +70,10 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "When Brandkit variables are defined on a page level:", "Field Name": "loginPage", "Type": "custom_multiselect_single", "Default Value": "Attach Global Brandkit variables after page-level"},
 
     # # -- multilingual --
-    {"Panel Type": "left-sidebar-settings--multilingual-manager", "Field Label": "Enable multilingual", "Field Name": "enable_multilingual", "Type": "checkbox", "Default Value": "unchecked"},
+    # {"Panel Type": "left-sidebar-settings--multilingual-manager", "Field Label": "Enable multilingual", "Field Name": "enable_multilingual", "Type": "checkbox", "Default Value": "unchecked"},
     
     # # ── performance ──
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "", "Field Name": "_token", "Type": "hidden", "Default Value": ""},
-    # {"Panel Type": "left-sidebar-settings--performance", "Field Label": "", "Field Name": "", "Type": "text", "Default Value": ""},
-    # {"Panel Type": "left-sidebar-settings--performance", "Field Label": "", "Field Name": "repository", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Enable PSI performance options", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Minify all included CSS files", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "checked"},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Minify all included JS files", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "checked"},
@@ -98,7 +94,6 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "brands[]", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "site_description", "Type": "textarea", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "site_keywords", "Type": "textarea", "Default Value": ""},
-    # {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Country * Pfizer Region: EU Region: Europe", "Field Name": "country", "Type": "select", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Currency", "Field Name": "currency", "Type": "select", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Type *", "Field Name": "audiences", "Type": "select", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "audience_specialties[]", "Type": "text", "Default Value": ""},
@@ -111,49 +106,26 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_indications[]", "Type": "custom_multiselect", "Default Value": ""},
 
-    # # ── fonts ──
-    # {"Panel Type": "left-sidebar-settings--fonts", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
-    # {"Panel Type": "left-sidebar-settings--fonts", "Field Label": "", "Field Name": "", "Type": "text"},
-    # {"Panel Type": "left-sidebar-settings--fonts", "Field Label": "", "Field Name": "repository", "Type": "text"},
-    # {"Panel Type": "left-sidebar-settings--fonts", "Field Label": "", "Field Name": "gjs-clm-states", "Type": "select", "Default Value": ""},
-    # {"Panel Type": "left-sidebar-settings--fonts", "Field Label": "", "Field Name": "gjs-clm-new", "Type": "text", "Default Value": ""},
-    # {"Panel Type": "left-sidebar-settings--fonts", "Field Label": "", "Field Name": "block-manager--searching-field", "Type": "search", "Default Value": ""},
 
     # # ── external-link-manager ──
-    # {"Panel Type": "left-sidebar-settings--external-link-manager", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
-    # {"Panel Type": "left-sidebar-settings--external-link-manager", "Field Label": "", "Field Name": "", "Type": "text"},
-    # {"Panel Type": "left-sidebar-settings--external-link-manager", "Field Label": "", "Field Name": "repository", "Type": "text"},
     {"Panel Type": "left-sidebar-settings--external-link-manager", "Field Label": "Enabled?", "Field Name": "enabled", "Type": "checkbox", "Default Value": "unchecked"},
 
     # # ── promotional-popup-manager ──
-    # {"Panel Type": "left-sidebar-settings--promotional-popup-manager", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
-    # {"Panel Type": "left-sidebar-settings--promotional-popup-manager", "Field Label": "", "Field Name": "", "Type": "text"},
-    # {"Panel Type": "left-sidebar-settings--promotional-popup-manager", "Field Label": "", "Field Name": "repository", "Type": "text"},
     {"Panel Type": "left-sidebar-settings--promotional-popup-manager", "Field Label": "Enabled?", "Field Name": "enabled", "Type": "checkbox", "Default Value": "unchecked"},
 
     # # ── analytics ──
-    # {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
-    # {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "", "Field Name": "", "Type": "text"},
-    # {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "", "Field Name": "repository", "Type": "text"},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "Check here if you use Adobe analytics on your site", "Field Name": "enable-analytics", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "Check here if you use \"Adobe Target\"", "Field Name": "adobe-target", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "Adobe Analytics Library", "Field Name": "select", "Type": "select", "Default Value": ""},
-    # {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "URL for non-production Adobe Launch Script", "Field Name": "non-prod-url", "Type": "url"},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "URL for production Adobe Launch Script", "Field Name": "prod-url", "Type": "url"},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "Check here if you use GTM on your site", "Field Name": "enable-gtm", "Type": "checkbox", "Default Value": "unchecked"},
-    # {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "", "Field Name": "non-prod-gtm-url", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "", "Field Name": "prod-gtm-url", "Type": "text", "Default Value": ""},
 
-    # # ── bootstrap ──
-    # {"Panel Type": "left-sidebar-settings--bootstrap", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
-    # {"Panel Type": "left-sidebar-settings--bootstrap", "Field Label": "", "Field Name": "", "Type": "text"},
-    # {"Panel Type": "left-sidebar-settings--bootstrap", "Field Label": "", "Field Name": "repository", "Type": "text"},
-    {"Panel Type": "left-sidebar-settings--bootstrap", "Field Label": "Version", "Field Name": "bootstrap", "Type": "select", "Default Value": ""},
+    # # # ── bootstrap ──
+    {"Panel Type": "left-sidebar-settings--bootstrap", "Field Label": "Version", "Field Name": "bootstrap", "Type": "select", "Default Value": "No Bootstrap"},
 
 
     # ── main ──
-    # {"Panel Type": "left-sidebar-settings--main", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
-    # {"Panel Type": "left-sidebar-settings--main", "Field Label": "", "Field Name": "", "Type": "text"},
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "", "Field Name": "repository", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "Site Name", "Field Name": "site_name", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "Domain", "Field Name": "domain", "Type": "text", "Default Value": ""},
@@ -162,10 +134,9 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "Teams", "Field Name": "teams", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "Helix Components Version", "Field Name": "helix_components_version", "Type": "text", "Default Value": ""},
 
-    # # ── metatags ──
-    # {"Panel Type": "left-sidebar-settings--metatags", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
-    # {"Panel Type": "left-sidebar-settings--metatags", "Field Label": "", "Field Name": "", "Type": "text"},
-    # {"Panel Type": "left-sidebar-settings--metatags", "Field Label": "", "Field Name": "repository", "Type": "text"},
+    # # -- left-sidebar-settings--website --
+    {"Panel Type": "left-sidebar-settings--website", "Field Label": "Site Type", "Field Name": "site_type", "Type": "select", "Default Value": "Website"},
+
 
 
     # # ── data-source ──
@@ -495,6 +466,7 @@ def extract_values(site_dir):
     # --- main ---
     MAIN = "left-sidebar-settings--main"
     values[(MAIN, "site_name", "")] = site_name
+    # values[(MAIN, "site_type", "")] = "Website"
     values[(MAIN, "domain", "")] = domain
     values[(MAIN, "brand", "")] = brand
     values[(MAIN, "country", "")] = country_code if country_code else country
@@ -556,6 +528,11 @@ def extract_values(site_dir):
     values[(SEO, "currency", "")] = ""
     values[(SEO, "audiences", "")] = ""
     values[(SEO, "lexicon_business_unit", "")] = ""
+
+    # -- website --
+    # custom_multiselect_single — match by Field Label since Field Name is shared
+    WEB = "left-sidebar-settings--website"
+    values[(WEB, "", "Site Type")] = "Website"
 
     # Print summary of detected values
     print(f"\nExtracted values from HTML:")
