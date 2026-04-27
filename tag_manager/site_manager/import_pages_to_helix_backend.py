@@ -283,6 +283,9 @@ def pick_first_li_with_non_empty_span(page, container_xpath: str, label: str) ->
 
         option.click()
         page.wait_for_timeout(WEBBUILDER_SHORT_WAIT_MS)
+        title_input = page.locator(f"xpath={PAGE_TITLE_XPATH}")
+        title_input.click()
+        page.wait_for_timeout(WEBBUILDER_SHORT_WAIT_MS)
         logger.info("Selected default %s: %s", label, text)
         return True
 

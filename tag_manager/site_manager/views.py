@@ -48,6 +48,9 @@ from dotenv import load_dotenv
 # Disable SSL warnings for sites with certificate issues
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# Initialize logger
+logger = logging.getLogger(__name__)
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -3080,6 +3083,33 @@ def _normalize_to_absolute_path(raw_path, fallback_path):
     return str(path.resolve())
 
 
+def _resolve_local_script_path(env_value, fallback_path):
+    """Use script overrides only when they remain inside the current Django project."""
+    fallback = Path(fallback_path).expanduser().resolve()
+    configured = (env_value or '').strip()
+    if not configured:
+        return str(fallback)
+
+    candidate = Path(configured).expanduser()
+    if not candidate.is_absolute():
+        candidate = Path(settings.BASE_DIR) / candidate
+
+    try:
+        resolved = candidate.resolve()
+    except Exception:
+        return str(fallback)
+
+    try:
+        resolved.relative_to(Path(settings.BASE_DIR).resolve())
+        return str(resolved)
+    except ValueError:
+        logger.warning(
+            "Ignoring external script override '%s' because it is outside BASE_DIR.",
+            resolved,
+        )
+        return str(fallback)
+
+
 def _is_checked(post_data, key, default=False):
     if post_data is None:
         return default
@@ -3098,11 +3128,11 @@ def _build_pages_import_defaults():
     default_manual_csv = project_root / 'manual_page_intervention.csv'
 
     return {
-        'converter_script_path': _normalize_to_absolute_path(
+        'converter_script_path': _resolve_local_script_path(
             os.getenv('HELIX_CONVERTER_SCRIPT_PATH'),
             default_converter_script,
         ),
-        'import_script_path': _normalize_to_absolute_path(
+        'import_script_path': _resolve_local_script_path(
             os.getenv('HELIX_IMPORT_SCRIPT_PATH'),
             default_import_script,
         ),
