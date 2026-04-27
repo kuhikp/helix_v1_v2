@@ -246,30 +246,6 @@ def webbuilder_login():
     time.sleep(8)
     print("Logged In on webbuilder")
 
-def normalize_title_for_compare(title):
-    if not title:
-        return ""
-    # Lowercase
-    title = title.lower().strip()
-
-    # Remove accents (é → e, à → a)
-    title = unicodedata.normalize("NFKD", title)
-    title = "".join(c for c in title if not unicodedata.combining(c))
-
-    # Remove site suffix if present
-    title = title.split("|")[0].strip()
-
-    # Replace spaces & underscores with hyphen
-    title = re.sub(r"[\s_]+", "-", title)
-
-    # Remove any remaining invalid characters
-    title = re.sub(r"[^a-z0-9\-]", "", title)
-
-    # Remove duplicate hyphens
-    title = re.sub(r"-{2,}", "-", title)
-
-    return title.strip("-")
-
 def remove_site_suffix(title):
     if not title:
         return ""
@@ -284,64 +260,75 @@ def load_gcma_map():
     ws = wb.active
 
     headers = [cell.value for cell in ws[1]]
-    title_idx = headers.index("Title")
+    path_idx = headers.index("HTML File Path")
     gcma_idx = headers.index("GCMA Code")
 
     gcma_map = {}
-
     for row in ws.iter_rows(min_row=2, values_only=True):
-        title = row[title_idx]
+        html_path = row[path_idx]
         gcma = row[gcma_idx]
 
-        if title and gcma:
-            gcma_map[title_map.get(normalize_title_for_compare(title))] = gcma.strip()
+        if not html_path or not gcma:
+            continue
 
+        slug = extract_title_from_excel_path(html_path)
+
+        if slug:
+            gcma_map[slug] = gcma.strip()
     return gcma_map
 
 def load_language_map_from_excel():
-    '''
-    Returns:
-    {'VIVRE MA DERMATITE ATOPIQUE': 'fr',
-     'Frontpage': 'en',
-    }
-    '''
+
     wb = load_workbook(Excel_File)
     ws = wb.active
 
     headers = [cell.value for cell in ws[1]]
-    title_idx = headers.index("Title")
+    path_idx = headers.index("HTML File Path")
     lang_idx = headers.index("Language")
 
     page_language_map = {}
 
     for row in ws.iter_rows(min_row=2, values_only=True):
-        title = row[title_idx]
+        html_path = row[path_idx]
         lang = row[lang_idx]
 
-        if title and lang:
-            page_language_map[title_map.get(normalize_title_for_compare(title))] = lang.strip().lower()
+        if not html_path or not lang:
+            continue
 
+        slug = extract_title_from_excel_path(html_path)
+
+        if slug:
+            page_language_map[slug] = lang.strip().lower()
     return page_language_map
 
+def normalize_excel_language(excel_lang,select_element):
+    
+    excel_lang = excel_lang.lower().strip()
 
-def normalize_excel_language(excel_lang):
-    '''
-    Converts:
-      fr_FR → fr
-      en_US → en
-      fr-ch → fr-ch
-    '''
-    return excel_lang.replace("_", "-").lower()
+    # ✅ Get all available option values from Webbuilder
+    available_values = {
+        option.get_attribute("value").lower()
+        for option in select_element.find_elements(By.TAG_NAME, "option")
+    }
+
+    # ✅ If full language exists, keep it
+    if excel_lang in available_values:
+        return excel_lang
+
+    # ✅ Otherwise, fallback to base language
+    base_lang = excel_lang.split("-")[0]
+    if base_lang in available_values:
+        return base_lang
+
+    # ❌ Nothing matches
+    return None
+
 
 # Locate and select language using Selenium select API
 def update_language_in_webbuilder(driver, wait, excel_language):
-    '''
-    Updates the Webbuilder language dropdown using Excel language value
-    '''
-    excel_language = normalize_excel_language(excel_language)
-
+    
     try:
-        # 1️⃣ Locate the <select> element
+        # ✅ Locate the <select>
         language_select_el = wait.until(
             EC.presence_of_element_located(
                 (By.CSS_SELECTOR, "select.form-control")
@@ -350,16 +337,23 @@ def update_language_in_webbuilder(driver, wait, excel_language):
 
         select = Select(language_select_el)
 
-        # 2️⃣ Select matching option by VALUE
-        select.select_by_value(excel_language)
+        # ✅ Normalize language (pt-br → pt)
+        normalized_lang = normalize_excel_language(
+            excel_language,
+            language_select_el
+        )
 
-        print(f"✅ Language set to: {excel_language}")
+        if not normalized_lang:
+            print(f"⚠️ Language '{excel_language}' not supported in Webbuilder")
+            return
+
+        select.select_by_value(normalized_lang)
+        print(f"✅ Language set to: {normalized_lang}")
 
     except NoSuchElementException:
-        print(f"⚠️ Language '{excel_language}' not found in Webbuilder list")
-    
+        print("❌ Language dropdown not found in Webbuilder")
 
-def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_language_map):
+def edit_page_setting_in_webbuilder(page_slug,gcma_code, page_language_map):
     print(f"✏️ Editing page in Webbuilder: {page_slug}")
     
     driver.get(INSTANCE_URL)
@@ -444,7 +438,7 @@ def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_la
     '''
 
     # Title has special character then enable option to remove special char from slug
-    if has_special_alphabets(original_title):
+    if has_special_alphabets(page_slug):
         print("✅ Title contains special alphabets")
         
        
@@ -506,10 +500,10 @@ def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_la
         gcma_input.send_keys(Keys.BACKSPACE)
 
         #check the GCMA code is present or not
-        if gcma_code.get(original_title):
+        if gcma_code.get(page_slug):
             # 5️⃣ Enter the new title
-            gcma_input.send_keys(gcma_code.get(original_title))
-            print(f"✅ GCMA Code updated successfully: {gcma_code.get(original_title)}")
+            gcma_input.send_keys(gcma_code.get(page_slug))
+            print(f"✅ GCMA Code updated successfully: {gcma_code.get(page_slug)}")
         else:
             print("⚠️ Empty GCMA Code received — nothing to update")
         # 6️⃣ Blur to commit the value (important for Vue)
@@ -517,19 +511,17 @@ def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_la
 
     except TimeoutException:
         print("❌ Could not locate the GCMA Code input field")
-
     #Update the Language of the pages
     wait = WebDriverWait(driver,5)
 
     # 🔹 Get language for this page from Excel
-    excel_language = page_language_map.get(original_title)
+    excel_language = page_language_map.get(page_slug)
     DEFAULT_LANGUAGE = "en"
     # ✅ FORCE default language if Excel is empty
     if not excel_language:
         excel_language = DEFAULT_LANGUAGE
         print("ℹ️ Language empty in Excel — defaulting to English (en)")
     update_language_in_webbuilder(driver, wait, excel_language)
-
     # Save the changes - wait for modal and try multiple selectors
     time.sleep(2)  # Wait for settings modal to fully open
     save_button = None
@@ -557,7 +549,7 @@ def edit_page_setting_in_webbuilder(page_slug, original_title,gcma_code, page_la
     time.sleep(2)
     return True
 
-def Seo_setting_update(seo_normalize_title,original_title,description_map,keyword_map,priority_map, changefreq_map):
+def Seo_setting_update(seo_normalize_title,description_map,keyword_map,priority_map, changefreq_map):
     
     driver.get(INSTANCE_URL)
     driver.execute_script("document.body.style.zoom='80%'")
@@ -635,12 +627,12 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
         Seotitle_input.send_keys(Keys.BACKSPACE)
 
         # 5️⃣ Enter the new title
-        Seotitle_input.send_keys(original_title)
+        Seotitle_input.send_keys(seo_normalize_title)
 
         # 6️⃣ Blur to commit the value (important for Vue)
         driver.execute_script("arguments[0].blur();", Seotitle_input)
 
-        print(f"✅ SEO Title updated successfully: {original_title}")
+        print(f"✅ SEO Title updated successfully: {seo_normalize_title}")
 
     except TimeoutException:
         print("❌ Could not locate the SEO Title input field")
@@ -660,9 +652,10 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
         seo_desc.send_keys(Keys.COMMAND, "a")
         seo_desc.send_keys(Keys.BACKSPACE)
 
-        if description_map.get(original_title):
+        description = description_map.get(seo_normalize_title)
+        if description:
             # ✅ Enter new description
-            seo_desc.send_keys(description_map.get(original_title))
+            seo_desc.send_keys(description)
             print("✅ SEO Description updated")
         else:
             print("⚠️ Empty description received — nothing to update")
@@ -690,9 +683,9 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
         seo_keywords_input.send_keys(Keys.COMMAND, "a")
         seo_keywords_input.send_keys(Keys.BACKSPACE)
 
-        if keyword_map.get(original_title):
+        if keyword_map.get(seo_normalize_title):
             # ✅ Enter SEO Keywords
-            seo_keywords_input.send_keys(keyword_map.get(original_title))
+            seo_keywords_input.send_keys(keyword_map.get(seo_normalize_title))
             print("✅ SEO Keywords updated")
         else:
             print("⚠️ Empty SEO Keywords received — nothing to update")
@@ -704,7 +697,7 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
 
     # Update Priority
     
-    priority_value = priority_map.get(original_title)
+    priority_value = priority_map.get(seo_normalize_title)
 
     if priority_value:
         try:
@@ -729,7 +722,7 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
                     continue
 
             if not priority_input:
-                print(f"❌ Could not locate Priority slider for: {original_title}")
+                print(f"❌ Could not locate Priority slider for: {seo_normalize_title}")
                 return
 
             driver.execute_script(
@@ -771,15 +764,16 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
             print(f"❌ Error dragging Priority slider: {e}")
 
     else:
-        print(f"⚠️ No priority found for: {original_title}")
+        print(f"⚠️ No priority found for: {seo_normalize_title}")
 
     # Update Change Frequency (default to 'daily' if not found in Excel)
-    changefreq_value = changefreq_map.get(original_title)
-    if changefreq_value:
+    
+    if changefreq_map:
+        changefreq_value = next(iter(changefreq_map.values()))
         print(f"📋 Change Frequency from Excel: {changefreq_value}")
     else:
         changefreq_value = "daily"
-        print(f"ℹ️ No change frequency in Excel for: {original_title} — using default: daily")
+        print(f"ℹ️ No change frequency in Excel for: {seo_normalize_title} — using default: daily")
 
     try:
         freq_select_el = None
@@ -805,7 +799,7 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
                 continue
 
         if freq_select_el is None:
-            print(f"❌ Could not locate the Change Frequency dropdown for: {original_title}")
+            print(f"❌ Could not locate the Change Frequency dropdown for: {seo_normalize_title}")
         else:
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", freq_select_el)
             time.sleep(0.3)
@@ -842,73 +836,61 @@ def Seo_setting_update(seo_normalize_title,original_title,description_map,keywor
     return True
 
 def load_description_map_from_excel():
-    '''
-    Returns:
-    {
-      'VIVRE MA DERMATITE ATOPIQUE': 'Meta description text...',
-      'Frontpage': 'Homepage description...',
-    }
-    '''
+    
     wb = load_workbook(Excel_File)
     ws = wb.active
 
     headers = [cell.value for cell in ws[1]]
-    title_idx = headers.index("Title")
+    path_idx = headers.index("HTML File Path")
     desc_idx = headers.index("Description")
 
     description_map = {}
 
     for row in ws.iter_rows(min_row=2, values_only=True):
-        title = row[title_idx]
+        html_path = row[path_idx]
         desc = row[desc_idx]
 
-        if title and desc:
-            original_title = title_map.get(normalize_title_for_compare(title))
-            description_map[original_title] = desc.strip()
+        if not html_path or not desc:
+            continue
+
+        slug = extract_title_from_excel_path(html_path)
+
+        if slug:
+            description_map[slug] = desc.strip()
 
     return description_map
 
 def load_keyword_map_from_excel():
-    '''
-    Returns:
-    {
-      'VIVRE MA DERMATITE ATOPIQUE': 'eczema, skin care',
-      'Frontpage': 'homepage, eczee',
-    }
-    '''
+    
     wb = load_workbook(Excel_File)
     ws = wb.active
 
     headers = [cell.value for cell in ws[1]]
-    title_idx = headers.index("Title")
+    path_idx = headers.index("HTML File Path")
     keyword_idx = headers.index("Keywords")
 
     keyword_map = {}
 
     for row in ws.iter_rows(min_row=2, values_only=True):
-        title = row[title_idx]
+        html_path = row[path_idx]
         keywords = row[keyword_idx]
 
-        if title and keywords:
-            original_title = title_map.get(
-                normalize_title_for_compare(title)
-            )
-            if original_title:
-                keyword_map[original_title] = normalize_keywords(keywords)
+        if not html_path or not keywords:
+            continue
+
+        slug = extract_title_from_excel_path(html_path)
+
+        if slug:
+            keyword_map[slug] = normalize_keywords(keywords)
     return keyword_map
 
 def load_sitemap_map():
-    '''
-    Reads sitemap_data.xlsx and returns two dicts keyed by original page title.
-    Similar to load_gcma_map() but reads Priority and Change Frequency.
-        priority_map   -> { original_title: "0.5" }
-        changefreq_map -> { original_title: "daily" }
-    '''
+    
     wb_s = load_workbook(Sitemap_Excel_File)
     ws_s = wb_s.active
 
     headers = [cell.value for cell in ws_s[1]]
-    title_idx      = headers.index("Title")
+    path_idx       = headers.index("URL (loc)")
     priority_idx   = headers.index("Priority")
     changefreq_idx = headers.index("Change Frequency")
 
@@ -916,48 +898,31 @@ def load_sitemap_map():
     changefreq_map = {}
 
     for row in ws_s.iter_rows(min_row=2, values_only=True):
-        raw_title  = row[title_idx]
+        html_path  = row[path_idx]
         priority   = row[priority_idx]
         changefreq = row[changefreq_idx]
 
-        if raw_title:
-            clean_title = remove_site_suffix(str(raw_title))
-            normalized  = normalize_title_for_compare(clean_title)
-            key = title_map.get(normalized, clean_title)
+        if not html_path:
+            continue
 
-            if priority is not None:
-                priority_map[key] = str(priority).strip()
-            if changefreq:
-                changefreq_map[key] = str(changefreq).strip()
+        slug = extract_title_from_excel_path(html_path)
+
+        if not slug:
+            continue
+
+        if priority is not None:
+            priority_map[slug] = str(priority).strip()
+
+        if changefreq:
+            changefreq_map[slug] = str(changefreq).strip()
 
     print(f"📘 Loaded {len(priority_map)} priority entries from sitemap_data.xlsx")
     print(f"📘 Loaded {len(changefreq_map)} changefreq entries from sitemap_data.xlsx")
+
     return priority_map, changefreq_map
 
 ##################### Load Title from the Excel ####################################
-
-def load_titles_from_excel():
-    wb = load_workbook(Excel_File)
-    ws = wb.active
-
-    headers = [cell.value for cell in ws[1]]
-    title_index = headers.index(EXCEL_TITLE_COLUMN)
-
-    title_map = {}  
-    # normalized_title → original_title_without_suffix
-
-    for row in ws.iter_rows(min_row=2, values_only=True):
-        raw_title = row[title_index]
-        if raw_title:
-            clean_title = remove_site_suffix(raw_title)
-            normalized = normalize_title_for_compare(clean_title)
-            title_map[normalized] = clean_title
-
-    print(f"📘 Loaded {len(title_map)} titles from Excel", title_map)
-    print("********************************* Page Settings Started ******************************************")
-    return title_map
-
-def extract_title_from_html_path(html_path):
+def extract_title_from_excel_path(html_path):
 
     html_path = html_path.replace("\\", "/")
 
@@ -966,6 +931,35 @@ def extract_title_from_html_path(html_path):
 
     # fallback: filename without extension
     return os.path.splitext(os.path.basename(html_path))[0]
+    print("********************************* Page Settings Started ******************************************")
+
+def load_titles_from_excel_by_path(excel_file):
+    
+    wb = load_workbook(excel_file)
+    ws = wb.active
+
+    headers = [cell.value for cell in ws[1]]
+    path_idx  = headers.index("HTML File Path")
+    title_idx = headers.index("Title")
+
+    title_map = {}
+
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        html_path = row[path_idx]
+        excel_title = row[title_idx]
+
+        if not html_path:
+            continue
+
+        page_slug = extract_title_from_excel_path(html_path)
+        clean_title = remove_site_suffix(excel_title)
+
+        if page_slug and clean_title:
+            title_map[page_slug] = clean_title
+
+    print(f"📘 Loaded {len(title_map)} titles from Excel (via file path) {title_map}")
+    print("********************************* Page Settings Started ******************************************")
+    return title_map
 
 def process_html_pages_by_path(html_root_folder,title_map, gcma_map, page_language_map):
     print("\n✅ PROCESSING HTML PAGES BY FILE PATH for Page Settings")
@@ -979,11 +973,24 @@ def process_html_pages_by_path(html_root_folder,title_map, gcma_map, page_langua
             html_path = os.path.join(root, filename)
 
             # ✅ Extract title from path
-            page_title = extract_title_from_html_path(html_path)
+            page_title = extract_title_from_excel_path(html_path)
 
             if not page_title:
                 continue
-            
+
+            normalized_page_title = extract_title_from_excel_path(html_path)
+            original_excel_title = title_map[normalized_page_title]
+            page_found = edit_page_setting_in_webbuilder(
+                page_title,
+                gcma_map,
+                page_language_map
+            )
+            if not page_found:
+                print(f"❌ Page not found in Webbuilder: {page_title}")
+                print("➡️ Skipping and moving to next page\n")
+                print("*********************************** Page Setting New page *************************************")
+                continue
+            '''
             normalized_page_title = normalize_title_for_compare(page_title)
 
             if normalized_page_title in title_map:
@@ -1005,7 +1012,7 @@ def process_html_pages_by_path(html_root_folder,title_map, gcma_map, page_langua
             else:
                 print(f"❌ No Excel mapping for page: {page_title}")
                 print("*********************************** Page Setting New page *************************************")
-
+            '''
     print("\n✅ PAGES SETTINGS COMPLETED FOR ALL PAGES")
 
 def process_seo_settings_for_all_pages(html_root_folder,title_map,description_map,keyword_map,priority_map, changefreq_map):
@@ -1020,11 +1027,26 @@ def process_seo_settings_for_all_pages(html_root_folder,title_map,description_ma
             html_path = os.path.join(root, filename)
 
             # ✅ Extract title from path
-            page_title = extract_title_from_html_path(html_path)
+            page_title = extract_title_from_excel_path(html_path)
 
             if not page_title:
                 continue
-            
+
+            normalized_page_title = extract_title_from_excel_path(html_path)
+            original_excel_title = title_map[normalized_page_title]
+            page_found = Seo_setting_update(
+                page_title,
+                description_map,
+                keyword_map,
+                priority_map,
+                changefreq_map
+            )
+            if not page_found:
+                print(f"❌ Page not found in Webbuilder: {page_title}")
+                print("➡️ Skipping and moving to next page\n")
+                print("*********************************** SEO Setting New page *************************************")
+                continue
+            '''
             normalized_page_title = normalize_title_for_compare(page_title)
 
             if normalized_page_title in title_map:
@@ -1044,12 +1066,12 @@ def process_seo_settings_for_all_pages(html_root_folder,title_map,description_ma
             else:
                 print(f"❌ No Excel mapping for page: {page_title}")
                 print("*********************************** SEO Setting New page *************************************")
-
+            '''
     print("\n✅ SEO SETTINGS COMPLETED FOR ALL PAGES")
 
-'''
-##################### Compare the JSON title with Excel title##############################
 
+##################### Compare the JSON title with Excel title##############################
+'''
 def process_json_pages(title_map,gcma_map,page_language_map):
     for filename in os.listdir(Pages):
         if not filename.endswith(".json"):
@@ -1119,18 +1141,22 @@ def load_404_from_excel_by_path(excel_file):
     title_idx = headers.index("Title")
     desc_idx = headers.index("Description")
 
+    ERROR_PATHS = ("/404/index.html", "/errors/404.html")
     for row in ws.iter_rows(min_row=2, values_only=True):
+        raw_path = row[path_idx] or ""
         html_path = (row[path_idx] or "").replace("\\", "/").lower()
 
         # ✅ Match paths like /404/index.html
-        if "/404/index.html" in html_path:
+        if html_path.endswith(ERROR_PATHS):
             return {
+                "path":raw_path,
                 "title": (row[title_idx] or "").strip(),
                 "description": (row[desc_idx] or "").strip()
             }
 
     # ✅ Fallback if not found
     return {
+        "path":"",
         "title": "",
         "description": ""
     }
@@ -1140,14 +1166,18 @@ def update_404_page_in_webbuilder():
     error_404_data = load_404_from_excel_by_path(Excel_File)
     print("****************************** 404 Page Settings *************************")
     print("404 Error page mapping data:", error_404_data)
-    excel_title = (title_map.get(normalize_title_for_compare(error_404_data.get("title"))) or "").strip()
+    error_path = error_404_data.get("path")
+    excel_title = ((error_404_data.get("title")) or "").strip()
     excel_description = (error_404_data.get("description") or "").strip()
 
-    # ✅ Safety: do NOT update if title is missing
-    if not excel_title:
-        print("⚠️ 404 title is empty in Excel — skipping 404 page update")
+    # ✅ Safety: do NOT update if error path is missing
+    
+    if not error_path:
+        print("⚠️ No 404 page path found in Excel — skipping")
         return
 
+    # ✅ PRINT THE ERROR PATH
+    print(f"🚨 Updating 404 page for path: {error_path}")
     print(f"✅ 404 Excel Title      : {excel_title}")
     print(f"✅ 404 Excel Description: {excel_description or '[EMPTY — SKIPPED]'}")
 
@@ -1262,7 +1292,7 @@ if __name__ == "__main__":
     extract_sitemap_to_excel(sitemap_path)
     webbuilder_login()
     global title_map,gcma_map,normalized_page_title, page_slug
-    title_map = load_titles_from_excel()
+    title_map = load_titles_from_excel_by_path(Excel_File)
     gcma_map = load_gcma_map()
     page_language_map = load_language_map_from_excel()
     description_map = load_description_map_from_excel()
