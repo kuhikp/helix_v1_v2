@@ -512,6 +512,27 @@ try:
                         except:
                             select_elem = None
                     if not select_elem:
+                        # Try to find by label and then locate the select in the same section
+                        label_text = csv_row.get('Field Label', '').strip()
+                        if label_text:
+                            try:
+                                sections = driver.find_elements(By.XPATH, "//section | //div[contains(@class, 'field') or contains(@class, 'form-group')]")
+                                norm_label = label_text.lower().replace(' ', '').replace('*', '')
+                                for section in sections:
+                                    try:
+                                        label_elem = section.find_element(By.XPATH, ".//label")
+                                        label_val = label_elem.text.strip()
+                                        norm_label_val = label_val.lower().replace(' ', '').replace('*', '')
+                                        if norm_label in norm_label_val or norm_label_val in norm_label:
+                                            candidate_selects = section.find_elements(By.TAG_NAME, "select")
+                                            if candidate_selects:
+                                                select_elem = candidate_selects[0]
+                                                break
+                                    except Exception:
+                                        continue
+                            except Exception:
+                                pass
+                    if not select_elem:
                         selects = driver.find_elements(By.TAG_NAME, "select")
                         norm_label = csv_row.get('Field Label', field_name).lower().replace(' ', '').replace('*', '')
                         best_score = 0
@@ -532,6 +553,7 @@ try:
                         if best_elem:
                             select_elem = best_elem
                     if select_elem:
+                        print(f"✓ Found select element for '{field_name}' (label: '{label_text}')")
                         options = select_elem.find_elements(By.TAG_NAME, "option")
                         matched = False
                         value_norm = value.strip().lower().replace(' ', '')
@@ -540,6 +562,7 @@ try:
                             if opt_text_norm == value_norm:
                                 opt.click()
                                 matched = True
+                                print(f"✓ Selected option '{opt.text.strip()}' for '{field_name}'")
                                 break
                         if not matched:
                             print(f"❌ No exact match found for select '{field_name}' with value '{value}'. Field will not be changed. Available options: {[opt.text for opt in options]}")
@@ -555,7 +578,9 @@ try:
                                 pass
                             else:
                                 print(f"❌ Verification failed: '{field_name}' is set to '{selected_option}', expected '{value}'.")
-                        continue
+                    else:
+                        print(f"❌ Could not find select element for field '{field_name}' (label: '{label_text}')")
+                    continue
                 elif field_type == 'custom_multiselect':
                     try:
                         driver.execute_script("var iframe=document.querySelector('iframe.intercom-launcher-frame');if(iframe){iframe.style.display='none';}")
@@ -759,6 +784,7 @@ try:
                         if label_elem:
                             try:
                                 multiselect_div = label_elem.find_element(By.XPATH, "following-sibling::div[contains(@class, 'multiselect')]")
+
                             except Exception:
                                 parent_elem = label_elem.find_element(By.XPATH, '..')
                                 siblings = parent_elem.find_elements(By.XPATH, "./*")
