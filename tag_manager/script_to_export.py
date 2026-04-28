@@ -364,10 +364,10 @@ def extract_values(site_dir):
 
     # Enable GRV
     enable_grv = "unchecked"
-    # for _, c in all_contents:
-    #     if "pfizer_grv_nextgen_sso_url" in c:
-    #         enable_grv = "checked"
-    #         break
+    for _, c in all_contents:
+        if "pfizer_grv_nextgen_sso_url" in c:
+            enable_grv = "checked"
+            break
 
     # Enable Tooltips
     enable_tooltips = "unchecked"

@@ -469,6 +469,32 @@ try:
                                     if initial_state != target_state:
                                         elem.click()
                                         time.sleep(1)
+                                        
+                                        # Check if a popup appeared (e.g., for GRV checkbox)
+                                        try:
+                                            popup = driver.find_element(By.CLASS_NAME, "swal2-actions")
+                                            if popup.is_displayed():
+                                                # Look for the "Public" button in the popup
+                                                try:
+                                                    public_button = popup.find_element(By.XPATH, ".//button[contains(@class, 'swal2-cancel') and contains(@class, 'swal2-styled') and (contains(text(), 'Public') or contains(text(), 'public'))]")
+                                                    if public_button.is_displayed() and public_button.is_enabled():
+                                                        public_button.click()
+                                                        print(f"✓ Clicked 'Public' button in popup for '{field_name}'")
+                                                        time.sleep(1)
+                                                except Exception as btn_e:
+                                                    # Try alternate selector
+                                                    try:
+                                                        public_button = driver.find_element(By.XPATH, "//div[contains(@class, 'swal2-actions')]//button[contains(@class, 'swal2-cancel') and (contains(text(), 'Public') or contains(text(), 'public'))]")
+                                                        if public_button.is_displayed() and public_button.is_enabled():
+                                                            public_button.click()
+                                                            print(f"✓ Clicked 'Public' button in popup for '{field_name}'")
+                                                            time.sleep(1)
+                                                    except Exception:
+                                                        print(f"⚠️ Popup appeared but could not find 'Public' button for '{field_name}'")
+                                        except Exception:
+                                            # No popup appeared, continue normally
+                                            pass
+                                        
                                         driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", elem)
                                         driver.execute_script("arguments[0].blur();", elem)
                                         time.sleep(1)
@@ -476,6 +502,22 @@ try:
                                     if final_state != target_state:
                                         elem.click()
                                         time.sleep(1)
+                                        
+                                        # Check for popup again on second click attempt
+                                        try:
+                                            popup = driver.find_element(By.CLASS_NAME, "swal2-actions")
+                                            if popup.is_displayed():
+                                                try:
+                                                    public_button = popup.find_element(By.XPATH, ".//button[contains(@class, 'swal2-cancel') and contains(@class, 'swal2-styled') and (contains(text(), 'Public') or contains(text(), 'public'))]")
+                                                    if public_button.is_displayed() and public_button.is_enabled():
+                                                        public_button.click()
+                                                        print(f"✓ Clicked 'Public' button in popup for '{field_name}' (2nd attempt)")
+                                                        time.sleep(1)
+                                                except Exception:
+                                                    pass
+                                        except Exception:
+                                            pass
+                                        
                                         driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", elem)
                                         driver.execute_script("arguments[0].blur();", elem)
                                         time.sleep(1)
@@ -487,6 +529,22 @@ try:
                                     try:
                                         driver.execute_script("arguments[0].click();", elem)
                                         time.sleep(1)
+                                        
+                                        # Check for popup after JS click
+                                        try:
+                                            popup = driver.find_element(By.CLASS_NAME, "swal2-actions")
+                                            if popup.is_displayed():
+                                                try:
+                                                    public_button = popup.find_element(By.XPATH, ".//button[contains(@class, 'swal2-cancel') and contains(@class, 'swal2-styled') and (contains(text(), 'Public') or contains(text(), 'public'))]")
+                                                    if public_button.is_displayed() and public_button.is_enabled():
+                                                        public_button.click()
+                                                        print(f"✓ Clicked 'Public' button in popup for '{field_name}' (JS click)")
+                                                        time.sleep(1)
+                                                except Exception:
+                                                    pass
+                                        except Exception:
+                                            pass
+                                        
                                         driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", elem)
                                         driver.execute_script("arguments[0].blur();", elem)
                                         time.sleep(1)
