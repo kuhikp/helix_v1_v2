@@ -462,11 +462,8 @@ class PfizerWebBuilderUploader:
         except Exception as e:
             print(f"  - Error handling popup: {e}")
             # Continue anyway, popup handling is optional
-    def copy_files_from_httrack(self, source_folder='css'):
 
     def copy_files_from_httrack(self, source_folder='css'):
-
-    
         try:
             # Define source and destination paths
             base_dir = os.path.dirname(os.path.abspath(__file__))
