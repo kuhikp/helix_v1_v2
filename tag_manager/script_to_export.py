@@ -136,6 +136,8 @@ TEMPLATE = [
 
     # # -- left-sidebar-settings--website --
     {"Panel Type": "left-sidebar-settings--website", "Field Label": "Site Type", "Field Name": "site_type", "Type": "select", "Default Value": "Website"},
+    {"Panel Type": "left-sidebar-settings--website", "Field Label": "Edison Lite Site ID", "Field Name": "repository", "Type": "text", "Default Value": "   "},
+
 
 
 
@@ -533,6 +535,7 @@ def extract_values(site_dir):
     # custom_multiselect_single — match by Field Label since Field Name is shared
     WEB = "left-sidebar-settings--website"
     values[(WEB, "", "Site Type")] = "Website"
+    values[(WEB, "repository", "")] = "   "  # 3 spaces to trigger "value provided but empty" warning in WebBuilder
 
     # Print summary of detected values
     print(f"\nExtracted values from HTML:")
