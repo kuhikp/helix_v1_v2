@@ -99,6 +99,7 @@ try:
             field_name = csv_row['Field Name']
             field_type = csv_row['Type']
             value = csv_row['Value']
+            label_text = csv_row.get('Field Label', field_name)
             
             # Skip if no value is present
             if not value or value.strip() == '':
@@ -111,7 +112,7 @@ try:
             label_text = csv_row.get('Field Label', '').strip().replace('\n', ' ').replace('\r', ' ')
             if not field_name and not label_text:
                 continue
-            if field_name in ALWAYS_SKIP_FIELDS and field_type == 'text':
+            if field_name in ALWAYS_SKIP_FIELDS and field_type == 'text' and label_text != 'Edison Lite Site ID':
                 continue
             if field_type == 'hidden':
                 try:
