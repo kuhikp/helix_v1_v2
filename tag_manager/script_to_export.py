@@ -133,6 +133,8 @@ TEMPLATE = [
 
     # # -- left-sidebar-settings--website --
     {"Panel Type": "left-sidebar-settings--website", "Field Label": "Site Type", "Field Name": "site_type", "Type": "select", "Default Value": "Website"},
+    {"Panel Type": "left-sidebar-settings--website", "Field Label": "Edison Lite Site ID", "Field Name": "repository", "Type": "text", "Default Value": "   "},
+
 
     # # ── data-source ──
     # {"Panel Type": "left-sidebar-settings--data-source", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
@@ -357,10 +359,10 @@ def extract_values(site_dir):
 
     # Enable GRV
     enable_grv = "unchecked"
-    # for _, c in all_contents:
-    #     if "pfizer_grv_nextgen_sso_url" in c:
-    #         enable_grv = "checked"
-    #         break
+    for _, c in all_contents:
+        if "pfizer_grv_nextgen_sso_url" in c:
+            enable_grv = "checked"
+            break
 
     # Enable Tooltips
     enable_tooltips = "unchecked"
@@ -530,6 +532,7 @@ def extract_values(site_dir):
     # custom_multiselect_single — match by Field Label since Field Name is shared
     WEB = "left-sidebar-settings--website"
     values[(WEB, "", "Site Type")] = "Website"
+    values[(WEB, "repository", "")] = "   "  # 3 spaces to trigger "value provided but empty" warning in WebBuilder
 
     # Print summary of detected values
     print(f"\nExtracted values from HTML:")

@@ -269,7 +269,41 @@ class PfizerWebBuilderUploader:
             raise
 
     def check_file_exists(self, filename):
-        """Check if a file already exists in the WebBuilder file manager"""
+        """Check if a file already exists (optimized)"""
+        try:
+            # Find the file search input field
+            search_input = self.wait.until(
+                EC.presence_of_element_located((By.ID, "file-search-text-input"))
+            )
+            
+            # Clear and search
+            search_input.clear()
+            search_input.send_keys(filename)
+            
+            # Reduced wait time
+            time.sleep(1.5)
+            
+            # Check if file exists
+            try:
+                file_element = self.driver.find_element(
+                    By.XPATH, f"//span[@class='filename' and text()='{filename}']"
+                )
+                if file_element:
+                    print(f"  ⏭️  {filename} exists - skipping")
+                    search_input.clear()
+                    time.sleep(0.3)
+                    return True
+            except NoSuchElementException:
+                pass
+            
+            # Clear search
+            search_input.clear()
+            time.sleep(0.3)
+            return False
+            
+        except Exception as e:
+            print(f"  - Error checking {filename}: {e}")
+            return False       
         try:
             print(f"  - Checking if file '{filename}' already exists...")
             
@@ -428,9 +462,8 @@ class PfizerWebBuilderUploader:
         except Exception as e:
             print(f"  - Error handling popup: {e}")
             # Continue anyway, popup handling is optional
-    def copy_files_from_httrack(self, source_folder='css'):
 
-    
+    def copy_files_from_httrack(self, source_folder='css'):
         try:
             # Define source and destination paths
             base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -486,109 +519,107 @@ class PfizerWebBuilderUploader:
             print(f"❌ Error copying files: {e}")
             return 0, 0
       
-    def upload_file(self, file_path):
-        """Upload a single file"""
+    def upload_batch(self, file_paths, fast_mode=True):
+        """Upload a batch of up to 10 files at once"""
         try:
-            print(f"Step 6: Starting upload for {file_path.name}...")
+            file_names = [f.name for f in file_paths]
+            print(f"Uploading batch of {len(file_paths)} files: {', '.join(file_names)}")
             
-            # Wait for page to be stable before starting
-            time.sleep(2)
+            # Small initial wait
+            time.sleep(0.5 if fast_mode else 2)
             
             # Click "Add New File" button
-            print("  - Clicking 'Add New File' button...")
             add_file_button = self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Add New File') or contains(@class, 'add-file') or contains(@aria-label, 'Add New File')]"))
             )
             if not self.safe_click(add_file_button):
                 raise WebDriverException("Failed to click 'Add New File' button")
-            time.sleep(2)
+            
+            # Wait after Add New File
+            time.sleep(0.5 if fast_mode else 2)
             
             # Click "Browse Files" button
-            print("  - Clicking 'Browse Files' button...")
             browse_button = self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'browse files') or contains(text(), 'Browse Files') or contains(@class, 'browse')]"))
             )
             if not self.safe_click(browse_button):
                 raise WebDriverException("Failed to click 'Browse Files' button")
-            time.sleep(1)
             
-            # Find file input and upload file
-            print(f"  - Selecting file: {file_path.name}")
+            # Wait after Browse
+            time.sleep(0.3 if fast_mode else 1)
+            
+            # Find file input and send all file paths at once (newline-separated for multi-select)
             file_input = self.wait.until(
                 EC.presence_of_element_located((By.XPATH, "//input[@type='file']"))
             )
-            file_input.send_keys(str(file_path.absolute()))
+            all_paths = "\n".join(str(f.absolute()) for f in file_paths)
+            file_input.send_keys(all_paths)
             
-            # Handle potential "Large File Upload" popup that appears after file selection
+            # Handle potential "Large File Upload" popup
             self.handle_large_file_popup()
             
-            time.sleep(2)
+            # Wait before Save
+            time.sleep(0.5 if fast_mode else 2)
             
             # Click Save button
-            print("  - Clicking 'Save' button...")
             save_button = self.wait.until(
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Save') or contains(@class, 'save')]"))
             )
             if not self.safe_click(save_button):
                 raise WebDriverException("Failed to click 'Save' button")
-            time.sleep(1)
             
-            # Wait for upload to complete
-            print("  - Waiting for upload to complete...")
-            time.sleep(5)
+            # Wait for upload to complete (longer for batch)
+            time.sleep(3 if fast_mode else 5)
             
-            print(f"✓ Successfully uploaded: {file_path.name}")
-            return True
+            print(f"✓ Uploaded batch: {', '.join(file_names)}")
+            return len(file_paths), 0
             
         except Exception as e:
-            print(f"✗ Error uploading {file_path.name}: {e}")
-            return False
-    
-    def upload_all_files(self):
-        """Upload all files from the file folder"""
+            print(f"✗ Error uploading batch: {e}")
+            return 0, len(file_paths)
+        
+    def upload_all_files_in_batches(self, batch_size=10, pause_between_batches=3, fast_mode=True):
+        """Upload all files in batches of up to 10 files at a time"""
         files = self.get_files_to_upload()
+        total_files = len(files)
+
         successful_uploads = 0
         failed_uploads = 0
-        skipped_files = 0
-        
-        print(f"\n=== Starting upload process for {len(files)} files ===")
-        print("Checking for existing files to avoid duplicates...")
-        
-        for i, file_path in enumerate(files, 1):
-            print(f"\n--- Processing file {i}/{len(files)}: {file_path.name} ---")
-            
+
+        # WebBuilder supports max 10 files per upload
+        if batch_size <= 0 or batch_size > 10:
+            batch_size = 10
+
+        total_batches = (total_files + batch_size - 1) // batch_size
+        print(f"\n=== Batch upload: {total_files} files, {total_batches} batches of {batch_size} ===")
+
+        for batch_index in range(total_batches):
+            start = batch_index * batch_size
+            end = min(start + batch_size, total_files)
+            batch_files = files[start:end]
+
+            print(f"\n=== Batch {batch_index + 1}/{total_batches} ({len(batch_files)} files) ===")
+
             try:
-                # Check if file already exists
-                if self.check_file_exists(file_path.name):
-                    skipped_files += 1
-                    print(f"⏭️ Skipped {file_path.name} (already exists)")
-                    continue
-                
-                # File doesn't exist, proceed with upload
-                if self.upload_file(file_path):
-                    successful_uploads += 1
-                else:
-                    failed_uploads += 1
-                    
-                # Small delay between uploads
-                if i < len(files):
-                    print("  - Waiting before next upload...")
-                    time.sleep(3)
-                    
+                succeeded, failed = self.upload_batch(batch_files, fast_mode=fast_mode)
+                successful_uploads += succeeded
+                failed_uploads += failed
             except Exception as e:
-                print(f"✗ Failed to process {file_path.name}: {e}")
-                failed_uploads += 1
-                continue
-        
+                print(f"✗ Batch {batch_index + 1} failed: {e}")
+                failed_uploads += len(batch_files)
+
+            # Pause between batches
+            if batch_index < total_batches - 1:
+                print(f"Waiting {pause_between_batches}s before next batch...")
+                time.sleep(pause_between_batches)
+
         print("\n=== Upload Summary ===")
-        print(f"Total files processed: {len(files)}")
-        print(f"Skipped files (already exist): {skipped_files}")
+        print(f"Total files processed: {total_files}")
         print(f"Successful uploads: {successful_uploads}")
         print(f"Failed uploads: {failed_uploads}")
-        print(f"Time saved by skipping existing files: ~{skipped_files * 2} minutes")
-        
-        return successful_uploads, failed_uploads, skipped_files
-    
+
+        return successful_uploads, failed_uploads
+
     def close(self):
         """Close the browser"""
         if self.driver:
@@ -645,13 +676,16 @@ def main():
         # Navigate to file manager
         uploader.navigate_to_file_manager()
         
-        # Upload all files
-        successful, failed, skipped = uploader.upload_all_files()
-        
+        # Upload all files in batches of 10
+        batch_size = int(os.getenv("UPLOAD_BATCH_SIZE", "10"))
+        pause_between_batches = int(os.getenv("BATCH_PAUSE_SECONDS", "5"))
+
+        successful, failed = uploader.upload_all_files_in_batches(
+            batch_size=batch_size,
+            pause_between_batches=pause_between_batches
+        )        
         if failed == 0 and successful > 0:
-            print("\n🎉 All files processed successfully!")
-        elif skipped > 0 and failed == 0:
-            print(f"\n✅ Process completed! {skipped} files were already uploaded.")
+            print("\n🎉 All files uploaded successfully!")
         else:
             print(f"\n⚠️  Upload completed with {failed} failures.")
         
