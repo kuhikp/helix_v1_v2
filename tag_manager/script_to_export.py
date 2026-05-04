@@ -94,16 +94,24 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "site_description", "Type": "textarea", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "site_keywords", "Type": "textarea", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Currency", "Field Name": "currency", "Type": "select", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Type *", "Field Name": "audiences", "Type": "select", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "audience_specialties[]", "Type": "text", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_therapeutic_areas[]", "Type": "text", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_indications[]", "Type": "text", "Default Value": ""},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Type *", "Field Name": "audiences", "Type": "select", "Default Value": "External Organization"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Subtype *", "Field Name": "audience_specialties", "Type": "select", "Default Value": "Administrative Staff"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Therapeutic Area *", "Field Name": "lexicon_therapeutic_areas[]", "Type": "select", "Default Value": "Anesthesia"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Subtype *", "Field Name": "audience_specialties[]", "Type": "text", "Default Value": "Administrative Staff"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Therapeutic Area *", "Field Name": "lexicon_therapeutic_areas[]", "Type": "text", "Default Value": "Anesthesia"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Indications *", "Field Name": "lexicon_indications[]", "Type": "text", "Default Value": "Achondroplasia"},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Business Unit *", "Field Name": "lexicon_business_unit", "Type": "select", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_brands[]", "Type": "custom_multiselect", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "brands[]", "Type": "custom_multiselect", "Default Value": ""},
+<<<<<<< Updated upstream
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "audience_specialties[]", "Type": "custom_multiselect", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_indications[]", "Type": "custom_multiselect", "Default Value": ""},
+=======
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Subtype *", "Field Name": "audience_specialties[]", "Type": "custom_multiselect", "Default Value": "Administrative Staff"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Therapeutic Area *", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": "Anesthesia"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Indications *", "Field Name": "lexicon_indications[]", "Type": "custom_multiselect", "Default Value": "Achondroplasia"},
+>>>>>>> Stashed changes
 
     # # ── external-link-manager ──
     {"Panel Type": "left-sidebar-settings--external-link-manager", "Field Label": "Enabled?", "Field Name": "enabled", "Type": "checkbox", "Default Value": "unchecked"},
