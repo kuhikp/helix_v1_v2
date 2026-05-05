@@ -1664,7 +1664,6 @@ def process_batch_complexity_update(session_key):
             })
             session['batch_complexity_progress'] = progress
             session.save()
-        
         # Mark as completed
         progress = session.get('batch_complexity_progress', {})
         progress.update({
@@ -2237,6 +2236,7 @@ def convert_block_helix(request, site_id):
         return JsonResponse({'status': 'error', 'message': 'Could not read status file.'})
 
 
+@login_required
 def block_import_start(request, site_id):
     """
     Step C: Actual block import (Playwright automation).
@@ -2245,6 +2245,19 @@ def block_import_start(request, site_id):
         threading.Thread(target=run_import_block, args=(site_id,)).start()
         return JsonResponse({'status': 'started', 'message': 'Block import is in progress.'})
     return render(request, 'site_manager/import_block.html', {'site_id': site_id})
+
+
+@login_required
+def check_convert_block_helix_status(request, site_id):
+    """AJAX endpoint: returns the current status of the convert_block_helix background job."""
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_convert_block_helix.status")
+    if not os.path.exists(status_file):
+        return JsonResponse({'status': 'not_started', 'message': 'No conversion in progress.'})
+    try:
+        with open(status_file, 'r') as f:
+            return JsonResponse(json.load(f))
+    except Exception:
+        return JsonResponse({'status': 'error', 'message': 'Could not read status file.'})
 
 
 def run_import_block(site_id):
@@ -2278,8 +2291,7 @@ def run_import_block(site_id):
 
         # Call the main processing functions in synchronous order
         process_blocks(page, sitename, instance_id,
-                       blocks_folder=os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import',
-                       'data','modules'))
+                       blocks_folder="/Users/sbws_user/Documents/Webbuilder/4May/helix_v1_v2/generated_helix_output/block/Common_blocks")
 
         browser.close()
 
@@ -2384,6 +2396,117 @@ def process_blocks(page, sitename, instance_id, blocks_folder):
     skipped_csv = f"v2_{instance_id}_skipped_blocks.csv"
 
     for block_name in os.listdir(blocks_folder):
+        
+                # Skip already processed files
+
+        if block_name.startswith("processed_"):
+
+            continue
+ 
+        block_path = os.path.join(blocks_folder, block_name)
+ 
+        # ==========================
+
+        # ✅ HTML FILE HANDLING
+
+        # ==========================
+
+        if block_name.endswith(".html"):
+
+            try:
+
+                print(f"Reading HTML File : '{block_name}'")
+ 
+                with open(block_path, "r", encoding="utf-8") as f:
+
+                    b_html = f.read()
+ 
+                # Defaults for HTML-only blocks
+
+                b_title = os.path.splitext(block_name)[0]
+
+                b_description = ""
+
+                b_category = "HTML Blocks"
+
+                b_protected = False
+
+                b_files = []
+
+                b_auto_attach = False
+
+                b_auto_attach_location = ""
+
+                b_auto_attach_exceptions = []
+
+                b_auto_attach_to_error_pages = False
+
+                b_css = ""
+ 
+                add_block_button = page.locator(
+
+                    'xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/div[1]/div[2]/a'
+
+                )
+
+                fresh_site_button = page.locator(
+
+                    'xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/a'
+
+                )
+ 
+                if add_block_button.is_visible():
+
+                    add_block_button.click()
+
+                elif fresh_site_button.is_visible():
+
+                    fresh_site_button.click()
+ 
+                page.wait_for_timeout(1000)
+ 
+                create_block(
+
+                    page,
+
+                    b_title,
+
+                    b_description,
+
+                    b_category,
+
+                    b_protected,
+
+                    b_files,
+
+                    b_auto_attach,
+
+                    b_auto_attach_location,
+
+                    b_auto_attach_exceptions,
+
+                    b_auto_attach_to_error_pages,
+
+                    b_css,
+
+                    b_html
+
+                )
+ 
+                # Rename after success
+
+                os.rename(block_path, os.path.join(blocks_folder, f"processed_{block_name}"))
+ 
+                print(f"'{b_title}' Created from HTML File '{block_name}'")
+
+                print("========================================")
+ 
+            except Exception as e:
+
+                print(f"Failed processing HTML file {block_name}: {e}")
+ 
+            continue  # ✅ important: move to next file
+ 
         # if block_name.endswith(".json"):
         if not block_name.endswith(".json") or block_name.startswith("processed_"):
             continue
