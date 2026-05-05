@@ -19,6 +19,31 @@
         run after pulling the common block list.
       </p>
 
+      <!-- Path info panel -->
+      <div class="table-responsive mb-4">
+        <table class="table table-sm table-bordered align-middle mb-0" style="font-size:.85rem;">
+          <thead class="table-light">
+            <tr>
+              <th style="width:160px;">Setting</th>
+              <th>Resolved Path</th>
+              <th style="width:280px;">Env Variable</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="fw-semibold">Input folder</td>
+              <td><code>{{ input_folder }}</code></td>
+              <td><code>{{ input_env_var }}</code></td>
+            </tr>
+            <tr>
+              <td class="fw-semibold">Output folder</td>
+              <td><code>{{ output_folder }}</code></td>
+              <td><code>{{ output_env_var }}</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="mb-3">
         <button id="convert-blocks-btn" class="btn btn-warning fw-semibold text-dark"
                 onclick="convertBlocks()">
@@ -56,7 +81,7 @@
           btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Converting...';
           statusDiv.innerHTML =
             '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>' +
-            escapeHtml(data.message) + '</div>';
+            escapeHtml(data.message) + pathInfo(data) + '</div>';
           startPolling();
         } else {
           showResult(data);
@@ -87,11 +112,20 @@
       .catch(() => { /* network hiccup – keep polling */ });
   }
 
+  function pathInfo(data) {
+    if (!data.input_folder && !data.output_folder) return '';
+    let html = '<small class="d-block mt-1 text-muted">';
+    if (data.input_folder)  html += 'Input: <code>' + escapeHtml(data.input_folder) + '</code><br>';
+    if (data.output_folder) html += 'Output: <code>' + escapeHtml(data.output_folder) + '</code>';
+    html += '</small>';
+    return html;
+  }
+
   function showResult(data) {
     const alertClass =
       data.status === 'success' ? 'alert-success' :
-      data.status === 'running' ? 'alert-info' : 'alert-danger';
-    let html = '<div class="alert ' + alertClass + '">' + escapeHtml(data.message) + '</div>';
+      data.status === 'running' ? 'alert-info'    : 'alert-danger';
+    let html = '<div class="alert ' + alertClass + '">' + escapeHtml(data.message) + pathInfo(data) + '</div>';
     if (data.output) {
       html += '<pre class="bg-light p-3 rounded" style="max-height:300px;overflow-y:auto;font-size:.8rem;">' +
         escapeHtml(data.output) + '</pre>';

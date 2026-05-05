@@ -2104,27 +2104,40 @@ def pull_common_block_list(request, site_id):
 
 @login_required
 @login_required
+@login_required
 def convert_block_helix(request, site_id):
     """
     Step B: Convert the pulled block list into Helix-compatible format by running
     convert_html_to_helix_backend.py as a background subprocess.
+
+    Paths are resolved in this priority order:
+      input_folder  -> HELIX_CONVERTER_BLOCK_INPUT_FOLDER  (env) -> HELIX_CONVERTER_INPUT_FOLDER (env) -> default
+      output_folder -> HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER (env) -> HELIX_CONVERTER_OUTPUT_FOLDER (env) -> default
     """
     status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_convert_block_helix.status")
 
     if request.method == 'POST':
         defaults = _build_pages_import_defaults()
         script_path = defaults['converter_script_path']
-        input_folder = defaults['converter_input_folder']
-        output_folder = defaults['converter_output_folder']
         components_csv = defaults['components_csv']
         model = defaults['model']
         temperature = str(defaults['temperature'])
+
+        # Block-specific env vars take priority; fall back to the generic converter paths
+        raw_input = (os.getenv('HELIX_CONVERTER_BLOCK_INPUT_FOLDER') or '').strip()
+        raw_output = (os.getenv('HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER') or '').strip()
+
+        input_folder = _normalize_to_absolute_path(raw_input, defaults['converter_input_folder'])
+        output_folder = _normalize_to_absolute_path(raw_output, defaults['converter_output_folder'])
 
         missing = []
         if not os.path.exists(script_path):
             missing.append(f"Converter script not found: {script_path}")
         if not os.path.isdir(input_folder):
-            missing.append(f"Input folder not found: {input_folder}")
+            missing.append(
+                f"Block input folder not found: {input_folder} "
+                f"(set HELIX_CONVERTER_BLOCK_INPUT_FOLDER in .env)"
+            )
         if not os.path.isfile(components_csv):
             missing.append(f"Components CSV not found: {components_csv}")
         if missing:
@@ -2140,9 +2153,15 @@ def convert_block_helix(request, site_id):
                 pass
 
         with open(status_file, 'w') as f:
-            json.dump({'status': 'running', 'message': 'Conversion in progress...'}, f)
+            json.dump({
+                'status': 'running',
+                'message': 'Conversion in progress...',
+                'input_folder': input_folder,
+                'output_folder': output_folder,
+            }, f)
 
         def _run():
+            Path(output_folder).mkdir(parents=True, exist_ok=True)
             command = [
                 sys.executable, script_path,
                 '--input-folder', input_folder,
@@ -2158,29 +2177,55 @@ def convert_block_helix(request, site_id):
                     payload = {
                         'status': 'success',
                         'message': 'Blocks converted to Helix format successfully.',
+                        'input_folder': input_folder,
+                        'output_folder': output_folder,
                         'output': (result.stdout or '')[-2000:],
                     }
                 else:
                     payload = {
                         'status': 'error',
                         'message': f'Script exited with code {result.returncode}.',
+                        'input_folder': input_folder,
+                        'output_folder': output_folder,
                         'output': (result.stderr or result.stdout or '')[-2000:],
                     }
             except Exception as exc:
-                payload = {'status': 'error', 'message': str(exc), 'output': ''}
+                payload = {
+                    'status': 'error',
+                    'message': str(exc),
+                    'input_folder': input_folder,
+                    'output_folder': output_folder,
+                    'output': '',
+                }
             with open(status_file, 'w') as sf:
                 json.dump(payload, sf)
 
         thread = threading.Thread(target=_run)
         thread.daemon = True
         thread.start()
-        return JsonResponse({'status': 'running', 'message': 'Conversion started. Please wait...'})
+        return JsonResponse({
+            'status': 'running',
+            'message': 'Conversion started. Please wait...',
+            'input_folder': input_folder,
+            'output_folder': output_folder,
+        })
 
-    return render(request, 'site_manager/convert_block_helix.html', {'site_id': site_id})
+    # GET: resolve paths for display in the template
+    defaults = _build_pages_import_defaults()
+    raw_input = (os.getenv('HELIX_CONVERTER_BLOCK_INPUT_FOLDER') or '').strip()
+    raw_output = (os.getenv('HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER') or '').strip()
+    ctx_input_folder = _normalize_to_absolute_path(raw_input, defaults['converter_input_folder'])
+    ctx_output_folder = _normalize_to_absolute_path(raw_output, defaults['converter_output_folder'])
+
+    return render(request, 'site_manager/convert_block_helix.html', {
+        'site_id': site_id,
+        'input_folder': ctx_input_folder,
+        'output_folder': ctx_output_folder,
+        'input_env_var': 'HELIX_CONVERTER_BLOCK_INPUT_FOLDER',
+        'output_env_var': 'HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER',
+    })
 
 
-@login_required
-def check_convert_block_helix_status(request, site_id):
     """AJAX endpoint: returns the current status of the convert_block_helix background job."""
     status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_convert_block_helix.status")
     if not os.path.exists(status_file):
