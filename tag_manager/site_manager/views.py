@@ -2103,20 +2103,95 @@ def pull_common_block_list(request, site_id):
 
 
 @login_required
+@login_required
 def convert_block_helix(request, site_id):
     """
-    Step B: Convert the pulled block list into Helix-compatible format.
+    Step B: Convert the pulled block list into Helix-compatible format by running
+    convert_html_to_helix_backend.py as a background subprocess.
     """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_convert_block_helix.status")
+
     if request.method == 'POST':
-        try:
-            # TODO: implement actual conversion logic here
-            return JsonResponse({'status': 'success', 'message': 'Blocks converted to Helix format successfully.'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
+        defaults = _build_pages_import_defaults()
+        script_path = defaults['converter_script_path']
+        input_folder = defaults['converter_input_folder']
+        output_folder = defaults['converter_output_folder']
+        components_csv = defaults['components_csv']
+        model = defaults['model']
+        temperature = str(defaults['temperature'])
+
+        missing = []
+        if not os.path.exists(script_path):
+            missing.append(f"Converter script not found: {script_path}")
+        if not os.path.isdir(input_folder):
+            missing.append(f"Input folder not found: {input_folder}")
+        if not os.path.isfile(components_csv):
+            missing.append(f"Components CSV not found: {components_csv}")
+        if missing:
+            return JsonResponse({'status': 'error', 'message': '<br>'.join(missing)}, status=400)
+
+        if os.path.exists(status_file):
+            try:
+                with open(status_file, 'r') as f:
+                    existing = json.load(f)
+                if existing.get('status') == 'running':
+                    return JsonResponse({'status': 'error', 'message': 'Conversion is already running.'})
+            except Exception:
+                pass
+
+        with open(status_file, 'w') as f:
+            json.dump({'status': 'running', 'message': 'Conversion in progress...'}, f)
+
+        def _run():
+            command = [
+                sys.executable, script_path,
+                '--input-folder', input_folder,
+                '--output-folder', output_folder,
+                '--components-csv', components_csv,
+                '--model', model,
+                '--temperature', temperature,
+                '--skip-permalink-preprocess',
+            ]
+            try:
+                result = subprocess.run(command, capture_output=True, text=True, cwd=settings.BASE_DIR)
+                if result.returncode == 0:
+                    payload = {
+                        'status': 'success',
+                        'message': 'Blocks converted to Helix format successfully.',
+                        'output': (result.stdout or '')[-2000:],
+                    }
+                else:
+                    payload = {
+                        'status': 'error',
+                        'message': f'Script exited with code {result.returncode}.',
+                        'output': (result.stderr or result.stdout or '')[-2000:],
+                    }
+            except Exception as exc:
+                payload = {'status': 'error', 'message': str(exc), 'output': ''}
+            with open(status_file, 'w') as sf:
+                json.dump(payload, sf)
+
+        thread = threading.Thread(target=_run)
+        thread.daemon = True
+        thread.start()
+        return JsonResponse({'status': 'running', 'message': 'Conversion started. Please wait...'})
+
     return render(request, 'site_manager/convert_block_helix.html', {'site_id': site_id})
 
 
 @login_required
+def check_convert_block_helix_status(request, site_id):
+    """AJAX endpoint: returns the current status of the convert_block_helix background job."""
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_convert_block_helix.status")
+    if not os.path.exists(status_file):
+        return JsonResponse({'status': 'not_started', 'message': 'No conversion in progress.'})
+    try:
+        with open(status_file, 'r') as f:
+            return JsonResponse(json.load(f))
+    except Exception:
+        return JsonResponse({'status': 'error', 'message': 'Could not read status file.'})
+
+
 def block_import_start(request, site_id):
     """
     Step C: Actual block import (Playwright automation).

@@ -1,11 +1,9 @@
-{% extends 'authentication/base.html' %} {% block title %}Convert Block to Helix
-— Site {{ site_id }}{% endblock %} {% block content %}
+{% extends 'authentication/base.html' %}
+{% block title %}Convert Block to Helix — Site {{ site_id }}{% endblock %}
+{% block content %}
 <div class="container mt-5">
   <div class="mb-4">
-    <a
-      href="{% url 'import_block' site_id %}"
-      class="btn btn-outline-secondary"
-    >
+    <a href="{% url 'import_block' site_id %}" class="btn btn-outline-secondary">
       <i class="fas fa-arrow-left me-1"></i>Back to Block Import
     </a>
   </div>
@@ -13,8 +11,7 @@
   <div class="card shadow-sm">
     <div class="card-body">
       <h2 class="mb-1">
-        <i class="fas fa-exchange-alt text-warning me-2"></i>Convert Block to
-        Helix
+        <i class="fas fa-exchange-alt text-warning me-2"></i>Convert Block to Helix
       </h2>
       <p class="text-muted mb-4">
         Convert the pulled block list into Helix-compatible format for
@@ -23,18 +20,11 @@
       </p>
 
       <div class="mb-3">
-        <button
-          id="convert-blocks-btn"
-          class="btn btn-warning fw-semibold text-dark"
-          onclick="convertBlocks()"
-        >
+        <button id="convert-blocks-btn" class="btn btn-warning fw-semibold text-dark"
+                onclick="convertBlocks()">
           <i class="fas fa-wand-magic-sparkles me-1"></i>Convert Block to Helix
         </button>
-        <a
-          href="{% url 'import_block' site_id %}"
-          class="btn btn-secondary ms-2"
-          >Cancel</a
-        >
+        <a href="{% url 'import_block' site_id %}" class="btn btn-secondary ms-2">Cancel</a>
       </div>
       <div id="status" class="mt-3"></div>
     </div>
@@ -42,49 +32,93 @@
 </div>
 
 <script>
+  const STATUS_URL = "{% url 'check_convert_block_helix_status' site_id %}";
+  let pollInterval = null;
+
   function convertBlocks() {
-    const btn = document.getElementById("convert-blocks-btn");
-    const statusDiv = document.getElementById("status");
+    const btn = document.getElementById('convert-blocks-btn');
+    const statusDiv = document.getElementById('status');
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Converting...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Starting...';
     statusDiv.innerHTML =
-      '<div class="alert alert-info">Converting blocks to Helix format, please wait...</div>';
+      '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>Launching converter, please wait...</div>';
 
     fetch("{% url 'convert_block_helix' site_id %}", {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "X-CSRFToken": getCookie("csrftoken"),
-        "X-Requested-With": "XMLHttpRequest",
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest',
       },
     })
-      .then((r) => r.json())
-      .then((data) => {
-        statusDiv.innerHTML =
-          '<div class="alert alert-' +
-          (data.status === "success" ? "success" : "danger") +
-          '">' +
-          data.message +
-          "</div>";
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'running') {
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Converting...';
+          statusDiv.innerHTML =
+            '<div class="alert alert-info"><i class="fas fa-spinner fa-spin me-2"></i>' +
+            escapeHtml(data.message) + '</div>';
+          startPolling();
+        } else {
+          showResult(data);
+          resetBtn();
+        }
       })
-      .catch((err) => {
-        statusDiv.innerHTML =
-          '<div class="alert alert-danger">Error: ' + err + "</div>";
-      })
-      .finally(() => {
-        btn.disabled = false;
-        btn.innerHTML =
-          '<i class="fas fa-wand-magic-sparkles me-1"></i>Convert Block to Helix';
+      .catch(err => {
+        statusDiv.innerHTML = '<div class="alert alert-danger">Network error: ' + err + '</div>';
+        resetBtn();
       });
+  }
+
+  function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(pollStatus, 3000);
+  }
+
+  function pollStatus() {
+    fetch(STATUS_URL)
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'running' || data.status === 'not_started') return;
+        clearInterval(pollInterval);
+        pollInterval = null;
+        showResult(data);
+        resetBtn();
+      })
+      .catch(() => { /* network hiccup – keep polling */ });
+  }
+
+  function showResult(data) {
+    const alertClass =
+      data.status === 'success' ? 'alert-success' :
+      data.status === 'running' ? 'alert-info' : 'alert-danger';
+    let html = '<div class="alert ' + alertClass + '">' + escapeHtml(data.message) + '</div>';
+    if (data.output) {
+      html += '<pre class="bg-light p-3 rounded" style="max-height:300px;overflow-y:auto;font-size:.8rem;">' +
+        escapeHtml(data.output) + '</pre>';
+    }
+    document.getElementById('status').innerHTML = html;
+  }
+
+  function resetBtn() {
+    const btn = document.getElementById('convert-blocks-btn');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-wand-magic-sparkles me-1"></i>Convert Block to Helix';
+  }
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   function getCookie(name) {
     let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === name + "=") {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+    if (document.cookie && document.cookie !== '') {
+      for (const cookie of document.cookie.split(';')) {
+        const c = cookie.trim();
+        if (c.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(c.slice(name.length + 1));
           break;
         }
       }

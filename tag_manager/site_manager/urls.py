@@ -35,6 +35,7 @@ urlpatterns = [
     path('<int:site_id>/block/import/', views.import_block, name='import_block'),
     path('<int:site_id>/block/import/pull-common-blocks/', views.pull_common_block_list, name='pull_common_block_list'),
     path('<int:site_id>/block/import/convert-helix/', views.convert_block_helix, name='convert_block_helix'),
+    path('<int:site_id>/block/import/convert-helix/status/', views.check_convert_block_helix_status, name='check_convert_block_helix_status'),
     path('<int:site_id>/block/import/start/', views.block_import_start, name='block_import_start'),
     path('<int:site_id>/file-attribute/import/', views.import_file_attribute, name='import_file_attribute'),
     path('<int:site_id>/file/import/', views.import_file, name='import_file'),
