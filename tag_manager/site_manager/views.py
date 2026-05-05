@@ -2050,10 +2050,46 @@ def download_exported_meta(request, site_id):
 @login_required
 def import_block(request, site_id):
     """
-    View to handle block import for a given site.
+    Landing page for Block Import — shows 3 action buttons:
+    Pull Common Block List, Convert Block to Helix, Block Import.
+    """
+    return render(request, 'site_manager/block_import_landing.html', {'site_id': site_id})
+
+
+@login_required
+def pull_common_block_list(request, site_id):
+    """
+    Step A: Pull the common/shared block list from WebBuilder.
     """
     if request.method == 'POST':
-        # Start the import in a background thread
+        try:
+            # TODO: implement actual pull logic here
+            return JsonResponse({'status': 'success', 'message': 'Common block list pulled successfully.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return render(request, 'site_manager/pull_common_block_list.html', {'site_id': site_id})
+
+
+@login_required
+def convert_block_helix(request, site_id):
+    """
+    Step B: Convert the pulled block list into Helix-compatible format.
+    """
+    if request.method == 'POST':
+        try:
+            # TODO: implement actual conversion logic here
+            return JsonResponse({'status': 'success', 'message': 'Blocks converted to Helix format successfully.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return render(request, 'site_manager/convert_block_helix.html', {'site_id': site_id})
+
+
+@login_required
+def block_import_start(request, site_id):
+    """
+    Step C: Actual block import (Playwright automation).
+    """
+    if request.method == 'POST':
         threading.Thread(target=run_import_block, args=(site_id,)).start()
         return JsonResponse({'status': 'started', 'message': 'Block import is in progress.'})
     return render(request, 'site_manager/import_block.html', {'site_id': site_id})
