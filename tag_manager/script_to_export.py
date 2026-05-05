@@ -469,9 +469,10 @@ def extract_values(site_dir):
     # --- main ---
     MAIN = "left-sidebar-settings--main"
     values[(MAIN, "site_name", "")] = site_name
-    # values[(MAIN, "site_type", "")] = "Website"
+    values[(MAIN, "site_type", "")] = "Website"
     values[(MAIN, "domain", "")] = domain
-    values[(MAIN, "brand", "")] = brand
+    # TODO: Fetch Brand value from DMP SR.
+    values[(MAIN, "brand", "")] = "UNBRANDED"
     values[(MAIN, "country", "")] = country_code if country_code else country
     values[(MAIN, "teams", "")] = teams
     values[(MAIN, "helix_components_version", "")] = helix_components_version

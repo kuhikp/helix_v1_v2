@@ -133,7 +133,7 @@ site_description = get_field_value(fields, 'site_description') or get_field_valu
 # Try to get brand and country from fields
 brand = get_field_value(fields, 'brand') or get_field_value_by_label(fields, 'Brand') or 'Pfizer'
 country_code = get_field_value(fields, 'country') or 'US'
-edison_site_id = get_field_value(fields, 'edison_lite_site_id') or ''
+edison_site_id = get_field_value(fields, 'edison_lite_site_id') or '   '
 
 logging.info(f"Extracted - Site: {site_name}, Domain: {domain}, Brand: {brand}, Country: {country_code}")
 
@@ -158,11 +158,12 @@ country_name = country_mapping.get(country_code, 'United States')
 form_data = {
     'NAME': site_name,
     'TEAM': "TCS Development Team",  # Default team
-    'BRAND': "ABRILADA",
+    # TODO: Fetch Brand value from DMP SR.
+    'BRAND': "UNBRANDED",
     'COUNTRY': country_name,
     'HELIX_COMPONENTS_VERSION': "Helix V2",  # Default to V2
     'DOMAIN': domain,
-    # 'EDISON_LITE_SITE_ID': edison_site_id,
+    'EDISON_LITE_SITE_ID': edison_site_id,
     'DESCRIPTION': site_description
 }
 
