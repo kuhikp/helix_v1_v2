@@ -1740,11 +1740,14 @@ def run_import_script(request, site_id):
         
         def run_script():
             try:
+                runtime_env = os.environ.copy()
+                runtime_env['HELIX_INPUT_SITE_URL'] = (site.website_url or '').strip()
                 result = subprocess.run(
                     [sys.executable, script_path],
                     capture_output=True,
                     text=True,
-                    cwd=settings.BASE_DIR
+                    cwd=settings.BASE_DIR,
+                    env=runtime_env,
                 )
                 if result.returncode == 0:
                     status = {'status': 'completed', 'message': 'Import completed successfully.'}
@@ -1910,7 +1913,15 @@ def export_site_meta(request, site_id):
     script_path = os.path.join(settings.BASE_DIR, 'script_to_export.py')
     # Start the export script asynchronously
     try:
-        process = subprocess.Popen(['python3', script_path, str(site_id)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        site = get_object_or_404(SiteListDetails, pk=site_id)
+        runtime_env = os.environ.copy()
+        runtime_env['HELIX_INPUT_SITE_URL'] = (site.website_url or '').strip()
+        process = subprocess.Popen(
+            ['python3', script_path, str(site_id)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=runtime_env,
+        )
         # Write PID and initial status to status file
         with open(status_file, 'w') as f:
             f.write(json.dumps({'pid': process.pid, 'status': 'running', 'progress': 0}))
@@ -2389,7 +2400,7 @@ def run_step6_workflow(site):
         
         # Define paths
         base_dir = Path(settings.BASE_DIR)
-        html_root = base_dir / 'site_manager' / 'static' / 'httrack_export'
+        html_root = _resolve_site_httrack_folder(site)
         csv_path = base_dir / 'site_manager' / 'sites' / 'pfizer_assets.csv'
         final_files_dir = base_dir / 'site_manager' / 'static' / 'block_import' / 'data' / 'files'
         final_pages_dir = base_dir / 'site_manager' / 'static' / 'block_import' / 'data' / 'pages'
@@ -3083,6 +3094,76 @@ def _normalize_to_absolute_path(raw_path, fallback_path):
     return str(path.resolve())
 
 
+def _normalize_site_identifier(value):
+    text = (value or '').strip().lower()
+    if not text:
+        return ''
+
+    parse_target = text if '://' in text else f'https://{text}'
+    parsed = urlparse(parse_target)
+    host = (parsed.netloc or parsed.path or '').strip().lower()
+    host = host.split('/', 1)[0].split(':', 1)[0].strip('.')
+    if host.startswith('www.'):
+        host = host[4:]
+    return host
+
+
+def _resolve_site_folder_from_root(root_folder, expected_site_url=''):
+    """Resolve a site folder under a shared root (e.g. httrack_export)."""
+    root_folder = Path(root_folder).expanduser().resolve()
+    if not root_folder.exists() or not root_folder.is_dir():
+        raise FileNotFoundError(f"Root folder does not exist or is not a directory: {root_folder}")
+
+    if (root_folder / 'sitemap.xml').exists() or (root_folder / 'index.html').exists():
+        return root_folder
+
+    child_dirs = sorted(
+        [
+            child for child in root_folder.iterdir()
+            if child.is_dir() and not child.name.endswith('_permalinks_updated')
+        ],
+        key=lambda p: p.name.lower(),
+    )
+    if not child_dirs:
+        raise RuntimeError(f"No site folders found inside: {root_folder}")
+
+    requested_site = _normalize_site_identifier(expected_site_url)
+    if requested_site:
+        matches = [
+            child
+            for child in child_dirs
+            if _normalize_site_identifier(child.name) == requested_site
+        ]
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            raise RuntimeError(
+                "Multiple folders matched site URL '%s': %s"
+                % (expected_site_url, ", ".join(folder.name for folder in matches))
+            )
+        raise RuntimeError(
+            "No folder matched site URL '%s'. Available folders: %s"
+            % (expected_site_url, ", ".join(folder.name for folder in child_dirs[:20]))
+        )
+
+    if len(child_dirs) == 1:
+        return child_dirs[0]
+
+    logger.warning(
+        "Multiple site folders found inside %s. Using first alphabetically: %s",
+        root_folder,
+        child_dirs[0].name,
+    )
+    return child_dirs[0]
+
+
+def _resolve_site_httrack_folder(site):
+    base_dir = Path(settings.BASE_DIR)
+    httrack_root = base_dir / 'site_manager' / 'static' / 'httrack_export'
+    expected_site_url = (getattr(site, 'website_url', '') or '').strip()
+    return _resolve_site_folder_from_root(httrack_root, expected_site_url=expected_site_url)
+
+
 def _resolve_local_script_path(env_value, fallback_path):
     """Use script overrides only when they remain inside the current Django project."""
     fallback = Path(fallback_path).expanduser().resolve()
@@ -3116,16 +3197,29 @@ def _is_checked(post_data, key, default=False):
     return (post_data.get(key) or '').strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
-def _build_pages_import_defaults():
+def _build_pages_import_defaults(site=None):
     project_root = Path(settings.BASE_DIR).resolve().parent
+
+    site_url_default = ''
+    if site is not None:
+        site_url_default = (getattr(site, 'website_url', '') or '').strip()
+
+    output_site_url_default = (os.getenv('HELIX_OUTPUT_SITE_URL') or '').strip()
+    if not output_site_url_default and site is not None:
+        output_site_url_default = (getattr(site, 'webbuilder_site_url', '') or '').strip()
 
     default_converter_script = Path(settings.BASE_DIR) / 'site_manager' / 'convert_html_to_helix_backend.py'
     default_import_script = Path(settings.BASE_DIR) / 'site_manager' / 'import_pages_to_helix_backend.py'
-    default_input_folder = project_root / 'reference' / 'input_site'
-    default_components_csv = project_root / 'reference' / 'helix_components_html_output.csv'
+    default_input_folder = Path(settings.BASE_DIR) / 'site_manager' / 'static' / 'httrack_export'
+    default_components_csv = Path(settings.BASE_DIR) / 'site_manager' / 'static' / 'httrack_export' / 'helix_components_html_output.csv'
     default_output_folder = project_root / 'generated_helix_output'
     default_analysis_cache = project_root / 'temp' / 'component_analysis_cache.txt'
-    default_manual_csv = project_root / 'manual_page_intervention.csv'
+    default_manual_csv = ''  # Let the import script place CSV inside the site output folder
+
+    converter_input_env = (os.getenv('HELIX_CONVERTER_INPUT_FOLDER') or '').strip()
+    if converter_input_env.replace('\\', '/').endswith('reference/input_site'):
+        # Backward-compatible migration from legacy input_site path.
+        converter_input_env = ''
 
     return {
         'converter_script_path': _resolve_local_script_path(
@@ -3137,7 +3231,7 @@ def _build_pages_import_defaults():
             default_import_script,
         ),
         'converter_input_folder': _normalize_to_absolute_path(
-            os.getenv('HELIX_CONVERTER_INPUT_FOLDER'),
+            converter_input_env,
             default_input_folder,
         ),
         'converter_output_folder': _normalize_to_absolute_path(
@@ -3156,10 +3250,7 @@ def _build_pages_import_defaults():
             os.getenv('HELIX_ANALYSIS_CACHE_FILE'),
             default_analysis_cache,
         ),
-        'manual_intervention_csv': _normalize_to_absolute_path(
-            os.getenv('HELIX_MANUAL_INTERVENTION_CSV'),
-            default_manual_csv,
-        ),
+        'manual_intervention_csv': (os.getenv('HELIX_MANUAL_INTERVENTION_CSV') or '').strip(),
         'model': (os.getenv('HELIX_MODEL') or 'gpt-4o').strip(),
         'temperature': (os.getenv('HELIX_TEMPERATURE') or '0.4').strip(),
         'copy_non_html': _env_bool('HELIX_COPY_NON_HTML', True),
@@ -3170,13 +3261,13 @@ def _build_pages_import_defaults():
         'skip_permalink_preprocess': False,
         'import_headless': _env_bool('HELIX_IMPORT_HEADLESS', False),
         'instance_id_override': (os.getenv('HELIX_INSTANCE_ID_OVERRIDE') or '').strip(),
-        'input_site_url': (os.getenv('HELIX_INPUT_SITE_URL') or '').strip(),
-        'output_site_url': (os.getenv('HELIX_OUTPUT_SITE_URL') or '').strip(),
+        'input_site_url': (os.getenv('HELIX_INPUT_SITE_URL') or '').strip() or site_url_default,
+        'output_site_url': output_site_url_default,
     }
 
 
-def _build_pages_import_form_data(post_data=None):
-    defaults = _build_pages_import_defaults()
+def _build_pages_import_form_data(post_data=None, site=None):
+    defaults = _build_pages_import_defaults(site=site)
     source = post_data if post_data is not None else {}
 
     selected_model = (source.get('model') if post_data else defaults['model']) or HELIX_MODEL_OPTIONS[0]
@@ -3267,9 +3358,9 @@ def _validate_pages_import_form(action, form_data):
             errors.append(f"Import input folder not found: {form_data['import_input_folder']}")
 
         manual_csv = (form_data['manual_intervention_csv'] or '').strip()
-        if not manual_csv:
-            errors.append('Manual intervention CSV path is required.')
-        else:
+        # manual_intervention_csv is optional; when blank the script auto-places it
+        # inside generated_helix_output/<site-folder>/manual_page_intervention.csv
+        if manual_csv:
             try:
                 Path(manual_csv).expanduser().parent.mkdir(parents=True, exist_ok=True)
             except Exception as csv_error:
@@ -3282,6 +3373,7 @@ def _validate_pages_import_form(action, form_data):
 
 def _build_pages_import_command(action, form_data):
     if action == 'convert':
+        site_url_arg = (form_data.get('input_site_url') or '').strip()
         command = [
             sys.executable,
             form_data['converter_script_path'],
@@ -3291,6 +3383,9 @@ def _build_pages_import_command(action, form_data):
             '--model', form_data['model'],
             '--temperature', str(form_data['temperature']),
         ]
+
+        if site_url_arg:
+            command.extend(['--site-url', site_url_arg])
 
         if form_data['copy_non_html']:
             command.append('--copy-non-html')
@@ -3310,12 +3405,19 @@ def _build_pages_import_command(action, form_data):
         return command
 
     if action == 'import':
+        site_url_arg = (form_data.get('input_site_url') or '').strip()
         command = [
             sys.executable,
             form_data['import_script_path'],
             '--input-folder', form_data['import_input_folder'],
-            '--manual-intervention-csv', form_data['manual_intervention_csv'],
         ]
+        # Only pass --manual-intervention-csv if explicitly set; otherwise the
+        # script auto-places it inside generated_helix_output/<site-folder>/
+        if (form_data.get('manual_intervention_csv') or '').strip():
+            command.extend(['--manual-intervention-csv', form_data['manual_intervention_csv']])
+
+        if site_url_arg:
+            command.extend(['--site-url', site_url_arg])
 
         if form_data['import_headless']:
             command.append('--headless')
@@ -3339,7 +3441,7 @@ def _tail_output(text, max_lines=20, max_chars=1600):
     return joined[-max_chars:]
 
 
-def _stream_subprocess_logs(action_key, command, runtime_env):
+def _stream_subprocess_logs(action_key, command, runtime_env, on_process_start=None):
     env = dict(runtime_env)
     env['PYTHONUNBUFFERED'] = '1'
 
@@ -3353,6 +3455,12 @@ def _stream_subprocess_logs(action_key, command, runtime_env):
         bufsize=1,
     )
 
+    if callable(on_process_start):
+        try:
+            on_process_start(process.pid)
+        except Exception:
+            pass
+
     collected_lines = []
     if process.stdout is not None:
         for raw_line in process.stdout:
@@ -3364,7 +3472,7 @@ def _stream_subprocess_logs(action_key, command, runtime_env):
             collected_lines.append(line)
 
     return_code = process.wait()
-    return return_code, '\n'.join(collected_lines).strip()
+    return process.pid, return_code, '\n'.join(collected_lines).strip()
 
 
 def _format_elapsed(seconds):
@@ -3441,6 +3549,7 @@ def _run_pages_action_in_background(site_id, action_key, command, runtime_env):
         'start_time': start_time,
         'end_time': None,
         'output': '',
+        'pid': None,
     }
     _write_pages_action_status(site_id, action_key, running_status)
     logger.info("Pages action '%s' started. Command: %s", action_key, command_preview)
@@ -3448,7 +3557,16 @@ def _run_pages_action_in_background(site_id, action_key, command, runtime_env):
         logger.info("Convert to Helix Playwright step is running in headed mode (browser window should open).")
 
     try:
-        return_code, merged_logs = _stream_subprocess_logs(action_key, command, runtime_env)
+        def _on_process_start(pid):
+            running_status['pid'] = pid
+            _write_pages_action_status(site_id, action_key, running_status)
+
+        pid, return_code, merged_logs = _stream_subprocess_logs(
+            action_key,
+            command,
+            runtime_env,
+            on_process_start=_on_process_start,
+        )
         end_time = time.time()
 
         if return_code == 0:
@@ -3463,14 +3581,18 @@ def _run_pages_action_in_background(site_id, action_key, command, runtime_env):
                 'end_time': end_time,
                 'output': output_summary,
                 'return_code': return_code,
+                'pid': pid,
             }
             _write_pages_action_status(site_id, action_key, completed_status)
             logger.info("Pages action '%s' completed. Command: %s", action_key, command_preview)
         else:
             error_summary = _tail_output(merged_logs)
+            failed_message = f"{action_title} failed with exit code {return_code}."
+            if 'Process Stopped Abruptly' in merged_logs:
+                failed_message = 'Process Stopped Abruptly'
             failed_status = {
                 'status': 'failed',
-                'message': f"{action_title} failed with exit code {return_code}.",
+                'message': failed_message,
                 'action': action_key,
                 'site_id': site_id,
                 'command': command_preview,
@@ -3478,6 +3600,7 @@ def _run_pages_action_in_background(site_id, action_key, command, runtime_env):
                 'end_time': end_time,
                 'output': error_summary,
                 'return_code': return_code,
+                'pid': pid,
             }
             _write_pages_action_status(site_id, action_key, failed_status)
             logger.error(
@@ -3498,9 +3621,41 @@ def _run_pages_action_in_background(site_id, action_key, command, runtime_env):
             'start_time': start_time,
             'end_time': end_time,
             'output': str(run_error),
+            'pid': running_status.get('pid'),
         }
         _write_pages_action_status(site_id, action_key, failed_status)
         logger.exception("Unexpected error executing pages action '%s': %s", action_key, run_error)
+
+
+@login_required
+@require_POST
+def cancel_pages_import_action(request, site_id, action):
+    action_key = (action or '').strip().lower()
+    if action_key not in PAGES_IMPORT_ACTIONS:
+        return JsonResponse({'success': False, 'message': 'Invalid action.'}, status=400)
+
+    status = _read_pages_action_status(site_id, action_key)
+    pid = status.get('pid')
+
+    if status.get('status') != 'running' or not pid:
+        return JsonResponse({'success': False, 'message': 'No running process found.'}, status=400)
+
+    try:
+        os.kill(int(pid), signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    except Exception as kill_error:
+        return JsonResponse({'success': False, 'message': f'Unable to stop process: {kill_error}'}, status=500)
+
+    stopped_status = {
+        **status,
+        'status': 'failed',
+        'message': 'Process Stopped Abruptly',
+        'end_time': time.time(),
+        'output': (status.get('output') or '').strip(),
+    }
+    _write_pages_action_status(site_id, action_key, stopped_status)
+    return JsonResponse({'success': True, 'message': 'Process Stopped Abruptly'})
 
 
 @login_required
@@ -3516,7 +3671,9 @@ def pages_import_action(request, site_id, action):
         return redirect('pages_import', site_id=site.id)
 
     if request.method == 'POST':
-        form_data = _build_pages_import_form_data(request.POST)
+        form_data = _build_pages_import_form_data(request.POST, site=site)
+        if not (form_data.get('input_site_url') or '').strip():
+            form_data['input_site_url'] = (site.website_url or '').strip()
         validation_errors = _validate_pages_import_form(action_key, form_data)
 
         if validation_errors:
@@ -3525,8 +3682,36 @@ def pages_import_action(request, site_id, action):
         else:
             current_status = _read_pages_action_status(site.id, action_key)
             if current_status.get('status') == 'running':
-                messages.warning(request, f"{PAGES_IMPORT_ACTIONS[action_key]['title']} is already running.")
-                return redirect('pages_import_action', site_id=site.id, action=action_key)
+                # Check whether the recorded PID is still alive; if not, the
+                # status file is stale (e.g. Django restart / thread crash) and
+                # we should clear it instead of blocking a new run.
+                stale = False
+                pid = current_status.get('pid')
+                if pid:
+                    try:
+                        os.kill(int(pid), 0)  # signal 0 = existence check only
+                    except (ProcessLookupError, OSError):
+                        stale = True
+                else:
+                    stale = True  # no PID recorded → treat as stale
+
+                if stale:
+                    _write_pages_action_status(site.id, action_key, {
+                        'status': 'failed',
+                        'message': 'Previous run was interrupted unexpectedly (process no longer alive).',
+                        'action': action_key,
+                        'site_id': site.id,
+                        'start_time': current_status.get('start_time'),
+                        'end_time': time.time(),
+                        'output': '',
+                    })
+                    logger.warning(
+                        "Cleared stale 'running' status for site %s action '%s' (PID %s not alive).",
+                        site.id, action_key, pid,
+                    )
+                else:
+                    messages.warning(request, f"{PAGES_IMPORT_ACTIONS[action_key]['title']} is already running.")
+                    return redirect('pages_import_action', site_id=site.id, action=action_key)
 
             command = _build_pages_import_command(action_key, form_data)
             runtime_env = os.environ.copy()
@@ -3555,7 +3740,10 @@ def pages_import_action(request, site_id, action):
                 logger.exception("Unexpected error executing pages action '%s': %s", action_key, run_error)
                 messages.error(request, f"Unexpected error while running script: {run_error}")
 
-    form_data = _build_pages_import_form_data(request.POST if request.method == 'POST' else None)
+    form_data = _build_pages_import_form_data(
+        request.POST if request.method == 'POST' else None,
+        site=site,
+    )
 
     command_preview = ''
     try:
@@ -3576,6 +3764,7 @@ def pages_import_action(request, site_id, action):
         'action_status': current_status,
         'status_api_url': f"/sites/{site.id}/pages/import/{action_key}/status/",
         'status_clear_url': f"/sites/{site.id}/pages/import/{action_key}/clear-status/",
+        'status_cancel_url': f"/sites/{site.id}/pages/import/{action_key}/cancel/",
     })
 
 
@@ -3959,15 +4148,19 @@ def run_import_page_setting(site_id, status_file):
     Background function that runs PageSettings_import.py via subprocess and writes status to a file.
     """
     try:
+        site = get_object_or_404(SiteListDetails, pk=site_id)
         script_path = os.path.join(
             settings.BASE_DIR,
             'site_manager', 'templates', 'site_manager', 'PageSettings_import.py'
         )
+        runtime_env = os.environ.copy()
+        runtime_env['HTML_FOLDER'] = str(_resolve_site_httrack_folder(site))
         result = subprocess.run(
             [sys.executable, script_path],
             capture_output=True,
             text=True,
-            cwd=settings.BASE_DIR
+            cwd=settings.BASE_DIR,
+            env=runtime_env,
         )
         if result.returncode == 0:
             status = {
