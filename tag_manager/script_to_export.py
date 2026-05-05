@@ -55,7 +55,6 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "Enable using modular version of javascript scripts", "Field Name": "selectiveModularScriptEnabled", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "Include default viewport on website", "Field Name": "viewport", "Type": "checkbox", "Default Value": "checked"},
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "Include Cross Origin Referrer Tag", "Field Name": "referrer", "Type": "checkbox", "Default Value": "unchecked"},
-    {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "Auto add Site Title to title tags", "Field Name": "includeTitle", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "No Snippet Beta", "Field Name": "nosnippet", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "Enable RTL support", "Field Name": "enableRtlSupport", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "Enable Preconnect Tags", "Field Name": "enablePreconnectTags", "Type": "checkbox", "Default Value": "unchecked"},
@@ -69,10 +68,10 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "Select Rich Text Editor Beta", "Field Name": "loginPage", "Type": "custom_multiselect_single", "Default Value": "CKEditor 5"},
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "When Brandkit variables are defined on a page level:", "Field Name": "loginPage", "Type": "custom_multiselect_single", "Default Value": "Attach Global Brandkit variables after page-level"},
 
-    # # -- multilingual --
+    # -- multilingual --
     # {"Panel Type": "left-sidebar-settings--multilingual-manager", "Field Label": "Enable multilingual", "Field Name": "enable_multilingual", "Type": "checkbox", "Default Value": "unchecked"},
     
-    # # ── performance ──
+    # ── performance ──
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "", "Field Name": "_token", "Type": "hidden", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Enable PSI performance options", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Minify all included CSS files", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "checked"},
@@ -81,10 +80,10 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Defer loading website JS", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Enable Fast Deployments", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "checked"},
 
-    # # -- developer settings --
+    # -- developer settings --
     {"Panel Type": "left-sidebar-settings--developer", "Field Label": "Allow Edison Previews", "Field Name": "allow_edison_previews", "Type": "checkbox", "Default Value": "checked"},
 
-    # # ── seo ──
+    # ── seo ──
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "_token", "Type": "hidden", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "repository", "Type": "text", "Default Value": ""},
@@ -95,17 +94,18 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "site_description", "Type": "textarea", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "site_keywords", "Type": "textarea", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Currency", "Field Name": "currency", "Type": "select", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Type *", "Field Name": "audiences", "Type": "select", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "audience_specialties[]", "Type": "text", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_therapeutic_areas[]", "Type": "text", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_indications[]", "Type": "text", "Default Value": ""},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Type *", "Field Name": "audiences", "Type": "select", "Default Value": "External Organization"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Subtype *", "Field Name": "audience_specialties", "Type": "select", "Default Value": "Administrative Staff"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Therapeutic Area *", "Field Name": "lexicon_therapeutic_areas[]", "Type": "select", "Default Value": "Anesthesia"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Subtype *", "Field Name": "audience_specialties[]", "Type": "text", "Default Value": "Administrative Staff"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Therapeutic Area *", "Field Name": "lexicon_therapeutic_areas[]", "Type": "text", "Default Value": "Anesthesia"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Indications *", "Field Name": "lexicon_indications[]", "Type": "text", "Default Value": "Achondroplasia"},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Business Unit *", "Field Name": "lexicon_business_unit", "Type": "select", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_brands[]", "Type": "custom_multiselect", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "brands[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "audience_specialties[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_indications[]", "Type": "custom_multiselect", "Default Value": ""},
-
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Subtype *", "Field Name": "audience_specialties[]", "Type": "custom_multiselect", "Default Value": "Administrative Staff"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Therapeutic Area *", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": "Anesthesia"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Indications *", "Field Name": "lexicon_indications[]", "Type": "custom_multiselect", "Default Value": "Achondroplasia"},
 
     # # ── external-link-manager ──
     {"Panel Type": "left-sidebar-settings--external-link-manager", "Field Label": "Enabled?", "Field Name": "enabled", "Type": "checkbox", "Default Value": "unchecked"},
@@ -124,7 +124,6 @@ TEMPLATE = [
     # # # ── bootstrap ──
     {"Panel Type": "left-sidebar-settings--bootstrap", "Field Label": "Version", "Field Name": "bootstrap", "Type": "select", "Default Value": "No Bootstrap"},
 
-
     # ── main ──
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "", "Field Name": "repository", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "Site Name", "Field Name": "site_name", "Type": "text", "Default Value": ""},
@@ -137,8 +136,6 @@ TEMPLATE = [
     # # -- left-sidebar-settings--website --
     {"Panel Type": "left-sidebar-settings--website", "Field Label": "Site Type", "Field Name": "site_type", "Type": "select", "Default Value": "Website"},
     {"Panel Type": "left-sidebar-settings--website", "Field Label": "Edison Lite Site ID", "Field Name": "repository", "Type": "text", "Default Value": "   "},
-
-
 
 
     # # ── data-source ──
@@ -176,8 +173,6 @@ TEMPLATE = [
     # {"Panel Type": "left-sidebar-settings--data-source", "Field Label": "Article Listing - Env4 (https://pfecpfizercomus-env4.pfizersite.io/v1/api/hub/featured_stories/listing.json)", "Field Name": "", "Type": "checkbox"},
     # {"Panel Type": "left-sidebar-settings--data-source", "Field Label": "Careers - Env4 (https://pfecpfizercomus-env4.pfizersite.io/v1/api/hub/listing/career.json)", "Field Name": "", "Type": "checkbox"},
 ]
-
-
 
 # ──────────────────────────────────────────────────────────────
 # Helpers
@@ -508,6 +503,10 @@ def extract_values(site_dir):
     # custom_multiselect_single — match by Field Label since Field Name is shared
     values[(OPT, "", "Select Rich Text Editor Beta")] = "CKEditor 5"
     values[(OPT, "", "When Brandkit variables are defined on a page level:")] = "Attach Global Brandkit variables after page-level"
+
+    # --- multilingual ---
+    # MULTILINGUAL = "left-sidebar-settings--multilingual-manager"
+    # values[(MULTILINGUAL, "", "Enable multilingual")] = "unchecked"
 
     # --- performance --- (all share Field Name, so match by Field Label)
     PERF = "left-sidebar-settings--performance"
