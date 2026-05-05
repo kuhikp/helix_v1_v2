@@ -69,7 +69,7 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "When Brandkit variables are defined on a page level:", "Field Name": "loginPage", "Type": "custom_multiselect_single", "Default Value": "Attach Global Brandkit variables after page-level"},
 
     # -- multilingual --
-    {"Panel Type": "left-sidebar-settings--multilingual-manager", "Field Label": "Enable multilingual", "Field Name": "enable_multilingual", "Type": "checkbox", "Default Value": "unchecked"},
+    # {"Panel Type": "left-sidebar-settings--multilingual-manager", "Field Label": "Enable multilingual", "Field Name": "enable_multilingual", "Type": "checkbox", "Default Value": "unchecked"},
     
     # ── performance ──
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "", "Field Name": "_token", "Type": "hidden", "Default Value": ""},
@@ -103,15 +103,9 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Business Unit *", "Field Name": "lexicon_business_unit", "Type": "select", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_brands[]", "Type": "custom_multiselect", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "brands[]", "Type": "custom_multiselect", "Default Value": ""},
-<<<<<<< Updated upstream
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "audience_specialties[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_indications[]", "Type": "custom_multiselect", "Default Value": ""},
-=======
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Subtype *", "Field Name": "audience_specialties[]", "Type": "custom_multiselect", "Default Value": "Administrative Staff"},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Therapeutic Area *", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": "Anesthesia"},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Indications *", "Field Name": "lexicon_indications[]", "Type": "custom_multiselect", "Default Value": "Achondroplasia"},
->>>>>>> Stashed changes
 
     # # ── external-link-manager ──
     {"Panel Type": "left-sidebar-settings--external-link-manager", "Field Label": "Enabled?", "Field Name": "enabled", "Type": "checkbox", "Default Value": "unchecked"},
@@ -511,8 +505,8 @@ def extract_values(site_dir):
     values[(OPT, "", "When Brandkit variables are defined on a page level:")] = "Attach Global Brandkit variables after page-level"
 
     # --- multilingual ---
-    MULTILINGUAL = "left-sidebar-settings--multilingual-manager"
-    values[(MULTILINGUAL, "", "Enable multilingual")] = "unchecked"
+    # MULTILINGUAL = "left-sidebar-settings--multilingual-manager"
+    # values[(MULTILINGUAL, "", "Enable multilingual")] = "unchecked"
 
     # --- performance --- (all share Field Name, so match by Field Label)
     PERF = "left-sidebar-settings--performance"
