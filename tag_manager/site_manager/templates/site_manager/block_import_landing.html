@@ -1,10 +1,11 @@
-{% extends 'authentication/base.html' %}
-{% block title %}Block Import — Site {{ site_id }}{% endblock %}
-
-{% block content %}
+{% extends 'authentication/base.html' %} {% block title %}Block Import — Site {{
+site_id }}{% endblock %} {% block content %}
 <div class="container mt-5">
   <div class="mb-4">
-    <a href="{% url 'site_meta_list' site_id %}" class="btn btn-outline-secondary">
+    <a
+      href="{% url 'site_meta_list' site_id %}"
+      class="btn btn-outline-secondary"
+    >
       <i class="fas fa-arrow-left me-1"></i>Back to Meta Details
     </a>
   </div>
@@ -19,7 +20,6 @@
       </p>
 
       <div class="row g-4">
-
         <!-- Step A: Pull Common Block List -->
         <div class="col-md-4">
           <div class="card border-primary h-100 shadow-sm">
@@ -31,10 +31,13 @@
               </div>
               <h5 class="card-title fw-bold">Pull Common Block List</h5>
               <p class="card-text text-muted flex-grow-1">
-                Fetch the common/shared block list from the WebBuilder source. This is the first step before converting or importing blocks.
+                Fetch the common/shared block list from the WebBuilder source.
+                This is the first step before converting or importing blocks.
               </p>
-              <a href="{% url 'pull_common_block_list' site_id %}"
-                 class="btn btn-primary fw-semibold mt-3 w-100">
+              <a
+                href="{% url 'pull_common_block_list' site_id %}"
+                class="btn btn-primary fw-semibold mt-3 w-100"
+              >
                 <i class="fas fa-download me-1"></i>Pull Common Block List
               </a>
             </div>
@@ -52,11 +55,15 @@
               </div>
               <h5 class="card-title fw-bold">Convert Block to Helix</h5>
               <p class="card-text text-muted flex-grow-1">
-                Convert the pulled block list into Helix-compatible format. Run this after pulling the common block list.
+                Convert the pulled block list into Helix-compatible format. Run
+                this after pulling the common block list.
               </p>
-              <a href="{% url 'convert_block_helix' site_id %}"
-                 class="btn btn-warning fw-semibold mt-3 w-100 text-dark">
-                <i class="fas fa-wand-magic-sparkles me-1"></i>Convert Block to Helix
+              <a
+                href="{% url 'convert_block_helix' site_id %}"
+                class="btn btn-warning fw-semibold mt-3 w-100 text-dark"
+              >
+                <i class="fas fa-wand-magic-sparkles me-1"></i>Convert Block to
+                Helix
               </a>
             </div>
           </div>
@@ -73,16 +80,18 @@
               </div>
               <h5 class="card-title fw-bold">Block Import</h5>
               <p class="card-text text-muted flex-grow-1">
-                Import block data into WebBuilder using Playwright browser automation. Run this after converting blocks to Helix format.
+                Import block data into WebBuilder using Playwright browser
+                automation. Run this after converting blocks to Helix format.
               </p>
-              <a href="{% url 'block_import_start' site_id %}"
-                 class="btn btn-info fw-semibold mt-3 w-100 text-white">
+              <a
+                href="{% url 'block_import_start' site_id %}"
+                class="btn btn-info fw-semibold mt-3 w-100 text-white"
+              >
                 <i class="fas fa-file-import me-1"></i>Block Import
               </a>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>

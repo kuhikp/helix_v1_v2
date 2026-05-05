@@ -2060,13 +2060,45 @@ def import_block(request, site_id):
 def pull_common_block_list(request, site_id):
     """
     Step A: Pull the common/shared block list from WebBuilder.
+    Runs Common_block_import.py as a subprocess when the button is clicked.
     """
     if request.method == 'POST':
         try:
-            # TODO: implement actual pull logic here
-            return JsonResponse({'status': 'success', 'message': 'Common block list pulled successfully.'})
+            script_path = os.path.join(settings.BASE_DIR, 'site_manager', 'Common_block_import.py')
+
+            if not os.path.exists(script_path):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Script not found: {script_path}'
+                }, status=404)
+
+            result = subprocess.run(
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                cwd=settings.BASE_DIR,
+            )
+
+            if result.returncode == 0:
+                output_summary = result.stdout.strip()[-1000:] if result.stdout.strip() else 'Script completed with no output.'
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'Common block list pulled successfully.<br><pre>{output_summary}</pre>'
+                })
+            else:
+                error_detail = result.stderr.strip()[-1000:] if result.stderr.strip() else 'Unknown error.'
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Script failed with exit code {result.returncode}.<br><pre>{error_detail}</pre>'
+                }, status=500)
+
         except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
+            logger.error(f'Error running Common_block_import.py: {e}')
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Unexpected error: {str(e)}'
+            }, status=500)
+
     return render(request, 'site_manager/pull_common_block_list.html', {'site_id': site_id})
 
 
