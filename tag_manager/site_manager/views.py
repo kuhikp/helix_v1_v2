@@ -2288,10 +2288,11 @@ def run_import_block(site_id):
             page.fill('xpath=//*[@id="username"]', username)
             page.fill('xpath=//*[@id="password"]', password)
             page.press('xpath=//*[@id="password"]', "Enter")
-
+        
+        raw_output = (os.getenv('HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER') or '').strip()
         # Call the main processing functions in synchronous order
         process_blocks(page, sitename, instance_id,
-                       blocks_folder="/Users/sbws_user/Documents/Webbuilder/4May/helix_v1_v2/generated_helix_output/block/Common_blocks")
+                       blocks_folder=raw_output)
 
         browser.close()
 

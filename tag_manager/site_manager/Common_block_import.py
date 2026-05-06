@@ -8,14 +8,26 @@ from tqdm import tqdm
 # ==================================================
 # CONFIGURATION
 # ==================================================
+HTML_Files_Folder = os.getenv("HTML_Files_Folder").replace("\t", "\\t")
+ROOT_DIR = os.path.normpath(HTML_Files_Folder)
+#ROOT_DIR = "/Users/sbws_user/Downloads/HTMLtracker/migration/public/www.pactonco.fr" #HTTracked site folder in your local
 
-ROOT_DIR = "/Users/sbws_user/Downloads/HTMLtracker/migration/public/www.pactonco.fr" #HTTracked site folder in your local
-OUTPUT_DIR = "/Users/sbws_user/Downloads/HTMLtracker/Common_blocks_www.pactonco.fr/" #location where common blocks will be saved in your local
-UNCOMMON_OUTPUT_DIR = "/Users/sbws_user/Downloads/HTMLtracker/Uncommon_blocks_www.pactonco.fr/" #location where uncommon blocks will be saved in your local
+
+# Base output directory from environment variable
+OUTPUT_DIR = (os.getenv('HELIX_CONVERTER_BLOCK_FOLDER') or '').strip()
+
+# Define subfolder paths
+COMMON_BLOCKS_DIR = os.path.join(OUTPUT_DIR, 'common_blocks')
+UNCOMMON_BLOCKS_DIR = os.path.join(OUTPUT_DIR, 'uncommon_blocks')
+
+
+
+#OUTPUT_DIR = "/Users/sbws_user/Downloads/HTMLtracker/Common_blocks_www.pactonco.fr/" #location where common blocks will be saved in your local
+#UNCOMMON_OUTPUT_DIR = "/Users/sbws_user/Downloads/HTMLtracker/Uncommon_blocks_www.pactonco.fr/" #location where uncommon blocks will be saved in your local
 MIN_OCCURRENCE_RATIO = 0.6  # 60%
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
-os.makedirs(UNCOMMON_OUTPUT_DIR, exist_ok=True)
+os.makedirs(COMMON_BLOCKS_DIR, exist_ok=True)
+os.makedirs(UNCOMMON_BLOCKS_DIR, exist_ok=True)
 
 # ==================================================
 # FILE DISCOVERY
@@ -210,8 +222,8 @@ def save_blocks(blocks, out_dir):
 
     return registry
 
-common_registry = save_blocks(common_blocks, OUTPUT_DIR)
-uncommon_registry = save_blocks(uncommon_blocks, UNCOMMON_OUTPUT_DIR)
+common_registry = save_blocks(common_blocks, COMMON_BLOCKS_DIR)
+uncommon_registry = save_blocks(uncommon_blocks, UNCOMMON_BLOCKS_DIR)
 
 with open(os.path.join(OUTPUT_DIR, "block_registry.json"), "w") as f:
     json.dump(common_registry, f, indent=2)
