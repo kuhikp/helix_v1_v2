@@ -34,9 +34,10 @@ MULTISELECT_WAIT_TIME = 2
 
 USERNAME = os.getenv('USERNAME')
 PASSWORD = os.getenv('PASSWORD')
+EDISON_SITE_ID = os.getenv('EDISON_SITE_ID', '')
 
 SYSTEM_FIELDS_TO_SKIP = {'_token', 'csrfmiddlewaretoken', 'sessionid'}
-ALWAYS_SKIP_FIELDS = {'repository', 'lexicon_brands[]', 'brands[]', 'lexicon_therapeutic_areas[]', 'lexicon_indications[]'}
+ALWAYS_SKIP_FIELDS = {'lexicon_brands[]', 'brands[]', 'lexicon_therapeutic_areas[]', 'lexicon_indications[]'}
 MULTISELECT_FIELDS = {'audience_specialties[]', 'lexicon_brands[]', 'brands[]', 'lexicon_therapeutic_areas[]', 'lexicon_indications[]'}
 
 try:
@@ -101,8 +102,8 @@ try:
             value = csv_row['Value']
             label_text = csv_row.get('Field Label', field_name)
             
-            # Skip if no value is present
-            if not value or value.strip() == '':
+            # Skip if no value is present (but preserve intentional whitespace like "   ")
+            if value is None or (isinstance(value, str) and len(value) == 0):
                 print(f"⊘ Skipping {field_name or 'unnamed field'} - no value")
                 continue
             
@@ -112,7 +113,14 @@ try:
             label_text = csv_row.get('Field Label', '').strip().replace('\n', ' ').replace('\r', ' ')
             if not field_name and not label_text:
                 continue
-            if field_name in ALWAYS_SKIP_FIELDS and field_type == 'text' and label_text != 'Edison Lite Site ID':
+            
+            # Debug logging for repository field
+            if field_name == 'repository':
+                print(f"[DEBUG] repository field found - label: '{label_text}', value: '{value}', type: '{field_type}'")
+                print(f"[DEBUG] Using value from JSON as-is (including spaces if present)")
+            
+            # Skip other always-skip fields
+            if field_name in ALWAYS_SKIP_FIELDS and field_type == 'text':
                 continue
             if field_type == 'hidden':
                 try:
@@ -238,9 +246,13 @@ try:
                         elem.send_keys(value)
                         driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", elem)
                         driver.execute_script("arguments[0].blur();", elem)
+                        if field_name.lower() == "repository":
+                            print(f"✓ repo - filled '{field_name}' with value: '{value}'")
                     except Exception:
                         try:
                             driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true })); arguments[0].blur();", elem, value)
+                            if field_name.lower() == "repository":
+                                print(f"✓ repo - filled '{field_name}' with value: '{value}' (JS fallback)")
                         except Exception:
                             pass
                     if field_name.lower() == "domain":
