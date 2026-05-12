@@ -34,7 +34,6 @@ MULTISELECT_WAIT_TIME = 2
 
 USERNAME = os.getenv('USERNAME')
 PASSWORD = os.getenv('PASSWORD')
-EDISON_SITE_ID = os.getenv('EDISON_SITE_ID', '')
 
 SYSTEM_FIELDS_TO_SKIP = {'_token', 'csrfmiddlewaretoken', 'sessionid'}
 ALWAYS_SKIP_FIELDS = {'lexicon_brands[]', 'brands[]', 'lexicon_therapeutic_areas[]', 'lexicon_indications[]'}
@@ -102,10 +101,10 @@ try:
             value = csv_row['Value']
             label_text = csv_row.get('Field Label', field_name)
             
-            # Skip if no value is present (but preserve intentional whitespace like "   ")
-            if value is None or (isinstance(value, str) and len(value) == 0):
-                print(f"⊘ Skipping {field_name or 'unnamed field'} - no value")
-                continue
+            # Skip if no value is present
+            # if value is None or (isinstance(value, str) and len(value) == 0):
+            #     print(f"⊘ Skipping {field_name or 'unnamed field'} - no value")
+            #     continue
             
             if (field_type == 'multiselect' or field_type == 'custom_multiselect') and field_name in MULTISELECT_FIELDS:
                 values = multiselect_values[(v2_site_id, panel_type)][field_name]
@@ -113,14 +112,7 @@ try:
             label_text = csv_row.get('Field Label', '').strip().replace('\n', ' ').replace('\r', ' ')
             if not field_name and not label_text:
                 continue
-            
-            # Debug logging for repository field
-            if field_name == 'repository':
-                print(f"[DEBUG] repository field found - label: '{label_text}', value: '{value}', type: '{field_type}'")
-                print(f"[DEBUG] Using value from JSON as-is (including spaces if present)")
-            
-            # Skip other always-skip fields
-            if field_name in ALWAYS_SKIP_FIELDS and field_type == 'text':
+            if field_name in ALWAYS_SKIP_FIELDS and field_type == 'text' and label_text != 'Edison Lite Site ID':
                 continue
             if field_type == 'hidden':
                 try:
@@ -146,14 +138,74 @@ try:
                     pass
             try:
                 if field_type in ['text', 'textarea', 'url']:
+                    
                     elem = None
+                    print(f"Processing field '{field_name}' (label: '{label_text}') of type '{field_type}' with value '{value}'")
                     label_text = csv_row.get('Field Label', '').strip().replace('\n', ' ').replace('\r', ' ')
+                    
+                    # First, try to find the settings-component-container to scope our search
+                    settings_container = None
                     try:
-                        elem = driver.find_element(By.NAME, field_name)
+                        settings_container = driver.find_element(By.CLASS_NAME, "settings-component-container")
+                        print(f"✓ Found settings-component-container, scoping search within it")
+                    except Exception:
+                        print(f"⚠️ settings-component-container not found, searching in entire page")
+                    
+                    # Use the container as the search root if found, otherwise use driver
+                    search_root = settings_container if settings_container else driver
+                    
+                    # Try to find element by name within the scoped container
+                    try:
+                        if settings_container:
+                            # Search within settings container
+                            elem = settings_container.find_element(By.NAME, field_name)
+                        else:
+                            # Fallback to full page search
+                            elem = driver.find_element(By.NAME, field_name)
                     except:
                         elem = None
+                    
+                    # If multiple elements with same name exist, match by label
+                    if not elem and field_name:
+                        try:
+                            # Get all elements with this name within the container
+                            all_elements_with_name = search_root.find_elements(By.NAME, field_name)
+                            
+                            if len(all_elements_with_name) > 1:
+                                # Multiple elements found - match by label
+                                print(f"⚠️ Found {len(all_elements_with_name)} elements with name '{field_name}' in settings container, matching by label...")
+                                norm_label = label_text.lower().replace(' ', '').replace('*', '')
+                                
+                                for candidate_elem in all_elements_with_name:
+                                    try:
+                                        # Find the parent field container
+                                        parent_field = candidate_elem.find_element(By.XPATH, "ancestor::div[contains(@class, 'field')][1]")
+                                        # Find the label in this field
+                                        label_elem = parent_field.find_element(By.TAG_NAME, "label")
+                                        label_val = label_elem.text.strip()
+                                        norm_label_val = label_val.lower().replace(' ', '').replace('*', '')
+                                        
+                                        # Check if label matches
+                                        if norm_label in norm_label_val or norm_label_val in norm_label:
+                                            elem = candidate_elem
+                                            print(f"✓ Matched element by label: '{label_val}'")
+                                            break
+                                    except Exception:
+                                        continue
+                                
+                                # If no match found by label, use the first one
+                                if not elem and all_elements_with_name:
+                                    elem = all_elements_with_name[0]
+                                    print(f"⚠️ No label match found, using first element with name '{field_name}'")
+                            elif len(all_elements_with_name) == 1:
+                                # Only one element found - use it
+                                elem = all_elements_with_name[0]
+                        except Exception:
+                            pass
+                    
+                    # Fuzzy matching by label if still not found
                     if not elem:
-                        fields_divs = driver.find_elements(By.CLASS_NAME, "field")
+                        fields_divs = search_root.find_elements(By.CLASS_NAME, "field")
                         norm_label = label_text.lower().replace(' ', '').replace('*', '')
                         best_score = 0
                         best_elem = None
@@ -176,8 +228,10 @@ try:
                                 continue
                         if best_elem:
                             elem = best_elem
+                    
+                    # Exact label match as final fallback
                     if not elem:
-                        fields_divs = driver.find_elements(By.CLASS_NAME, "field")
+                        fields_divs = search_root.find_elements(By.CLASS_NAME, "field")
                         norm_label = label_text.lower().replace(' ', '').replace('*', '')
                         for field_div in fields_divs:
                             try:
@@ -190,8 +244,11 @@ try:
                                     break
                             except Exception:
                                 continue
+                    
                     if not elem:
+                        print(f"❌ Could not find element for '{field_name}' (label: '{label_text}') even within settings-component-container")
                         continue
+                    
                     try:
                         driver.execute_script("var overlays=document.querySelectorAll('iframe, .intercom-launcher-frame, .modal, .popup'); overlays.forEach(o=>o.style.display='none');")
                     except:
@@ -202,6 +259,7 @@ try:
                             break
                         time.sleep(0.5)
                     if not elem.is_displayed() or not elem.is_enabled():
+                        print(f"Element displayed: {elem.is_displayed()}, enabled: {elem.is_enabled()}")
                         try:
                             parent_section = elem.find_element(By.XPATH, "ancestor::section[1]")
                             candidates = parent_section.find_elements(By.XPATH, ".//input | .//textarea | .//div[@contenteditable='true'] | .//span[@contenteditable='true']")
@@ -237,22 +295,33 @@ try:
                         except Exception:
                             pass
                         try:
-                            driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true })); arguments[0].blur();", elem, value)
+                            print(f"⚠️ Element for '{field_name}' (label: '{label_text}') is not interactable. Attempting JS fallback to set value.")
+                            # If clicking an element
+                            try:
+                                
+                                print(f"Attempting to click element for '{field_name}' using JS fallback")
+                                print(f"Element tag: {elem.tag_name}, type: {elem.get_attribute('type')}, name: {elem.get_attribute('name')}, title: {elem.get_attribute('title')}, aria-label: {elem.get_attribute('aria-label')}")
+                                print(f"Element outerHTML: {elem.get_attribute('outerHTML')}")
+                                print(f"Current URL: {driver.current_url}")
+                                
+                                #xpath = "//*[@id='webbuilder-editor-content-wrapper']/div/div[1]/div/div/div[3]/div[2]/section[4]/div/div/div/input";
+                                #element = driver.find_element(By.XPATH, xpath)
+                                driver.execute_script("arguments[0].click();", elem)
+                            except Exception as e:
+                                print(f"Error: {e}")
+
                         except Exception:
                             pass
                         continue
                     try:
+                        print(f"✓ Found element for '{field_name}' (label: '{label_text}'), setting value to '{value}'")
                         elem.clear()
                         elem.send_keys(value)
                         driver.execute_script("arguments[0].dispatchEvent(new Event('change', { bubbles: true }));", elem)
                         driver.execute_script("arguments[0].blur();", elem)
-                        if field_name.lower() == "repository":
-                            print(f"✓ repo - filled '{field_name}' with value: '{value}'")
                     except Exception:
                         try:
                             driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true })); arguments[0].blur();", elem, value)
-                            if field_name.lower() == "repository":
-                                print(f"✓ repo - filled '{field_name}' with value: '{value}' (JS fallback)")
                         except Exception:
                             pass
                     if field_name.lower() == "domain":
