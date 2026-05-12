@@ -101,11 +101,6 @@ try:
             value = csv_row['Value']
             label_text = csv_row.get('Field Label', field_name)
             
-            # Skip if no value is present
-            # if value is None or (isinstance(value, str) and len(value) == 0):
-            #     print(f"⊘ Skipping {field_name or 'unnamed field'} - no value")
-            #     continue
-            
             if (field_type == 'multiselect' or field_type == 'custom_multiselect') and field_name in MULTISELECT_FIELDS:
                 values = multiselect_values[(v2_site_id, panel_type)][field_name]
                 value = ','.join(sorted(set(values), key=values.index))

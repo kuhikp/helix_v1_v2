@@ -69,10 +69,10 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "Select Rich Text Editor Beta", "Field Name": "loginPage", "Type": "custom_multiselect_single", "Default Value": "CKEditor 5"},
     {"Panel Type": "left-sidebar-settings--optional-and-head-features", "Field Label": "When Brandkit variables are defined on a page level:", "Field Name": "loginPage", "Type": "custom_multiselect_single", "Default Value": "Attach Global Brandkit variables after page-level"},
 
-    # # -- multilingual --
+    # -- multilingual --
     # {"Panel Type": "left-sidebar-settings--multilingual-manager", "Field Label": "Enable multilingual", "Field Name": "enable_multilingual", "Type": "checkbox", "Default Value": "unchecked"},
     
-    # # ── performance ──
+    # ── performance ──
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "", "Field Name": "_token", "Type": "hidden", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Enable PSI performance options", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Minify all included CSS files", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "checked"},
@@ -81,10 +81,10 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Defer loading website JS", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--performance", "Field Label": "Enable Fast Deployments", "Field Name": "renderCriticalContentFirst", "Type": "checkbox", "Default Value": "checked"},
 
-    # # -- developer settings --
+    # -- developer settings --
     {"Panel Type": "left-sidebar-settings--developer", "Field Label": "Allow Edison Previews", "Field Name": "allow_edison_previews", "Type": "checkbox", "Default Value": "checked"},
 
-    # # ── seo ──
+    # ── seo ──
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "_token", "Type": "hidden", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "repository", "Type": "text", "Default Value": ""},
@@ -95,25 +95,19 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "site_description", "Type": "textarea", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "site_keywords", "Type": "textarea", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Currency", "Field Name": "currency", "Type": "select", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Type *", "Field Name": "audiences", "Type": "select", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "audience_specialties[]", "Type": "text", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_therapeutic_areas[]", "Type": "text", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_indications[]", "Type": "text", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Business Unit *", "Field Name": "lexicon_business_unit", "Type": "select", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_brands[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "brands[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "audience_specialties[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": ""},
-    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "", "Field Name": "lexicon_indications[]", "Type": "custom_multiselect", "Default Value": ""},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Type *", "Field Name": "audiences", "Type": "select", "Default Value": "External Organization"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Customer Subtype *", "Field Name": "audience_specialties[]", "Type": "custom_multiselect", "Default Value": "Administrative Staff"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Therapeutic Area *", "Field Name": "lexicon_therapeutic_areas[]", "Type": "custom_multiselect", "Default Value": "Anesthesia"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Indications *", "Field Name": "indications[]", "Type": "custom_multiselect", "Default Value": "Achondroplasia"},
+    {"Panel Type": "left-sidebar-settings--seo", "Field Label": "Business Unit *", "Field Name": "lexicon_business_unit", "Type": "custom_multiselect", "Default Value": ""},
 
-
-    # # ── external-link-manager ──
+    # ── external-link-manager ──
     {"Panel Type": "left-sidebar-settings--external-link-manager", "Field Label": "Enabled?", "Field Name": "enabled", "Type": "checkbox", "Default Value": "unchecked"},
 
-    # # ── promotional-popup-manager ──
+    # ── promotional-popup-manager ──
     {"Panel Type": "left-sidebar-settings--promotional-popup-manager", "Field Label": "Enabled?", "Field Name": "enabled", "Type": "checkbox", "Default Value": "unchecked"},
 
-    # # ── analytics ──
+    # ── analytics ──
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "Check here if you use Adobe analytics on your site", "Field Name": "enable-analytics", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "Check here if you use \"Adobe Target\"", "Field Name": "adobe-target", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "Adobe Analytics Library", "Field Name": "select", "Type": "select", "Default Value": ""},
@@ -121,9 +115,8 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "Check here if you use GTM on your site", "Field Name": "enable-gtm", "Type": "checkbox", "Default Value": "unchecked"},
     {"Panel Type": "left-sidebar-settings--analytics", "Field Label": "", "Field Name": "prod-gtm-url", "Type": "text", "Default Value": ""},
 
-    # # # ── bootstrap ──
+    # ── bootstrap ──
     {"Panel Type": "left-sidebar-settings--bootstrap", "Field Label": "Version", "Field Name": "bootstrap", "Type": "select", "Default Value": "No Bootstrap"},
-
 
     # ── main ──
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "", "Field Name": "repository", "Type": "text", "Default Value": ""},
@@ -134,12 +127,9 @@ TEMPLATE = [
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "Teams", "Field Name": "teams", "Type": "text", "Default Value": ""},
     {"Panel Type": "left-sidebar-settings--main", "Field Label": "Helix Components Version", "Field Name": "helix_components_version", "Type": "text", "Default Value": ""},
 
-    # # -- left-sidebar-settings--website --
+    # -- left-sidebar-settings--website --
     {"Panel Type": "left-sidebar-settings--website", "Field Label": "Site Type", "Field Name": "site_type", "Type": "select", "Default Value": "Website"},
     {"Panel Type": "left-sidebar-settings--website", "Field Label": "Edison Lite Site ID", "Field Name": "repository", "Type": "text", "Default Value": "   "},
-
-
-
 
     # # ── data-source ──
     # {"Panel Type": "left-sidebar-settings--data-source", "Field Label": "", "Field Name": "_token", "Type": "hidden"},
@@ -176,8 +166,6 @@ TEMPLATE = [
     # {"Panel Type": "left-sidebar-settings--data-source", "Field Label": "Article Listing - Env4 (https://pfecpfizercomus-env4.pfizersite.io/v1/api/hub/featured_stories/listing.json)", "Field Name": "", "Type": "checkbox"},
     # {"Panel Type": "left-sidebar-settings--data-source", "Field Label": "Careers - Env4 (https://pfecpfizercomus-env4.pfizersite.io/v1/api/hub/listing/career.json)", "Field Name": "", "Type": "checkbox"},
 ]
-
-
 
 # ──────────────────────────────────────────────────────────────
 # Helpers
@@ -529,8 +517,11 @@ def extract_values(site_dir):
     values[(SEO, "site_keywords", "")] = ""
     values[(SEO, "country", "")] = country
     values[(SEO, "currency", "")] = ""
-    values[(SEO, "audiences", "")] = ""
-    values[(SEO, "lexicon_business_unit", "")] = ""
+    values[(SEO, "audiences", "")] = "External Organization"
+    values[(SEO, "", "Customer Subtype *")] = "Administrative Staff"
+    values[(SEO, "", "Therapeutic Area *")] = "Anesthesia"
+    values[(SEO, "", "Indications *")] = "Achondroplasia"
+    values[(SEO, "", "Business Unit *")] = ""
 
     # -- website --
     # custom_multiselect_single — match by Field Label since Field Name is shared
