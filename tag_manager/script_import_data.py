@@ -36,7 +36,7 @@ USERNAME = os.getenv('USERNAME')
 PASSWORD = os.getenv('PASSWORD')
 
 SYSTEM_FIELDS_TO_SKIP = {'_token', 'csrfmiddlewaretoken', 'sessionid'}
-ALWAYS_SKIP_FIELDS = {'repository', 'lexicon_brands[]', 'brands[]', 'lexicon_therapeutic_areas[]', 'lexicon_indications[]'}
+ALWAYS_SKIP_FIELDS = {'lexicon_brands[]', 'brands[]', 'lexicon_therapeutic_areas[]', 'lexicon_indications[]'}
 MULTISELECT_FIELDS = {'audience_specialties[]', 'lexicon_brands[]', 'brands[]', 'lexicon_therapeutic_areas[]', 'lexicon_indications[]'}
 
 try:
@@ -101,11 +101,6 @@ try:
             value = csv_row['Value']
             label_text = csv_row.get('Field Label', field_name)
             
-            # Skip if no value is present
-            if not value or value.strip() == '':
-                print(f"⊘ Skipping {field_name or 'unnamed field'} - no value")
-                continue
-            
             if (field_type == 'multiselect' or field_type == 'custom_multiselect') and field_name in MULTISELECT_FIELDS:
                 values = multiselect_values[(v2_site_id, panel_type)][field_name]
                 value = ','.join(sorted(set(values), key=values.index))
@@ -140,12 +135,66 @@ try:
                 if field_type in ['text', 'textarea', 'url']:
                     elem = None
                     label_text = csv_row.get('Field Label', '').strip().replace('\n', ' ').replace('\r', ' ')
+                    
+                    # First, try to find the settings-component-container to scope our search
+                    settings_container = None
                     try:
-                        elem = driver.find_element(By.NAME, field_name)
+                        settings_container = driver.find_element(By.CLASS_NAME, "settings-component-container")
+                    except Exception:
+                        print(f"⚠️ settings-component-container not found, searching in entire page")
+
+                    # Use the container as the search root if found, otherwise use driver
+                    search_root = settings_container if settings_container else driver
+                    
+                    # Try to find element by name within the scoped container
+                    try:
+                        if settings_container:
+                            # Search within settings container
+                            elem = settings_container.find_element(By.NAME, field_name)
+                        else:
+                            # Fallback to full page search
+                            elem = driver.find_element(By.NAME, field_name)
                     except:
                         elem = None
+                    
+                    # If multiple elements with same name exist, match by label
+                    if not elem and field_name:
+                        try:
+                            # Get all elements with this name within the container
+                            all_elements_with_name = search_root.find_elements(By.NAME, field_name)
+                            
+                            if len(all_elements_with_name) > 1:
+                                # Multiple elements found - match by label
+                                norm_label = label_text.lower().replace(' ', '').replace('*', '')
+                                
+                                for candidate_elem in all_elements_with_name:
+                                    try:
+                                        # Find the parent field container
+                                        parent_field = candidate_elem.find_element(By.XPATH, "ancestor::div[contains(@class, 'field')][1]")
+                                        # Find the label in this field
+                                        label_elem = parent_field.find_element(By.TAG_NAME, "label")
+                                        label_val = label_elem.text.strip()
+                                        norm_label_val = label_val.lower().replace(' ', '').replace('*', '')
+                                        
+                                        # Check if label matches
+                                        if norm_label in norm_label_val or norm_label_val in norm_label:
+                                            elem = candidate_elem
+                                            break
+                                    except Exception:
+                                        continue
+                                
+                                # If no match found by label, use the first one
+                                if not elem and all_elements_with_name:
+                                    elem = all_elements_with_name[0]
+                            elif len(all_elements_with_name) == 1:
+                                # Only one element found - use it
+                                elem = all_elements_with_name[0]
+                        except Exception:
+                            pass
+                    
+                    # Fuzzy matching by label if still not found
                     if not elem:
-                        fields_divs = driver.find_elements(By.CLASS_NAME, "field")
+                        fields_divs = search_root.find_elements(By.CLASS_NAME, "field")
                         norm_label = label_text.lower().replace(' ', '').replace('*', '')
                         best_score = 0
                         best_elem = None
@@ -168,8 +217,10 @@ try:
                                 continue
                         if best_elem:
                             elem = best_elem
+                    
+                    # Exact label match as final fallback
                     if not elem:
-                        fields_divs = driver.find_elements(By.CLASS_NAME, "field")
+                        fields_divs = search_root.find_elements(By.CLASS_NAME, "field")
                         norm_label = label_text.lower().replace(' ', '').replace('*', '')
                         for field_div in fields_divs:
                             try:
@@ -182,8 +233,11 @@ try:
                                     break
                             except Exception:
                                 continue
+                    
                     if not elem:
+                        print(f"❌ Could not find element for '{field_name}' (label: '{label_text}') even within settings-component-container")
                         continue
+                    
                     try:
                         driver.execute_script("var overlays=document.querySelectorAll('iframe, .intercom-launcher-frame, .modal, .popup'); overlays.forEach(o=>o.style.display='none');")
                     except:
@@ -229,7 +283,14 @@ try:
                         except Exception:
                             pass
                         try:
-                            driver.execute_script("arguments[0].value = arguments[1]; arguments[0].dispatchEvent(new Event('change', { bubbles: true })); arguments[0].blur();", elem, value)
+                            print(f"⚠️ Element for '{field_name}' (label: '{label_text}') is not interactable. Attempting JS fallback to set value.")
+                            # If clicking an element
+                            try:
+                                print(f"Attempting to click element for '{field_name}' using JS fallback")
+                                driver.execute_script("arguments[0].click();", elem)
+                            except Exception as e:
+                                print(f"Error: {e}")
+
                         except Exception:
                             pass
                         continue
