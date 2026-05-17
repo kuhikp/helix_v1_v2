@@ -1664,7 +1664,6 @@ def process_batch_complexity_update(session_key):
             })
             session['batch_complexity_progress'] = progress
             session.save()
-        
         # Mark as completed
         progress = session.get('batch_complexity_progress', {})
         progress.update({
@@ -2050,13 +2049,215 @@ def download_exported_meta(request, site_id):
 @login_required
 def import_block(request, site_id):
     """
-    View to handle block import for a given site.
+    Landing page for Block Import — shows 3 action buttons:
+    Pull Common Block List, Convert Block to Helix, Block Import.
+    """
+    return render(request, 'site_manager/block_import_landing.html', {'site_id': site_id})
+
+
+@login_required
+def pull_common_block_list(request, site_id):
+    """
+    Step A: Pull the common/shared block list from WebBuilder.
+    Runs Common_block_import.py as a subprocess when the button is clicked.
     """
     if request.method == 'POST':
-        # Start the import in a background thread
+        try:
+            script_path = os.path.join(settings.BASE_DIR, 'site_manager', 'Common_block_import.py')
+
+            if not os.path.exists(script_path):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Script not found: {script_path}'
+                }, status=404)
+
+            result = subprocess.run(
+                [sys.executable, script_path],
+                capture_output=True,
+                text=True,
+                cwd=settings.BASE_DIR,
+            )
+
+            if result.returncode == 0:
+                output_summary = result.stdout.strip()[-1000:] if result.stdout.strip() else 'Script completed with no output.'
+                return JsonResponse({
+                    'status': 'success',
+                    'message': f'Common block list pulled successfully.<br><pre>{output_summary}</pre>'
+                })
+            else:
+                error_detail = result.stderr.strip()[-1000:] if result.stderr.strip() else 'Unknown error.'
+                return JsonResponse({
+                    'status': 'error',
+                    'message': f'Script failed with exit code {result.returncode}.<br><pre>{error_detail}</pre>'
+                }, status=500)
+
+        except Exception as e:
+            logger.error(f'Error running Common_block_import.py: {e}')
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Unexpected error: {str(e)}'
+            }, status=500)
+
+    return render(request, 'site_manager/pull_common_block_list.html', {'site_id': site_id})
+
+
+@login_required
+@login_required
+@login_required
+def convert_block_helix(request, site_id):
+    """
+    Step B: Convert the pulled block list into Helix-compatible format by running
+    convert_html_to_helix_backend.py as a background subprocess.
+
+    Paths are resolved in this priority order:
+      input_folder  -> HELIX_CONVERTER_BLOCK_INPUT_FOLDER  (env) -> HELIX_CONVERTER_INPUT_FOLDER (env) -> default
+      output_folder -> HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER (env) -> HELIX_CONVERTER_OUTPUT_FOLDER (env) -> default
+    """
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_convert_block_helix.status")
+
+    if request.method == 'POST':
+        defaults = _build_pages_import_defaults()
+        script_path = defaults['converter_script_path']
+        components_csv = defaults['components_csv']
+        model = defaults['model']
+        temperature = str(defaults['temperature'])
+
+        # Block-specific env vars take priority; fall back to the generic converter paths
+        raw_input = (os.getenv('HELIX_CONVERTER_BLOCK_INPUT_FOLDER') or '').strip()
+        raw_output = (os.getenv('HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER') or '').strip()
+
+        input_folder = _normalize_to_absolute_path(raw_input, defaults['converter_input_folder'])
+        output_folder = _normalize_to_absolute_path(raw_output, defaults['converter_output_folder'])
+
+        missing = []
+        if not os.path.exists(script_path):
+            missing.append(f"Converter script not found: {script_path}")
+        if not os.path.isdir(input_folder):
+            missing.append(
+                f"Block input folder not found: {input_folder} "
+                f"(set HELIX_CONVERTER_BLOCK_INPUT_FOLDER in .env)"
+            )
+        if not os.path.isfile(components_csv):
+            missing.append(f"Components CSV not found: {components_csv}")
+        if missing:
+            return JsonResponse({'status': 'error', 'message': '<br>'.join(missing)}, status=400)
+
+        if os.path.exists(status_file):
+            try:
+                with open(status_file, 'r') as f:
+                    existing = json.load(f)
+                if existing.get('status') == 'running':
+                    return JsonResponse({'status': 'error', 'message': 'Conversion is already running.'})
+            except Exception:
+                pass
+
+        with open(status_file, 'w') as f:
+            json.dump({
+                'status': 'running',
+                'message': 'Conversion in progress...',
+                'input_folder': input_folder,
+                'output_folder': output_folder,
+            }, f)
+
+        def _run():
+            Path(output_folder).mkdir(parents=True, exist_ok=True)
+            command = [
+                sys.executable, script_path,
+                '--input-folder', input_folder,
+                '--output-folder', output_folder,
+                '--components-csv', components_csv,
+                '--model', model,
+                '--temperature', temperature,
+                '--skip-permalink-preprocess',
+            ]
+            try:
+                result = subprocess.run(command, capture_output=True, text=True, cwd=settings.BASE_DIR)
+                if result.returncode == 0:
+                    payload = {
+                        'status': 'success',
+                        'message': 'Blocks converted to Helix format successfully.',
+                        'input_folder': input_folder,
+                        'output_folder': output_folder,
+                        'output': (result.stdout or '')[-2000:],
+                    }
+                else:
+                    payload = {
+                        'status': 'error',
+                        'message': f'Script exited with code {result.returncode}.',
+                        'input_folder': input_folder,
+                        'output_folder': output_folder,
+                        'output': (result.stderr or result.stdout or '')[-2000:],
+                    }
+            except Exception as exc:
+                payload = {
+                    'status': 'error',
+                    'message': str(exc),
+                    'input_folder': input_folder,
+                    'output_folder': output_folder,
+                    'output': '',
+                }
+            with open(status_file, 'w') as sf:
+                json.dump(payload, sf)
+
+        thread = threading.Thread(target=_run)
+        thread.daemon = True
+        thread.start()
+        return JsonResponse({
+            'status': 'running',
+            'message': 'Conversion started. Please wait...',
+            'input_folder': input_folder,
+            'output_folder': output_folder,
+        })
+
+    # GET: resolve paths for display in the template
+    defaults = _build_pages_import_defaults()
+    raw_input = (os.getenv('HELIX_CONVERTER_BLOCK_INPUT_FOLDER') or '').strip()
+    raw_output = (os.getenv('HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER') or '').strip()
+    ctx_input_folder = _normalize_to_absolute_path(raw_input, defaults['converter_input_folder'])
+    ctx_output_folder = _normalize_to_absolute_path(raw_output, defaults['converter_output_folder'])
+
+    return render(request, 'site_manager/convert_block_helix.html', {
+        'site_id': site_id,
+        'input_folder': ctx_input_folder,
+        'output_folder': ctx_output_folder,
+        'input_env_var': 'HELIX_CONVERTER_BLOCK_INPUT_FOLDER',
+        'output_env_var': 'HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER',
+    })
+
+
+    """AJAX endpoint: returns the current status of the convert_block_helix background job."""
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_convert_block_helix.status")
+    if not os.path.exists(status_file):
+        return JsonResponse({'status': 'not_started', 'message': 'No conversion in progress.'})
+    try:
+        with open(status_file, 'r') as f:
+            return JsonResponse(json.load(f))
+    except Exception:
+        return JsonResponse({'status': 'error', 'message': 'Could not read status file.'})
+
+
+@login_required
+def block_import_start(request, site_id):
+    """
+    Step C: Actual block import (Playwright automation).
+    """
+    if request.method == 'POST':
         threading.Thread(target=run_import_block, args=(site_id,)).start()
         return JsonResponse({'status': 'started', 'message': 'Block import is in progress.'})
     return render(request, 'site_manager/import_block.html', {'site_id': site_id})
+
+
+@login_required
+def check_convert_block_helix_status(request, site_id):
+    """AJAX endpoint: returns the current status of the convert_block_helix background job."""
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_convert_block_helix.status")
+    if not os.path.exists(status_file):
+        return JsonResponse({'status': 'not_started', 'message': 'No conversion in progress.'})
+    try:
+        with open(status_file, 'r') as f:
+            return JsonResponse(json.load(f))
+    except Exception:
+        return JsonResponse({'status': 'error', 'message': 'Could not read status file.'})
 
 
 def run_import_block(site_id):
@@ -2087,11 +2288,11 @@ def run_import_block(site_id):
             page.fill('xpath=//*[@id="username"]', username)
             page.fill('xpath=//*[@id="password"]', password)
             page.press('xpath=//*[@id="password"]', "Enter")
-
+        
+        raw_output = (os.getenv('HELIX_CONVERTER_BLOCK_OUTPUT_FOLDER') or '').strip()
         # Call the main processing functions in synchronous order
         process_blocks(page, sitename, instance_id,
-                       blocks_folder=os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import',
-                       'data','modules'))
+                       blocks_folder=raw_output)
 
         browser.close()
 
@@ -2196,6 +2397,117 @@ def process_blocks(page, sitename, instance_id, blocks_folder):
     skipped_csv = f"v2_{instance_id}_skipped_blocks.csv"
 
     for block_name in os.listdir(blocks_folder):
+        
+                # Skip already processed files
+
+        if block_name.startswith("processed_"):
+
+            continue
+ 
+        block_path = os.path.join(blocks_folder, block_name)
+ 
+        # ==========================
+
+        # ✅ HTML FILE HANDLING
+
+        # ==========================
+
+        if block_name.endswith(".html"):
+
+            try:
+
+                print(f"Reading HTML File : '{block_name}'")
+ 
+                with open(block_path, "r", encoding="utf-8") as f:
+
+                    b_html = f.read()
+ 
+                # Defaults for HTML-only blocks
+
+                b_title = os.path.splitext(block_name)[0]
+
+                b_description = ""
+
+                b_category = "HTML Blocks"
+
+                b_protected = False
+
+                b_files = []
+
+                b_auto_attach = False
+
+                b_auto_attach_location = ""
+
+                b_auto_attach_exceptions = []
+
+                b_auto_attach_to_error_pages = False
+
+                b_css = ""
+ 
+                add_block_button = page.locator(
+
+                    'xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/div[1]/div[2]/a'
+
+                )
+
+                fresh_site_button = page.locator(
+
+                    'xpath=//*[@id="webbuilder-modal-block-list"]/div/div/div/a'
+
+                )
+ 
+                if add_block_button.is_visible():
+
+                    add_block_button.click()
+
+                elif fresh_site_button.is_visible():
+
+                    fresh_site_button.click()
+ 
+                page.wait_for_timeout(1000)
+ 
+                create_block(
+
+                    page,
+
+                    b_title,
+
+                    b_description,
+
+                    b_category,
+
+                    b_protected,
+
+                    b_files,
+
+                    b_auto_attach,
+
+                    b_auto_attach_location,
+
+                    b_auto_attach_exceptions,
+
+                    b_auto_attach_to_error_pages,
+
+                    b_css,
+
+                    b_html
+
+                )
+ 
+                # Rename after success
+
+                os.rename(block_path, os.path.join(blocks_folder, f"processed_{block_name}"))
+ 
+                print(f"'{b_title}' Created from HTML File '{block_name}'")
+
+                print("========================================")
+ 
+            except Exception as e:
+
+                print(f"Failed processing HTML file {block_name}: {e}")
+ 
+            continue  # ✅ important: move to next file
+ 
         # if block_name.endswith(".json"):
         if not block_name.endswith(".json") or block_name.startswith("processed_"):
             continue

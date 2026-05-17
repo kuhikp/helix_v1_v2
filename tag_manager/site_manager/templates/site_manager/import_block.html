@@ -1,57 +1,74 @@
 {% extends 'authentication/base.html' %}
 
-{% block title %}Import Block{% endblock %}
+{% block title %}Block Import — Start{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h2 class="mb-4">Import Block for Site {{ site_id }}</h2>
-            <div class="mb-3">
-                <button id="start-import-btn" class="btn btn-info fw-semibold" onclick="startImport()">Start Import</button>
-                <a href="{% url 'site_meta_list' site_id %}" class="btn btn-secondary ms-2">Cancel</a>
-            </div>
-            <div id="status" class="mt-3"></div>
-        </div>
+  <div class="mb-4">
+    <a href="{% url 'import_block' site_id %}" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-1"></i>Back to Block Import
+    </a>
+  </div>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h2 class="mb-1">
+        <i class="fas fa-cubes text-info me-2"></i>Block Import
+      </h2>
+      <p class="text-muted mb-4">
+        Import block data into WebBuilder for <strong>Site {{ site_id }}</strong> using Playwright browser automation.
+        This is <strong>Step C</strong> — run after converting blocks to Helix format.
+      </p>
+      <div class="mb-3">
+        <button id="start-import-btn" class="btn btn-info fw-semibold text-white" onclick="startImport()">
+          <i class="fas fa-file-import me-1"></i>Start Block Import
+        </button>
+        <a href="{% url 'import_block' site_id %}" class="btn btn-secondary ms-2">Cancel</a>
+      </div>
+      <div id="status" class="mt-3"></div>
     </div>
+  </div>
 </div>
+
 <script>
-    function startImport() {
-        const statusDiv = document.getElementById('status');
-        statusDiv.innerHTML = '<div class="alert alert-info">Import is in progress...</div>';
-        document.getElementById('start-import-btn').disabled = true;
-        fetch(window.location.pathname, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            statusDiv.innerHTML = '<div class="alert alert-info">' + data.message + '</div>';
-        })
-        .catch(error => {
-            statusDiv.innerHTML = '<div class="alert alert-danger">An error occurred: ' + error + '</div>';
-        })
-        .finally(() => {
-            document.getElementById('start-import-btn').disabled = false;
-        });
-    }
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
+  function startImport() {
+    const statusDiv = document.getElementById('status');
+    const btn = document.getElementById('start-import-btn');
+    statusDiv.innerHTML = '<div class="alert alert-info">Import is in progress...</div>';
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Importing...';
+    fetch(window.location.pathname, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      statusDiv.innerHTML = '<div class="alert alert-info">' + data.message + '</div>';
+    })
+    .catch(error => {
+      statusDiv.innerHTML = '<div class="alert alert-danger">An error occurred: ' + error + '</div>';
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-file-import me-1"></i>Start Block Import';
+    });
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
-        return cookieValue;
+      }
     }
+    return cookieValue;
+  }
 </script>
 {% endblock %}
-
