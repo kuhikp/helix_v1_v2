@@ -108,9 +108,22 @@
                     </a>
                 </div>
             </div>
-            <!-- Step 5: Pages Import -->
+            <!-- Step 5: Convert Permalinks -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
-                <h4 class="mb-3 fw-bold text-dark">Step 5: <span class="text-primary">Pages Import</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 5: <span class="text-warning">Convert Image Permalinks</span></h4>
+                <div class="mb-3 text-muted" style="font-size:1rem;">
+                    Convert image permalinks from v1 to v2 format. This updates internal image URLs in page content to use the new v2 site ID and UUID mappings.
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <a href="/sites/{{ site.id }}/meta/convert-permalinks/" class="btn btn-outline-warning border fw-semibold" id="convert-permalinks-link">
+                        <i class="fas fa-images me-1"></i>Convert Permalinks
+                    </a>
+                    <span id="convert-permalinks-status" class="ms-2 text-secondary small" style="min-width:160px;"></span>
+                </div>
+            </div>
+            <!-- Step 6: Pages Import -->
+            <div class="p-4 border rounded bg-white shadow-sm mt-4">
+                <h4 class="mb-3 fw-bold text-dark">Step 6: <span class="text-primary">Pages Import</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Import page data for this site using Web-builder Export Archive. This will automate the import of all pages for the selected site.
                 </div>
@@ -120,9 +133,9 @@
                     </a>
                 </div>
             </div>
-            <!-- Step 6: File Attribute Import -->
+            <!-- Step 7: File Attribute Import -->
             <div class="p-4 border rounded bg-white shadow-sm mt-4">
-                <h4 class="mb-3 fw-bold text-dark">Step 6: <span class="text-warning">File Attribute Import</span></h4>
+                <h4 class="mb-3 fw-bold text-dark">Step 7: <span class="text-warning">File Attribute Import</span></h4>
                 <div class="mb-3 text-muted" style="font-size:1rem;">
                     Import file attribute data for this site using Web-builder Export Archive. Use this to update or migrate file-level attributes in bulk.
                 </div>

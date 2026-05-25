@@ -48,6 +48,12 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Load environment variables from .env file
 load_dotenv()
 
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
 username = os.getenv('USERNAME')
 password = os.getenv('PASSWORD')
 sitename = os.getenv('SITENAME')
@@ -3040,5 +3046,321 @@ def clear_file_upload_status(request, site_id):
     except Exception as e:
         return JsonResponse({
             'success': False, 
+            'message': f'Error clearing status: {str(e)}'
+        })
+
+
+@login_required
+def convert_permalinks(request, site_id):
+    """
+    Step 5 of Meta Page: Convert image permalinks from v1 to v2 format.
+    
+    This view displays the permalink conversion form with prepopulated values.
+    
+    URL: /sites/{site_id}/meta/convert-permalinks/
+    """
+    from .permalink_converter import convert_permalinks as run_converter
+    from django.conf import settings
+    from dotenv import load_dotenv
+    
+    load_dotenv()
+    
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    result_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.result")
+    
+    # Get default/previous values
+    base_data_path = os.path.join(
+        settings.BASE_DIR,
+        'site_manager',
+        'static',
+        'block_import',
+        'data'
+    )
+    
+    # Prepopulated form values
+    form_data = {
+        'pages_dir': os.path.join(base_data_path, 'pages'),
+        'files_dir': os.path.join(base_data_path, 'files'),
+        'files_v2_dir': os.path.join(base_data_path, 'files_v2'),
+        'v1_site_id': '',  # Will be extracted from URLs or form
+        'v2_site_id': os.getenv('V2_SITE_ID', ''),
+    }
+    
+    conversion_complete = False
+    conversion_successful = False
+    result_message = ""
+    result_details = []
+    
+    # Check if conversion has completed
+    if os.path.exists(result_file):
+        try:
+            with open(result_file, 'r') as f:
+                result = json.load(f)
+            conversion_complete = True
+            conversion_successful = result.get('success', False)
+            result_message = result.get('message', '')
+            result_details = result.get('details', [])
+            # Populate form with previous values
+            form_data['v1_site_id'] = result.get('v1_site_id', '')
+            form_data['v2_site_id'] = result.get('v2_site_id', '')
+        except Exception as e:
+            logger.warning(f"Error reading conversion result file: {str(e)}")
+    
+    context = {
+        'site': site,
+        'form_data': form_data,
+        'conversion_complete': conversion_complete,
+        'conversion_successful': conversion_successful,
+        'conversion_in_progress': False,
+        'result_message': result_message,
+        'result_details': result_details,
+    }
+    
+    return render(request, 'site_manager/convert_permalinks.html', context)
+
+
+@login_required
+@require_POST
+def start_convert_permalinks(request, site_id):
+    """
+    AJAX endpoint to start the permalink conversion process with form data.
+    
+    Starts the conversion in a background thread and returns immediately.
+    
+    POST Parameters:
+        - pages_dir: Path to pages directory
+        - files_dir: Path to files directory
+        - files_v2_dir: Path to files_v2 directory
+        - v1_site_id: Original site ID
+        - v2_site_id: New site ID
+    
+    Returns:
+        JSON response with status
+    """
+    from .permalink_converter import convert_permalinks as run_converter, ensure_metadata_files
+    
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.status")
+    result_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.result")
+    progress_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.progress")
+    
+    # Get form data
+    pages_dir = request.POST.get('pages_dir', '').strip()
+    files_dir = request.POST.get('files_dir', '').strip()
+    files_v2_dir = request.POST.get('files_v2_dir', '').strip()
+    v1_site_id = request.POST.get('v1_site_id', '').strip()
+    v2_site_id = request.POST.get('v2_site_id', '').strip()
+    
+    # Validate form data
+    if not all([pages_dir, files_dir, files_v2_dir, v2_site_id]):
+        return JsonResponse({
+            'success': False,
+            'message': 'All fields are required'
+        })
+    
+    # Check if conversion already in progress
+    if os.path.exists(status_file):
+        return JsonResponse({
+            'success': False,
+            'message': 'Conversion is already in progress for this site'
+        })
+    
+    # Validate that files_v2 directory exists
+    if not os.path.exists(files_v2_dir):
+        return JsonResponse({
+            'success': False,
+            'message': f'Error: files_v2 directory not found at {files_v2_dir}'
+        })
+    
+    # Validate that pages directory exists
+    if not os.path.exists(pages_dir):
+        return JsonResponse({
+            'success': False,
+            'message': f'Error: pages directory not found at {pages_dir}'
+        })
+
+    # Ensure UUID-keyed metadata files exist before conversion starts.
+    try:
+        metadata_status = ensure_metadata_files(
+            files_dir=files_dir,
+            files_v2_dir=files_v2_dir,
+            v1_site_id=v1_site_id,
+            v2_site_id=v2_site_id
+        )
+        logger.info(
+            "Permalink metadata prepared for site %s: file_v1=%s (%s), file_v2=%s (%s)",
+            site_id,
+            metadata_status['file_v1_path'],
+            metadata_status['file_v1_count'],
+            metadata_status['file_v2_path'],
+            metadata_status['file_v2_count']
+        )
+    except Exception as e:
+        logger.error(f"Error preparing permalink metadata files: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': f'Error creating metadata files: {str(e)}'
+        }, status=500)
+    
+    # Create status file to indicate conversion is starting
+    try:
+        with open(status_file, 'w') as f:
+            f.write('starting')
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error creating status file: {str(e)}'
+        })
+    
+    # Start conversion in background thread
+    def run_conversion_background():
+        try:
+            # Progress callback to save progress
+            def progress_callback(progress_data):
+                try:
+                    with open(progress_file, 'w') as f:
+                        json.dump(progress_data, f)
+                except Exception as e:
+                    logger.warning(f"Error saving progress: {str(e)}")
+            
+            # Run the converter with custom paths
+            result = run_converter(
+                site_id,
+                pages_dir=pages_dir,
+                files_dir=files_dir,
+                files_v2_dir=files_v2_dir,
+                v1_site_id=v1_site_id,
+                v2_site_id=v2_site_id,
+                progress_callback=progress_callback
+            )
+            
+            # Save result
+            with open(result_file, 'w') as f:
+                json.dump(result, f, indent=2)
+            
+            logger.info(f"Permalink conversion completed for site {site_id}: {result}")
+        except Exception as e:
+            logger.error(f"Error during permalink conversion: {str(e)}", exc_info=True)
+            with open(result_file, 'w') as f:
+                json.dump({
+                    'success': False,
+                    'message': f'Error during conversion: {str(e)}',
+                    'successful_count': 0,
+                    'failed_count': 0,
+                    'details': [str(e)],
+                    'v1_site_id': v1_site_id,
+                    'v2_site_id': v2_site_id
+                }, f, indent=2)
+        finally:
+            # Remove status file
+            if os.path.exists(status_file):
+                try:
+                    os.remove(status_file)
+                except Exception as e:
+                    logger.warning(f"Error removing status file: {str(e)}")
+            # Remove progress file
+            if os.path.exists(progress_file):
+                try:
+                    os.remove(progress_file)
+                except Exception as e:
+                    logger.warning(f"Error removing progress file: {str(e)}")
+    
+    # Start background thread
+    conversion_thread = threading.Thread(target=run_conversion_background)
+    conversion_thread.daemon = True
+    conversion_thread.start()
+    
+    logger.info(f"Started permalink conversion for site {site_id} with custom paths")
+    
+    return JsonResponse({
+        'success': True,
+        'message': 'Permalink conversion started. Please wait...'
+    
+    })
+
+
+@login_required
+def check_convert_permalinks_status(request, site_id):
+    """
+    AJAX endpoint to check the status of permalink conversion.
+    
+    Returns:
+        JSON response with current status and progress
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.status")
+    result_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.result")
+    progress_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.progress")
+    
+    # Check if conversion in progress
+    if os.path.exists(status_file):
+        # Check for progress file
+        progress_data = {}
+        if os.path.exists(progress_file):
+            try:
+                with open(progress_file, 'r') as f:
+                    progress_data = json.load(f)
+            except Exception as e:
+                logger.warning(f"Error reading progress file: {str(e)}")
+        
+        return JsonResponse({
+            'status': 'in_progress',
+            'message': 'Conversion in progress...',
+            'progress': progress_data
+        })
+    
+    # Check if result available
+    if os.path.exists(result_file):
+        try:
+            with open(result_file, 'r') as f:
+                result = json.load(f)
+            return JsonResponse({
+                'status': 'complete',
+                'result': result
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error reading result: {str(e)}'
+            })
+    
+    # No conversion status
+    return JsonResponse({
+        'status': 'idle',
+        'message': 'No conversion in progress'
+    })
+
+
+@login_required
+@require_POST
+def clear_convert_permalinks_status(request, site_id):
+    """
+    AJAX endpoint to clear the conversion status and result.
+    
+    Used to reset the interface after viewing results.
+    
+    Returns:
+        JSON response indicating success
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.status")
+    result_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_permalink_convert.result")
+    
+    try:
+        # Remove status file if exists
+        if os.path.exists(status_file):
+            os.remove(status_file)
+        
+        # Remove result file if exists
+        if os.path.exists(result_file):
+            os.remove(result_file)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Conversion status cleared successfully.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
             'message': f'Error clearing status: {str(e)}'
         })
