@@ -10,16 +10,19 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import logging
 import os
 import random
 import re
+import signal
 import shutil
 import string
 import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -171,6 +174,53 @@ class PayloadTooLargeError(RuntimeError):
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 logger = logging.getLogger("helix_backend_converter")
+
+PROCESS_STOP_MESSAGE = "Process Stopped Abruptly"
+CONVERT_PROGRESS_FILE_NAME = ".helix_convert_progress.json"
+BODY_CLASSES_OUTPUT_FILE_NAME = "body_classes.json"
+
+
+def _raise_process_stopped(_signum, _frame) -> None:
+	raise RuntimeError(PROCESS_STOP_MESSAGE)
+
+
+def configure_abort_signal_handlers() -> None:
+	for sig in (signal.SIGINT, signal.SIGTERM):
+		try:
+			signal.signal(sig, _raise_process_stopped)
+		except Exception:
+			continue
+
+
+def load_convert_progress(progress_file: Path) -> set[str]:
+	if not progress_file.exists():
+		return set()
+
+	try:
+		payload = json.loads(progress_file.read_text(encoding="utf-8", errors="ignore"))
+		if not isinstance(payload, dict):
+			return set()
+
+		processed_files = payload.get("processed_files") or []
+		if not isinstance(processed_files, list):
+			return set()
+
+		return {str(item) for item in processed_files if str(item).strip()}
+	except Exception as progress_error:
+		logger.warning("Unable to read convert progress file %s: %s", progress_file, progress_error)
+		return set()
+
+
+def save_convert_progress(progress_file: Path, processed_files: set[str]) -> None:
+	progress_file.parent.mkdir(parents=True, exist_ok=True)
+	payload = {
+		"processed_files": sorted(processed_files),
+		"processed_count": len(processed_files),
+		"updated_at": int(time.time()),
+	}
+	temp_file = progress_file.with_name(progress_file.name + ".tmp")
+	temp_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+	temp_file.replace(progress_file)
 
 
 # ---------------------------------------------------------------------------
@@ -919,6 +969,146 @@ def collect_html_files(input_folder: Path) -> list[Path]:
 	return sorted(files)
 
 
+def normalize_site_identifier(value: str) -> str:
+	text = (value or "").strip().lower()
+	if not text:
+		return ""
+
+	parse_target = text if "://" in text else f"https://{text}"
+	parsed = urlparse(parse_target)
+	host = (parsed.netloc or parsed.path or "").strip().lower()
+	host = host.split("/", 1)[0].split(":", 1)[0].strip(".")
+	if host.startswith("www."):
+		host = host[4:]
+	return host
+
+
+def _available_site_folder_candidates(input_folder: Path) -> list[Path]:
+	return sorted(
+		[
+			child for child in input_folder.iterdir()
+			if child.is_dir() and not child.name.endswith("_permalinks_updated")
+		],
+		key=lambda p: p.name.lower(),
+	)
+
+
+def _is_shared_site_root(folder: Path) -> bool:
+	return folder.name in {"input_site", "httrack_export"}
+
+
+def resolve_input_site_source_folder(input_folder: Path, expected_site_url: str = "") -> tuple[Path, str | None]:
+	"""Resolve actual site folder when --input-folder points at a shared site root."""
+	if not _is_shared_site_root(input_folder):
+		if _is_shared_site_root(input_folder.parent):
+			return input_folder, input_folder.name
+		return input_folder, None
+
+	candidate_dirs = _available_site_folder_candidates(input_folder)
+	if not candidate_dirs:
+		raise RuntimeError(f"No website folder found inside input folder: {input_folder}")
+
+	requested_site = normalize_site_identifier(expected_site_url)
+	if requested_site:
+		matches = [
+			candidate
+			for candidate in candidate_dirs
+			if normalize_site_identifier(candidate.name) == requested_site
+		]
+
+		if len(matches) == 1:
+			selected = matches[0]
+			logger.info(
+				"Matched site URL '%s' to input folder: %s",
+				expected_site_url,
+				selected,
+			)
+			return selected, selected.name
+
+		if len(matches) > 1:
+			raise RuntimeError(
+				"Multiple source folders matched the site URL '%s': %s"
+				% (expected_site_url, ", ".join(folder.name for folder in matches))
+			)
+
+		raise RuntimeError(
+			"No source folder matched site URL '%s'. Available folders: %s"
+			% (expected_site_url, ", ".join(folder.name for folder in candidate_dirs[:20]))
+		)
+
+	selected = candidate_dirs[0]
+	if len(candidate_dirs) > 1:
+		logger.warning(
+			"Multiple website folders found inside %s. Using first alphabetically: %s",
+			input_folder,
+			selected.name,
+		)
+
+	logger.info("Detected website source folder from %s: %s", input_folder.name, selected)
+	return selected, selected.name
+
+
+def derive_body_class_key(relative_path: Path) -> str:
+	if relative_path.name.lower() == "index.html":
+		parent_name = relative_path.parent.name.strip()
+		if parent_name:
+			return parent_name
+		return "index.html"
+
+	return relative_path.name
+
+
+def extract_body_classes_from_html(html_text: str) -> list[str]:
+	text = html_text or ""
+	if not text.strip():
+		return []
+
+	if BeautifulSoup is not None:
+		soup = BeautifulSoup(text, "html.parser")
+		if soup.body is not None:
+			classes = soup.body.get("class")
+			if isinstance(classes, list):
+				return [str(item).strip() for item in classes if str(item).strip()]
+			if isinstance(classes, str):
+				return [part.strip() for part in classes.split() if part.strip()]
+
+	body_tag_match = re.search(r"<body\b[^>]*>", text, flags=re.IGNORECASE | re.DOTALL)
+	if not body_tag_match:
+		return []
+
+	body_tag = body_tag_match.group(0)
+	class_match = re.search(r"\bclass\s*=\s*([\"'])(.*?)\1", body_tag, flags=re.IGNORECASE | re.DOTALL)
+	if not class_match:
+		return []
+
+	return [part.strip() for part in class_match.group(2).split() if part.strip()]
+
+
+def build_body_classes_map(input_root: Path, html_files: list[Path]) -> dict[str, list[str]]:
+	body_classes_map: dict[str, list[str]] = {}
+
+	for html_file in html_files:
+		rel = html_file.relative_to(input_root)
+		key = derive_body_class_key(rel)
+		classes = extract_body_classes_from_html(
+			html_file.read_text(encoding="utf-8", errors="ignore")
+		)
+		body_classes_map[key] = classes
+
+	return body_classes_map
+
+
+def write_body_classes_json(output_folder: Path, body_classes_map: dict[str, list[str]]) -> Path:
+	output_path = output_folder / BODY_CLASSES_OUTPUT_FILE_NAME
+	output_path.parent.mkdir(parents=True, exist_ok=True)
+	output_path.write_text(
+		json.dumps(body_classes_map, indent=2, ensure_ascii=False),
+		encoding="utf-8",
+	)
+	logger.info("Wrote body classes map JSON: %s", output_path)
+	return output_path
+
+
 def extract_image_filename(path: str) -> str | None:
 	if not path:
 		return None
@@ -1152,7 +1342,44 @@ def apply_permalink_updates_in_place(
 	return len(image_sources), len(replacements), True
 
 
-def preprocess_reference_html_permalinks(input_folder: Path, headless: bool = False) -> None:
+def prepare_permalink_updated_input_folder(input_folder: Path) -> Path:
+	"""Create a copy of input folder for permalink-updated HTML files.
+
+	When source is a shared root, the copy is created from the website child folder
+	inside it and named '<website_folder>_permalinks_updated'.
+	"""
+	if _is_shared_site_root(input_folder):
+		candidate_dirs = sorted(
+			[
+				child for child in input_folder.iterdir()
+				if child.is_dir() and not child.name.endswith("_permalinks_updated")
+			],
+			key=lambda p: p.name.lower(),
+		)
+
+		if not candidate_dirs:
+			raise RuntimeError(
+				f"No website folder found inside input folder: {input_folder}"
+			)
+
+		website_source_folder = candidate_dirs[0]
+		updated_input_folder = input_folder / f"{website_source_folder.name}_permalinks_updated"
+	else:
+		updated_input_folder = input_folder.parent / f"{input_folder.name}_permalinks_updated"
+
+	if updated_input_folder.exists():
+		shutil.rmtree(updated_input_folder)
+
+	if _is_shared_site_root(input_folder):
+		shutil.copytree(website_source_folder, updated_input_folder)
+	else:
+		shutil.copytree(input_folder, updated_input_folder)
+
+	logger.info("Created permalink-updated input folder copy: %s", updated_input_folder)
+	return updated_input_folder
+
+
+def preprocess_reference_html_permalinks(input_folder: Path, headless: bool = False) -> Path:
 	if sync_playwright is None:
 		raise RuntimeError(
 			"Playwright is required for permalink preprocessing. Install it with: pip install playwright"
@@ -1168,10 +1395,12 @@ def preprocess_reference_html_permalinks(input_folder: Path, headless: bool = Fa
 			"must be set before permalink preprocessing can run."
 		)
 
-	html_files = collect_html_files(input_folder)
+	updated_input_folder = prepare_permalink_updated_input_folder(input_folder)
+
+	html_files = collect_html_files(updated_input_folder)
 	if not html_files:
-		logger.info("No HTML files found for permalink preprocessing under: %s", input_folder)
-		return
+		logger.info("No HTML files found for permalink preprocessing under: %s", updated_input_folder)
+		return updated_input_folder
 
 	logger.info(
 		"Starting Webbuilder permalink preprocessing for %d reference HTML files.",
@@ -1194,7 +1423,7 @@ def preprocess_reference_html_permalinks(input_folder: Path, headless: bool = Fa
 			goto_webbuilder_file_manager(page, instance_id=instance_id)
 
 			for index, html_file in enumerate(html_files, 1):
-				rel = html_file.relative_to(input_folder)
+				rel = html_file.relative_to(updated_input_folder)
 				logger.info("Permalink preprocessing [%d/%d]: %s", index, len(html_files), rel)
 
 				images_found, permalinks_found, updated = apply_permalink_updates_in_place(
@@ -1216,6 +1445,7 @@ def preprocess_reference_html_permalinks(input_folder: Path, headless: bool = Fa
 		total_images,
 		total_permalinks,
 	)
+	return updated_input_folder
 
 
 def split_html_into_chunks(input_html: str, max_chars: int = MAX_INPUT_CHARS_PER_CHUNK) -> list[str]:
@@ -1571,10 +1801,15 @@ def parse_args() -> argparse.Namespace:
 		action="store_true",
 		help="Run the Webbuilder permalink preprocessing browser in headless mode.",
 	)
+	parser.add_argument(
+		"--site-url",
+		help="Optional website URL used to match a folder under input_site or httrack_export.",
+	)
 	return parser.parse_args()
 
 
 def main() -> None:
+	configure_abort_signal_handlers()
 	load_dotenv()
 	args = parse_args()
 
@@ -1587,6 +1822,22 @@ def main() -> None:
 	if not input_folder.exists() or not input_folder.is_dir():
 		raise FileNotFoundError(f"Input folder does not exist or is not a directory: {input_folder}")
 
+	expected_site_url = (
+		(args.site_url or os.getenv("HELIX_INPUT_SITE_URL") or os.getenv("INPUT_SITE_URL") or "").strip()
+	)
+	conversion_source_folder, website_folder_name = resolve_input_site_source_folder(
+		input_folder,
+		expected_site_url=expected_site_url,
+	)
+	if not conversion_source_folder.exists() or not conversion_source_folder.is_dir():
+		raise FileNotFoundError(
+			f"Resolved conversion source folder does not exist or is not a directory: {conversion_source_folder}"
+		)
+
+	effective_output_folder = (
+		output_folder / website_folder_name if website_folder_name else output_folder
+	)
+
 	token, use_copilot_endpoints = get_token()
 	active_base_url = normalize_base_url(os.getenv("API_BASE_URL", GITHUB_MODELS_BASE_URL))
 	client = build_client(token, active_base_url)
@@ -1595,11 +1846,15 @@ def main() -> None:
 
 	if args.skip_permalink_preprocess:
 		logger.info("Skipping permalink preprocessing by request.")
+		conversion_input_folder = conversion_source_folder
 	else:
-		preprocess_reference_html_permalinks(
-			input_folder=input_folder,
+		conversion_input_folder = preprocess_reference_html_permalinks(
+			input_folder=conversion_source_folder,
 			headless=bool(args.permalink_headless),
 		)
+
+	logger.info("Conversion input folder: %s", conversion_input_folder)
+	logger.info("Conversion output folder: %s", effective_output_folder)
 
 	discovered_models = fetch_models(client)
 	if args.list_models:
@@ -1670,13 +1925,23 @@ def main() -> None:
 	print(component_analysis[:2500] + ("..." if len(component_analysis) > 2500 else ""))
 	print("#" * 100 + "\n")
 
-	html_files = collect_html_files(input_folder)
+	html_files = collect_html_files(conversion_input_folder)
 	if not html_files:
-		raise RuntimeError(f"No .html/.htm files found under input folder: {input_folder}")
+		raise RuntimeError(f"No .html/.htm files found under input folder: {conversion_input_folder}")
 
 	logger.info("Found %d HTML files to convert", len(html_files))
-	output_folder.mkdir(parents=True, exist_ok=True)
+	effective_output_folder.mkdir(parents=True, exist_ok=True)
 	logger.info("Stable endpoint for conversion starts as: %s", active_base_url)
+	body_classes_map = build_body_classes_map(conversion_input_folder, html_files)
+	write_body_classes_json(effective_output_folder, body_classes_map)
+	progress_file = effective_output_folder / CONVERT_PROGRESS_FILE_NAME
+	processed_rel_paths = load_convert_progress(progress_file)
+	if processed_rel_paths:
+		logger.info(
+			"Loaded conversion progress: %d files already marked processed (%s)",
+			len(processed_rel_paths),
+			progress_file,
+		)
 
 	success_count = 0
 	attempted_count = 0
@@ -1684,12 +1949,31 @@ def main() -> None:
 	failed_files: list[str] = []
 
 	for html_file in html_files:
-		rel = html_file.relative_to(input_folder)
+		rel = html_file.relative_to(conversion_input_folder)
+		rel_str = rel.as_posix()
+
+		if rel_str in processed_rel_paths:
+			out_file = effective_output_folder / rel
+			if out_file.exists() and out_file.stat().st_size > 0:
+				skipped_count += 1
+				logger.info("Skipping already processed file from progress: %s", rel)
+				continue
+
+			logger.warning(
+				"Progress had %s but output file is missing/empty; reprocessing.",
+				rel,
+			)
+			processed_rel_paths.discard(rel_str)
+			save_convert_progress(progress_file, processed_rel_paths)
+
 		if args.skip_existing:
-			out_file = output_folder / rel
+			out_file = effective_output_folder / rel
 			if out_file.exists() and out_file.stat().st_size > 0:
 				skipped_count += 1
 				logger.info("Skipping existing converted file: %s", rel)
+				if rel_str not in processed_rel_paths:
+					processed_rel_paths.add(rel_str)
+					save_convert_progress(progress_file, processed_rel_paths)
 				continue
 
 		attempted_count += 1
@@ -1701,15 +1985,19 @@ def main() -> None:
 				base_url=active_base_url,
 				include_copilot_endpoints=use_copilot_endpoints,
 				file_path=html_file,
-				input_root=input_folder,
-				output_root=output_folder,
+				input_root=conversion_input_folder,
+				output_root=effective_output_folder,
 				all_components=all_components,
 				component_analysis=component_analysis,
 				max_components=max_components,
 				show_model_output=args.show_model_output,
 			)
 			success_count += 1
+			processed_rel_paths.add(rel_str)
+			save_convert_progress(progress_file, processed_rel_paths)
 		except Exception as file_exc:
+			if str(file_exc).strip() == PROCESS_STOP_MESSAGE:
+				raise
 			rel_str = str(rel)
 			failed_files.append(rel_str)
 			logger.error("Failed converting file %s: %s", rel_str, file_exc)
@@ -1717,7 +2005,7 @@ def main() -> None:
 
 	if args.copy_non_html:
 		logger.info("Copying non-HTML assets...")
-		copy_non_html_assets(input_folder, output_folder)
+		copy_non_html_assets(conversion_input_folder, effective_output_folder)
 
 	logger.info(
 		"Conversion completed. Success: %d / %d attempted (total source: %d, skipped existing: %d), Failed: %d",
@@ -1731,7 +2019,7 @@ def main() -> None:
 		preview = ", ".join(failed_files[:10])
 		logger.warning("Failed files (first %d): %s", min(len(failed_files), 10), preview)
 	logger.info("Final stable endpoint used: %s", active_base_url)
-	logger.info("Output folder: %s", output_folder)
+	logger.info("Output folder: %s", effective_output_folder)
 
 	if attempted_count > 0 and success_count == 0:
 		raise RuntimeError(
@@ -1743,5 +2031,8 @@ if __name__ == "__main__":
 	try:
 		main()
 	except Exception as exc:
-		logger.error("Fatal error: %s", exc)
+		if str(exc).strip() == PROCESS_STOP_MESSAGE:
+			logger.error(PROCESS_STOP_MESSAGE)
+		else:
+			logger.error("Fatal error: %s", exc)
 		sys.exit(1)

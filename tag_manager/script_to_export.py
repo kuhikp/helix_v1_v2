@@ -22,6 +22,62 @@ SITE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "site_manage
 OUTPUT_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Webbuilder_extracted_settings", "site_config_export.json")
 
 
+def normalize_site_identifier(value):
+    text = (value or "").strip().lower()
+    if not text:
+        return ""
+
+    parse_target = text if "://" in text else f"https://{text}"
+    parsed = urlparse(parse_target)
+    host = (parsed.netloc or parsed.path or "").strip().lower()
+    host = host.split("/", 1)[0].split(":", 1)[0].strip(".")
+    if host.startswith("www."):
+        host = host[4:]
+    return host
+
+
+def resolve_site_dir(shared_root, expected_site_url=""):
+    """Resolve concrete site folder when SITE_DIR points to shared httrack_export root."""
+    if os.path.isfile(os.path.join(shared_root, "sitemap.xml")) or os.path.isfile(os.path.join(shared_root, "index.html")):
+        return shared_root
+
+    if not os.path.isdir(shared_root):
+        raise FileNotFoundError(f"Site root not found: {shared_root}")
+
+    children = sorted(
+        [
+            name for name in os.listdir(shared_root)
+            if os.path.isdir(os.path.join(shared_root, name)) and not name.endswith("_permalinks_updated")
+        ],
+        key=lambda s: s.lower(),
+    )
+    if not children:
+        raise RuntimeError(f"No site folders found inside: {shared_root}")
+
+    requested = normalize_site_identifier(expected_site_url)
+    if requested:
+        matches = [name for name in children if normalize_site_identifier(name) == requested]
+        if len(matches) == 1:
+            resolved = os.path.join(shared_root, matches[0])
+            print(f"Matched site URL '{expected_site_url}' to folder: {resolved}")
+            return resolved
+        if len(matches) > 1:
+            raise RuntimeError(
+                "Multiple folders matched site URL '%s': %s"
+                % (expected_site_url, ", ".join(matches))
+            )
+        raise RuntimeError(
+            "No folder matched site URL '%s'. Available folders: %s"
+            % (expected_site_url, ", ".join(children[:20]))
+        )
+
+    if len(children) == 1:
+        return os.path.join(shared_root, children[0])
+
+    print(f"Warning: Multiple site folders found in {shared_root}. Using first alphabetically: {children[0]}")
+    return os.path.join(shared_root, children[0])
+
+
 # Load .env if present
 ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
 env_vars = {}
@@ -456,10 +512,9 @@ def extract_values(site_dir):
     # --- main ---
     MAIN = "left-sidebar-settings--main"
     values[(MAIN, "site_name", "")] = site_name
-    values[(MAIN, "site_type", "")] = "Website"
+    # values[(MAIN, "site_type", "")] = "Website"
     values[(MAIN, "domain", "")] = domain
-    # TODO: Fetch Brand value from DMP SR.
-    values[(MAIN, "brand", "")] = "UNBRANDED"
+    values[(MAIN, "brand", "")] = brand
     values[(MAIN, "country", "")] = country_code if country_code else country
     values[(MAIN, "teams", "")] = teams
     values[(MAIN, "helix_components_version", "")] = helix_components_version
@@ -650,7 +705,15 @@ if __name__ == "__main__":
     print("Fetching site settings from local HTML files...")
     print(f"v2_site_id: {V2_SITE_ID}")
 
-    values = extract_values(SITE_DIR)
+    expected_site_url = (
+        os.environ.get("HELIX_INPUT_SITE_URL")
+        or os.environ.get("INPUT_SITE_URL")
+        or ""
+    ).strip()
+    selected_site_dir = resolve_site_dir(SITE_DIR, expected_site_url=expected_site_url)
+    print(f"Using site folder: {selected_site_dir}")
+
+    values = extract_values(selected_site_dir)
     output = build_output(values, V2_SITE_ID)
 
     # Write JSON

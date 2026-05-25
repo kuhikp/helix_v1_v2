@@ -1,0 +1,1151 @@
+Component Name,HTML Content
+Button,"
+<helix-core-button id=""izyj"" data-gjs-type=""helix-core-button"" variant=""primary"" size=""large"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""iz1l"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Button
+
+</helix-core-content>
+
+<helix-core-content id=""ihdws"" data-gjs-type=""helix-core-content"" slot=""loader-text"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Loading
+
+</helix-core-content>
+
+<helix-core-icon id=""is4nj"" data-gjs-type=""helix-core-icon"" slot=""loader-indicator"" is-block="""" icon-name=""autorenew"" is-rotating=""true"" size=""2"" variant=""filled"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-icon>
+
+</helix-core-button>
+
+<style>
+
+</style>"
+External Link,"
+<helix-core-ext-link id=""iloi"" data-gjs-type=""helix-core-ext-link"" button-width=""natural"" modal-variant=""backdrop"" centered=""1"" link-target=""_self"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-heading id=""ie4a"" data-gjs-type=""helix-core-heading"" variant=""h3"" class=""hydrated"" data-hwc-version=""4.0.1198"">You are now leaving PfizerPro
+
+</helix-core-heading>
+
+<helix-core-content id=""iwdgg"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!----> You are now leaving www.pfizerpro.co.uk. Links to external websites are provided as a resource to the viewer. This website is neither owned nor controlled by Pfizer Ltd. Pfizer accepts no responsibility for the content or services of the linked site other than the information or other materials relating to Pfizer medicines or business which it has provided or reviewed. PP-PFE-GBR-3859. November 2021 
+
+</helix-core-content>
+
+</helix-core-ext-link>
+
+<style>
+
+</style>"
+Accordion Primary,"
+<helix-core-accordion id=""iz0hi"" data-gjs-type=""helix-core-accordion"" behavior=""none"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-accordion-panel id=""ipp6s"" data-gjs-type=""helix-core-accordion-panel"" variant=""primary"" is-expanded="""" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-heading id=""ito5q"" data-gjs-type=""helix-core-heading"" variant=""h5"" slot=""header"" class=""hydrated"" data-hwc-version=""4.0.1198"">Header 1
+
+</helix-core-heading>
+
+<helix-core-content id=""ib673"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""irg06"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">I am the content of the first accordion.
+
+</p>
+
+</helix-core-content>
+
+</helix-core-accordion-panel>
+
+<helix-core-accordion-panel id=""i6bfj"" data-gjs-type=""helix-core-accordion-panel"" variant=""primary"" is-expanded="""" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-heading id=""i61e2"" data-gjs-type=""helix-core-heading"" variant=""h5"" slot=""header"" class=""hydrated"" data-hwc-version=""4.0.1198"">Header 2
+
+</helix-core-heading>
+
+<helix-core-content id=""icfu5"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""i0c9j"" data-gjs-type=""helix-core-content-paragraph"" class="""" data-hwc-version=""4.0.1198"">I am the content of the second accordion.
+
+</p>
+
+</helix-core-content>
+
+</helix-core-accordion-panel>
+
+</helix-core-accordion>
+
+<style>"
+Accordion Secondary,"
+<helix-core-accordion id=""ijh3j"" data-gjs-type=""helix-core-accordion"" behavior=""none"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-accordion-panel id=""i2sk5"" data-gjs-type=""helix-core-accordion-panel"" variant=""secondary"" is-expanded="""" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-heading id=""i3d15"" data-gjs-type=""helix-core-heading"" variant=""h5"" slot=""header"" class=""hydrated"" data-hwc-version=""4.0.1198"">Header 1
+
+</helix-core-heading>
+
+<helix-core-content id=""i5a3x"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""imqyl"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">I am the content of the first accordion.
+
+</p>
+
+</helix-core-content>
+
+</helix-core-accordion-panel>
+
+<helix-core-accordion-panel id=""iajbp"" data-gjs-type=""helix-core-accordion-panel"" variant=""secondary"" is-expanded="""" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-heading id=""iobcc"" data-gjs-type=""helix-core-heading"" variant=""h5"" slot=""header"" class=""hydrated"" data-hwc-version=""4.0.1198"">Header 2
+
+</helix-core-heading>
+
+<helix-core-content id=""izmel"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""iomts"" data-gjs-type=""helix-core-content-paragraph"" class="""" data-hwc-version=""4.0.1198"">I am the content of the second accordion.
+
+</p>
+
+</helix-core-content>
+
+</helix-core-accordion-panel>
+
+</helix-core-accordion>
+
+<style>"
+Accordion Custom,"
+<helix-core-accordion id=""iz2zz"" data-gjs-type=""helix-core-accordion"" behavior=""none"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-accordion-panel id=""ifpmc"" data-gjs-type=""helix-core-accordion-panel"" variant=""custom"" is-expanded="""" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-heading id=""ihue6"" data-gjs-type=""helix-core-heading"" variant=""h5"" slot=""header"" class=""hydrated"" data-hwc-version=""4.0.1198"">Header 1
+
+</helix-core-heading>
+
+<helix-core-content id=""iaycv"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""ioffh"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">I am the content of the first accordion.
+
+</p>
+
+</helix-core-content>
+
+</helix-core-accordion-panel>
+
+<helix-core-accordion-panel id=""ij2wv"" data-gjs-type=""helix-core-accordion-panel"" variant=""custom"" is-expanded="""" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-heading id=""i6hab"" data-gjs-type=""helix-core-heading"" variant=""h5"" slot=""header"" class=""hydrated"" data-hwc-version=""4.0.1198"">Header 2
+
+</helix-core-heading>
+
+<helix-core-content id=""iqiu9"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""i26hg"" data-gjs-type=""helix-core-content-paragraph"" class="""" data-hwc-version=""4.0.1198"">I am the content of the second accordion.
+
+</p>
+
+</helix-core-content>
+
+</helix-core-accordion-panel>
+
+</helix-core-accordion>
+
+<style>"
+Site GCMA,"
+<div id=""igzh"" data-gjs-type=""gcma-block"" class=""gcma-block gcma-website-block"">
+
+</div>
+
+<style>
+
+</style>"
+Page GCMA,"
+<div id=""ia3e"" data-gjs-type=""gcma-block"" class=""gcma-block gcma-webpage-block"">
+
+</div>
+
+<style>
+
+</style>"
+2 Columns,"
+<helix-core-layout-container id=""ip8v"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""irvi"" data-gjs-type=""helix-core-grid"" variant=""2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""iu4d"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""iv4h"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+2 Columns Side By Side,"
+<helix-core-layout-container id=""iows"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""iimu"" data-gjs-type=""helix-core-grid"" variant=""side-by-side"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""ibzz"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""isbb"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+1 Column,"
+<helix-core-layout-container id=""ipzm"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""idvb"" data-gjs-type=""helix-core-grid"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""itkz"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+3 Columns,"
+<helix-core-layout-container id=""i9wz"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""ihyl"" data-gjs-type=""helix-core-grid"" variant=""3up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""ivo9"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""iuz8s"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""iemck"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+2 Columns 66/33,"
+<helix-core-layout-container id=""i91t"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""i2f2"" data-gjs-type=""helix-core-grid"" variant=""2up-66-33"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""iw3f"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i77c"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+3 Columns 1-3up,"
+<helix-core-layout-container id=""isq4"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""inxr"" data-gjs-type=""helix-core-grid"" variant=""1-3up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""id0f"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i5mnb"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""isp9k"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+Grix 1-2-4up,"
+<helix-core-layout-container id=""i70e6"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""izm2w"" data-gjs-type=""helix-core-grid"" variant=""1-2-4up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""id38p"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""iypu9"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""iyywf"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i5i6z"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""ihf6c"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""irzjg"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i9wd2"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i5izj"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+Grid 4up,"
+<helix-core-layout-container id=""itfl"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""ibic"" data-gjs-type=""helix-core-grid"" variant=""4up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""itlhd"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i8jdr"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""iem9z"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""ieomx"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+Grid 2-4up,"
+<helix-core-layout-container id=""ivoj"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""i45z"" data-gjs-type=""helix-core-grid"" variant=""2-4up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""iuucl"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""itxhk"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i6016"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i2266"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+Grid 1up-by-2up-3up,"
+<helix-core-layout-container id=""ilnc"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""ibhm"" data-gjs-type=""helix-core-grid"" variant=""1up-by-2up-3up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""ieic"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""ixsyo"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""iq8sc"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+Subgrid 2 Columns,"
+<helix-core-grid id=""i3kp"" data-gjs-type=""helix-core-grid"" variant=""2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""iio6"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i6tj"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+<style>
+
+</style>"
+Subgrid 3 Columns,"
+<helix-core-grid id=""imoy"" data-gjs-type=""helix-core-grid"" variant=""3up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""i2th"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""ia55"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""injo"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+<style>
+
+</style>"
+Subgrid 4 Columns,"
+<helix-core-grid id=""iwn7"" data-gjs-type=""helix-core-grid"" variant=""4up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""i3hz"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""ihak"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i2sny"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i71zs"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+<style>
+
+</style>"
+2 Col Mobile 4 Columns Desktop,"
+<helix-core-layout-container id=""im7e"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""i2ur"" data-gjs-type=""helix-core-grid"" variant=""2-4up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""ihdme"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""i7h2q"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""ilrcn"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+<helix-core-grid-item id=""ihme8"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+1 Column - using span,"
+<helix-core-layout-container id=""i0lf"" data-gjs-type=""helix-core-layout-container"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""i3vt"" data-gjs-type=""helix-core-grid"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""ihdg"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<style>
+
+</style>"
+Footer Four-Column,"
+<helix-core-footer id=""ilg73"" data-gjs-type=""helix-core-footer"" variant=""four-column"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-footer-content id=""iddlk"" data-gjs-type=""default"" behavior=""expandable"" slot=""top-one"" class=""hydrated"">
+
+<helix-core-icon id=""il2jz"" data-gjs-type=""helix-core-icon"" slot=""accordion-indicator-collapsed"" icon-name=""add"" size=""2"" is-block="""" variant=""filled"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-icon>
+
+<helix-core-icon id=""is8gi"" data-gjs-type=""helix-core-icon"" slot=""accordion-indicator-expanded"" icon-name=""remove"" size=""2"" is-block="""" variant=""filled"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-icon>
+
+<helix-core-heading id=""izbrf"" data-gjs-type=""helix-core-heading"" variant=""h5"" behavior=""custom"" slot=""header"" class=""hydrated"" data-hwc-version=""4.0.1198"">Static Header
+
+</helix-core-heading>
+
+<ul id=""ieq2v"" data-gjs-type=""ul"" slot=""body"" class=""helix-core-ul-list helix-core-m-r-2x helix-core-m-b-2x"">
+
+<li id=""ivhpk"" data-gjs-type=""li"" class=""helix-core-m-b"">List Item
+
+</li>
+
+<li id=""iwhzg"" data-gjs-type=""li"" class=""helix-core-m-b"">List Item
+
+</li>
+
+<li id=""iddci"" data-gjs-type=""li"" class=""helix-core-m-b"">List Item
+
+</li>
+
+<li id=""id772"" data-gjs-type=""li"" class=""helix-core-m-b"">List Item
+
+</li>
+
+<li id=""itv1rg"" data-gjs-type=""li"" class=""helix-core-m-b"">List Item
+
+</li>
+
+</ul>
+
+</helix-core-footer-content>
+
+<helix-core-footer-content id=""i30t6t"" data-gjs-type=""default"" behavior=""expandable"" slot=""top-two"" class=""hydrated"">"
+Footer One-Column,"
+<helix-core-footer id=""ip3jc"" data-gjs-type=""helix-core-footer"" variant=""one-column"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-footer-content id=""ifmwz"" data-gjs-type=""default"" slot=""top"" class=""hydrated"">
+
+<helix-core-content id=""ie44e"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""inrtm"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">Please see full Prescribing Information, including Boxed Warning and Medication Guide.
+
+</p>
+
+<p id=""ivx9h"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198""> You are encouraged to report adverse events related to Pfizer products by calling 1-800-438-1985 (U.S. only). If you prefer, you may contact the U.S. Food and Drug Administration (FDA) directly. Visit http://fda.gov/MedWatch or call 1-800-FDA-1088. 
+
+</p>
+
+<p id=""i0ja5"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">If your doctor has prescribed PRODUCT NAME and you need help paying for it, PRODUCT NAME may be able to assist, depending on eligibility, terms and conditions.
+
+</p>
+
+<p id=""ilqtp"" data-gjs-type=""helix-core-content-paragraph"" class="""" data-hwc-version=""4.0.1198"">Call 1-844-935-5269 Monday through Friday, 8:00 AM–8:00 PM ET, for more information.
+
+</p>
+
+<p id=""i1dzl"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198""> This site is intended only for U.S. residents. The products discussed in this site may have different product labeling in different countries. The information provided is for educational purposes only and is not intended to replace discussions with a healthcare provider. 
+
+</p>
+
+<p id=""ic2ii"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">PRODUCT NAME is a registered trademark of Pfizer Inc. The brand names included throughout are the properties of their respective owners.
+
+</p>
+
+<p id=""iydic"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">PRODUCT NAME (product) is available in 5 mg and 10 mg tablets. PRODUCT NAME XR (product) is available in 11 mg and 22 mg extended-release tablets.
+
+</p>
+
+</helix-core-content>
+
+</helix-core-footer-content>"
+Footer Mini,"
+<helix-core-footer id=""i8dgg"" data-gjs-type=""helix-core-footer"" variant=""none"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-footer-content id=""i5c1n"" data-gjs-type=""default"" orientation=""horizontal"" slot=""bottom-first"" class=""hydrated"">
+
+<div id=""iwlvb"" data-gjs-type=""default-box"" class=""helix-core--small-display-flex"">
+
+<img id=""ibs3i"" data-gjs-type=""image"" src=""https://www.pfizer.com/sites/default/files/custom-logo/Logo_Footer.png"" alt=""test-icon-to-be-replaced"" class=""helix-core-m-r-2x"">
+
+<helix-core-content id=""irng7"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Copyright © 2020 Pfizer Inc. All rights reserved. PP-ABC-USA-1234-12
+
+</helix-core-content>
+
+</div>
+
+</helix-core-footer-content>
+
+<helix-core-footer-content id=""igin8"" data-gjs-type=""default"" orientation=""horizontal"" slot=""bottom-second"" class=""hydrated"">
+
+<ul id=""i77ib"" data-gjs-type=""ul"" class=""helix-core-ul-list helix-core-m-r-2x"">
+
+<li id=""i68l5"" data-gjs-type=""li"" class=""helix-core--xs-full-width helix-core-m-b-4x--xs helix-core-inline-block helix-core-m-r"">
+
+<a id=""ibur6"" data-gjs-type=""link"" href=""#"">Contact Us</a>
+
+</li>
+
+<li id=""iue3u"" data-gjs-type=""li"" class=""helix-core--xs-full-width helix-core-m-b-4x--xs helix-core-inline-block helix-core-m-r"">
+
+<a id=""iitir"" data-gjs-type=""link"" href=""#"">Terms of Use</a>
+
+</li>
+
+<li id=""i74xc"" data-gjs-type=""li"" class=""helix-core--xs-full-width helix-core-m-b-4x--xs helix-core-inline-block helix-core-m-r"">
+
+<a id=""i0r62"" data-gjs-type=""link"" href=""#"">Privacy Policy</a>
+
+</li>
+
+<li id=""iznw3"" data-gjs-type=""li"" class=""helix-core--xs-full-width helix-core-m-b-4x--xs helix-core-inline-block helix-core-m-r"">
+
+<a id=""is3ud"" data-gjs-type=""link"" href=""#"">Site Map</a>
+
+</li>
+
+</ul>"
+Footer Inverted Two Column,"
+<helix-core-footer id=""i0i8u"" data-gjs-type=""helix-core-footer"" variant=""two-column"" theme=""inverted"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""iyc5b"" data-gjs-type=""helix-core-content"" slot=""footnote"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""ig2xj"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+</p>
+
+</helix-core-content>
+
+<helix-core-footer-content id=""irmf9"" data-gjs-type=""default"" slot=""top-one"" class=""hydrated"">
+
+<ul id=""imwgj"" data-gjs-type=""ul"" class=""helix-core-ul-list helix-core-m-r-2x helix-core-m-b-2x"">
+
+<li id=""iackk"" data-gjs-type=""li"" class=""helix-core-m-b-6x"">
+
+<a id=""i4so6"" data-gjs-type=""link"" href=""#"">List Item</a>
+
+</li>
+
+<li id=""i54bg"" data-gjs-type=""li"" class=""helix-core-m-b-6x"">
+
+<a id=""i7ue8"" data-gjs-type=""link"" href=""#"">List Item</a>
+
+</li>
+
+<li id=""iyel4"" data-gjs-type=""li"" class=""helix-core-m-b-6x"">
+
+<a id=""ioc7h"" data-gjs-type=""link"" href=""#"">List Item</a>
+
+</li>
+
+<li id=""ivmtk"" data-gjs-type=""li"" class=""helix-core-m-b-6x"">
+
+<a id=""ioyzr"" data-gjs-type=""link"" href=""#"">List Item</a>
+
+</li>
+
+<li id=""i84ji"" data-gjs-type=""li"" class=""helix-core-m-b-6x"">
+
+<a id=""is7oz"" data-gjs-type=""link"" href=""#"">List Item</a>"
+Footer Inverted Three Column,"
+<helix-core-footer id=""iee5j"" data-gjs-type=""helix-core-footer"" variant=""three-column"" theme=""inverted"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""i9mav"" data-gjs-type=""helix-core-content"" slot=""footnote"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""i6hob"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+</p>
+
+</helix-core-content>
+
+<helix-core-footer-content id=""izsnh"" data-gjs-type=""default"" slot=""top-one"" class=""hydrated"">
+
+<helix-core-heading id=""i8bu1"" data-gjs-type=""helix-core-heading"" variant=""h3"" class=""helix-core-m-b-6x hydrated"" data-hwc-version=""4.0.1198"">Heading
+
+</helix-core-heading>
+
+<helix-core-content id=""ixo4k"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""iu909"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198"">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+</p>
+
+</helix-core-content>
+
+<helix-core-button-group id=""i086l"" data-gjs-type=""helix-core-button-group"" variant=""block"" inherit-text-align="""" align=""left"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-button id=""ixe82"" data-gjs-type=""helix-core-button"" theme=""inverted"" variant=""primary"" size=""large"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""icrik"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Button
+
+</helix-core-content>
+
+</helix-core-button>
+
+<helix-core-button id=""ikpt4"" data-gjs-type=""helix-core-button"" variant=""secondary"" theme=""inverted"" size=""large"" class=""hydrated"" data-hwc-version=""4.0.1198"">"
+Brightcove Video,"
+<helix-core-brightcove-video id=""helix--brightcove-video--id-5592313509001"" data-gjs-type=""helix-core-brightcove-video"" media-id=""5592313509001"" account-id=""1852113022001"" show-title=""true"" class=""hydrated"" data-hwc-version=""4.0.1198"" style=""overflow: hidden;"">
+
+<video-js data-embed=""default"" preload=""auto"" class=""video-js vjs-fluid vjs-paused vjs-controls-enabled vjs-workinghover vjs-v8 vjs-user-active vjs-layout-large bc-player-g2OtgoAoBs_default bc-player-g2OtgoAoBs_default-index-3 vjs-mouse vjs-plugins-ready vjs-player-info vjs-contextmenu-ui vjs-viewability vjs-errors vjs-hide-controls"" data-account=""1852113022001"" data-player=""g2OtgoAoBs"" data-video-id=""5592313509001"" id=""vjs_video_2390"" tabindex=""-1"" lang=""en"" translate=""no"" role=""region"" aria-label=""Video Player"">
+
+<video tabindex=""-1"" id=""vjs_video_2390_html5_api"" data-video-id=""5592313509001"" data-player=""g2OtgoAoBs"" data-account=""1852113022001"" class=""vjs-tech"" preload=""metadata"" data-embed=""default"">
+
+</video>
+
+<div class=""vjs-poster vjs-hidden"" aria-disabled=""false"">
+
+</div>
+
+<div class=""vjs-title-bar vjs-hidden"">
+
+<div class=""vjs-title-bar-title"" id=""vjs-title-bar-title-2477"">
+
+</div>
+
+<div class=""vjs-title-bar-description"" id=""vjs-title-bar-description-2478"">
+
+</div>
+
+</div>
+
+<div class=""vjs-text-track-display"" translate=""yes"" aria-live=""off"" aria-atomic=""true"">
+
+<div style=""position: absolute; inset: 0px; margin: 1.5%;"">
+
+</div>
+
+</div>
+
+<div class=""vjs-loading-spinner"" dir=""ltr"">
+
+<span class=""vjs-control-text"">Video Player is loading.</span>
+
+</div>
+
+<button class=""vjs-big-play-button"" type=""button"" title=""Play Video"" aria-disabled=""false""><span class=""vjs-icon-placeholder"" aria-hidden=""true""></span><span class=""vjs-control-text"" aria-live=""polite"">Play Video</span></button>"
+Icon,"
+<helix-core-icon id=""igqm"" data-gjs-type=""helix-core-icon"" icon-name=""settings"" variant=""filled"" size=""2"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-icon>
+
+<style>
+
+</style>"
+Image,"
+<helix-core-image id=""ici4"" data-gjs-type=""helix-core-image"" alt=""Helix Image"" img-src=""https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;h=300&amp;w=338&amp;q=80"" img-retina=""https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;h=600&amp;w=776&amp;q=80"" mobile-img-src=""https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;h=300&amp;w=338&amp;q=80"" mobile-img-retina=""https://images.unsplash.com/photo-1487530811176-3780de880c2d?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;h=600&amp;w=776&amp;q=80"" image-corners=""square"" class=""hydrated"" data-hwc-version=""4.0.1198""> 
+
+</helix-core-image>
+
+<style>
+
+</style>"
+Logo,"
+<helix-core-logo id=""iodp"" data-gjs-type=""helix-core-logo"" size=""default"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-logo>
+
+<style>
+
+</style>"
+Image Link,"
+<a id=""i9bf"" data-gjs-type=""link"" href="""" aria-role=""link"" class=""""><helix-core-image id=""i08h"" data-gjs-type=""helix-core-image"" alt=""Helix Image"" img-src=""data:image/png;base64,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"" img-retina=""data:image/png;base64,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"" mobile-img-src=""data:image/png;base64,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"" mobile-img-retina=""data:image/png;base64,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"" image-corners=""square"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-image></a>
+
+<style>
+
+</style>"
+Primary Menu,"
+<helix-core-menu id=""i21igk"" data-gjs-type=""helix-core-menu"" theme=""primary"" has-overlay-on-mprus-active=""true"" has-no-tablet-layout=""true"" behavior=""modal"" mobile-toggle=""hamburger"" is-secondary-hidden=""true"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-logo id=""ijowo9"" data-gjs-type=""helix-core-logo"" slot=""logo"" theme=""color"" size=""default"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-logo>
+
+<helix-core-layout-container id=""iv9do8"" data-gjs-type=""helix-core-layout-container"" slot=""mprus"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""inlj14"" data-gjs-type=""helix-core-grid"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""ibk86c"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<div id=""i519qs"" data-gjs-type=""default"" slot=""toggle-menu-open"">
+
+<p id=""i7q4ga"" data-gjs-type=""paragraph"" >Menu
+
+</p>
+
+</div>
+
+<div id=""i3tpd4"" data-gjs-type=""default"" slot=""toggle-menu-close"">
+
+<p id=""i5gvry"" data-gjs-type=""paragraph"" >Close
+
+</p>
+
+</div>
+
+<helix-core-button id=""irubvf"" data-gjs-type=""helix-core-button"" has-url-query-string=""destination"" has-modal-query-string=""signin"" href=""/login"" data-grv-redirect=""login"" slot=""cta-area"" variant=""primary"" data-grv-action=""none"" size=""large"" class=""ctas user--logged-out-only hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""iq9fqr"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Sign In
+
+</helix-core-content>"
+Primary Menu with mobile Masthead,"
+<helix-core-menu id=""imqujf"" data-gjs-type=""helix-core-menu"" theme=""primary"" has-overlay-on-mprus-active=""true"" behavior=""modal"" has-no-tablet-layout=""true"" mobile-toggle=""hamburger"" is-secondary-hidden=""true"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-logo id=""ikncv8"" data-gjs-type=""helix-core-logo"" slot=""logo"" theme=""color"" size=""default"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-logo>
+
+<helix-core-layout-container id=""ipwqny"" data-gjs-type=""helix-core-layout-container"" slot=""mprus"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""idqvlf"" data-gjs-type=""helix-core-grid"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""i2vgbf"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<div id=""ifirbs"" data-gjs-type=""default"" slot=""toggle-menu-open"">
+
+<p id=""i8xk18"" data-gjs-type=""paragraph"" >Menu
+
+</p>
+
+</div>
+
+<div id=""is7za8"" data-gjs-type=""default"" slot=""toggle-menu-close"">
+
+<p id=""ifbfso"" data-gjs-type=""paragraph"" >Close
+
+</p>
+
+</div>
+
+<helix-core-button id=""ity8b1"" data-gjs-type=""helix-core-button"" has-url-query-string=""destination"" has-modal-query-string=""signin"" href=""/login"" data-grv-redirect=""login"" slot=""cta-area"" variant=""primary"" data-grv-action=""none"" size=""large"" class=""ctas user--logged-out-only hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""iliqih"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Sign In
+
+</helix-core-content>"
+Secondary Menu,"
+<helix-core-menu id=""ij0ipq"" data-gjs-type=""helix-core-menu"" theme=""secondary"" has-overlay-on-mprus-active=""true"" has-no-tablet-layout=""true"" behavior=""modal"" mobile-toggle=""button"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-logo id=""iiazx5"" data-gjs-type=""helix-core-logo"" slot=""logo"" size=""unrestricted"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-image id=""ibxl3v"" data-gjs-type=""helix-core-image"" img-src=""https://cdn.zeplin.io/5fd74c9ceaccbe8423bdc7d6/assets/AFF97E78-5A80-4CEA-9447-EBEC74EBE789.svg"" mobile-img-src=""https://cdn.zeplin.io/5fd74c9ceaccbe8423bdc7d6/assets/AFF97E78-5A80-4CEA-9447-EBEC74EBE789.svg"" image-corners=""square"" class=""hydrated"" data-hwc-version=""4.0.1198""> 
+
+</helix-core-image>
+
+</helix-core-logo>
+
+<helix-core-layout-container id=""iv39sk"" data-gjs-type=""helix-core-layout-container"" slot=""mprus"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid id=""icexlf"" data-gjs-type=""helix-core-grid"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-grid-item id=""ilkxfl"" data-gjs-type=""helix-core-grid-item"" variant=""1up-by-2up"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-grid-item>
+
+</helix-core-grid>
+
+</helix-core-layout-container>
+
+<ul id=""i5xvt6"" data-gjs-type=""ul"" slot=""secondary-links"">
+
+<li id=""il8l8t"" data-gjs-type=""li"" >
+
+<helix-core-button id=""i6j9rn"" data-gjs-type=""helix-core-button"" variant=""primary"" size=""large"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-icon id=""i0wej8"" data-gjs-type=""helix-core-icon"" size=""1"" icon-name=""add_circle"" variant=""filled"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-icon>
+
+</helix-core-button>
+
+</li>
+
+</ul>"
+Back to Top,"
+<helix-core-floating-container id=""ihtkv"" data-gjs-type=""helix-core-floating-container"" position-reference=""window"" anchor-point-x=""right"" anchor-point-y=""bottom"" offset-x=""20px"" offset-y=""20px"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-scroll-to id=""in4ce"" data-gjs-type=""helix-core-scroll-to"" theme=""default"" class=""helix-core-scroll-to helix-core-scroll-to--shadow helix-core-scroll-to--rotate inactive hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-scroll-to>
+
+</helix-core-floating-container>
+
+<style>
+
+</style>"
+Hero,"
+<helix-core-hero id=""i0jw"" data-gjs-type=""helix-core-hero"" behavior=""2-column-centered"" scrim=""none"" background-img="""" background-color=""none"" min-height=""none"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-heading id=""i1t0h"" data-gjs-type=""helix-core-heading"" behavior=""helix-styles"" variant=""h1"" slot=""content"" class=""hydrated"" data-hwc-version=""4.0.1198""> Lorem ipsum dolor sit amet 
+
+</helix-core-heading>
+
+<helix-core-content id=""ig715"" data-gjs-type=""helix-core-content"" slot=""content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""i2lvx"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198""> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation. 
+
+</p>
+
+</helix-core-content>
+
+<helix-core-image id=""icmdi"" data-gjs-type=""helix-core-image"" slot=""image"" full-width=""true"" img-retina="""" img-src="""" image-corners=""square"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+</helix-core-image>
+
+</helix-core-hero>
+
+<style>
+
+</style>"
+QuickLinks,"
+<extras-quicklinks id=""iejzzr"" data-gjs-type=""extras-quicklinks"" class=""extras-quicklinks hydrated"">
+
+<!---->
+
+<ul id=""i34xjp"" data-gjs-type=""ul"" >
+
+<li id=""ijpcrl"" data-gjs-type=""li"" >
+
+<a id=""iknmq6"" data-gjs-type=""link"" href=""#"">Link</a>
+
+</li>
+
+<li id=""iouq2a"" data-gjs-type=""li"" >
+
+<a id=""iyn3ln"" data-gjs-type=""link"" href=""#"" is-link-active=""true"">Active Link</a>
+
+</li>
+
+<li id=""i99481"" data-gjs-type=""li"" >
+
+<a id=""im4xyg"" data-gjs-type=""link"" href=""#"">Link</a>
+
+</li>
+
+<li id=""ig3gjk"" data-gjs-type=""li"" >
+
+<a id=""i5c99w"" data-gjs-type=""link"" href=""#"">Link</a>
+
+</li>
+
+</ul>
+
+</extras-quicklinks>
+
+<style>
+
+</style>"
+Extras References,"
+<extras-references id=""icl3f"" data-gjs-type=""extras-references"" grid-gap=""8px"" symbol-align=""right"" class="""">
+
+<helix-core-heading id=""i3xnn"" data-gjs-type=""helix-core-heading"" slot=""heading"" variant=""h5"" class=""helix-core-type-preset-12 hydrated"" data-hwc-version=""4.0.1198"">References
+
+</helix-core-heading>
+
+<helix-core-reference id=""ila3m"" data-gjs-type=""helix-core-reference"" symbol=""†"" data-hwc-version=""4.0.1198"" aria-role=""list-item"" class=""hydrated"">
+
+<helix-core-content id=""ivvdu"" data-gjs-type=""helix-core-content"" data-hwc-version=""4.0.1198"" class=""helix-core-content hydrated"">
+
+<!---->Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur neque tellus, elementum sit amet lectus id, congue varius elit. Fusce molestie urna id elit fermentum tincidunt. Proin vel nibh sed elit commodo efficitur nec nec ipsum. Aliquam erat volutpat. Suspendisse eu elit et nisi malesuada luctus. Phasellus nec velit dapibus, condimentum purus non, rutrum mi. In eros sem, pellentesque id congue mollis, vehicula sit amet neque. Quisque condimentum feugiat quam non rhoncus. Cras eget vestibulum urna. Nullam sodales ipsum elit, ac commodo odio fringilla at.
+
+</helix-core-content>
+
+</helix-core-reference>
+
+<helix-core-reference id=""ifg3b"" data-gjs-type=""helix-core-reference"" symbol=""*"" data-hwc-version=""4.0.1198"" aria-role=""list-item"" class=""hydrated"">
+
+<helix-core-content id=""i2e0t"" data-gjs-type=""helix-core-content"" data-hwc-version=""4.0.1198"" class=""helix-core-content hydrated"">
+
+<!---->Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur neque tellus, elementum sit amet lectus id, congue varius elit. Fusce molestie urna id elit fermentum tincidunt. Proin vel nibh sed elit commodo efficitur nec nec ipsum. Aliquam erat volutpat. Suspendisse eu elit et nisi malesuada luctus. Phasellus nec velit dapibus, condimentum purus non, rutrum mi. In eros sem, pellentesque id congue mollis, vehicula sit amet neque. Quisque condimentum feugiat quam non rhoncus. Cras eget vestibulum urna. Nullam sodales ipsum elit, ac commodo odio fringilla at.
+
+</helix-core-content>
+
+</helix-core-reference>
+
+<helix-core-reference id=""iv8qp"" data-gjs-type=""helix-core-reference"" symbol=""1."" data-hwc-version=""4.0.1198"" aria-role=""list-item"" class=""hydrated"">
+
+<helix-core-content id=""i6ju9"" data-gjs-type=""helix-core-content"" data-hwc-version=""4.0.1198"" class=""helix-core-content hydrated"">
+
+<!---->Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur neque tellus, elementum sit amet lectus id, congue varius elit. Fusce molestie urna id elit fermentum tincidunt. Proin vel nibh sed elit commodo efficitur nec nec ipsum. Aliquam erat volutpat. Suspendisse eu elit et nisi malesuada luctus. Phasellus nec velit dapibus, condimentum purus non, rutrum mi. In eros sem, pellentesque id congue mollis, vehicula sit amet neque. Quisque condimentum feugiat quam non rhoncus. Cras eget vestibulum urna. Nullam sodales ipsum elit, ac commodo odio fringilla at.
+
+</helix-core-content>
+
+</helix-core-reference>"
+Content,"
+<helix-core-content id=""ieqk"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<p id=""ieu7"" data-gjs-type=""helix-core-content-paragraph"" data-hwc-version=""4.0.1198""> Example 
+
+</p>
+
+</helix-core-content>
+
+<style>
+
+</style>"
+Header,"
+<helix-core-header id=""i2oi"" data-gjs-type=""helix-core-header"" theme=""primary"" behavior=""default"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->
+
+<div class=""helix-core-header__container"">
+
+<helix-core-heading id=""i61k"" data-gjs-type=""helix-core-heading"" variant=""h3"" class=""hydrated"" data-hwc-version=""4.0.1198"">Header
+
+</helix-core-heading>
+
+</div>
+
+</helix-core-header>
+
+<style>
+
+</style>"
+Section Heading,"
+<helix-core-heading id=""iq2e"" data-gjs-type=""helix-core-heading"" class=""helix-core-heading hydrated"" data-hwc-version=""4.0.1198"">Example
+
+</helix-core-heading>
+
+<style>
+
+</style>"
+Reference,"
+<helix-core-reference id=""i1oiv"" data-gjs-type=""helix-core-reference"" symbol=""†"" class=""hydrated"" aria-role=""list-item"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""ilfm9"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur neque tellus, elementum sit amet lectus id, congue varius elit. Fusce molestie urna id elit fermentum tincidunt. Proin vel nibh sed elit commodo efficitur nec nec ipsum. Aliquam erat volutpat. Suspendisse eu elit et nisi malesuada luctus. Phasellus nec velit dapibus, condimentum purus non, rutrum mi. In eros sem, pellentesque id congue mollis, vehicula sit amet neque. Quisque condimentum feugiat quam non rhoncus. Cras eget vestibulum urna. Nullam sodales ipsum elit, ac commodo odio fringilla at.
+
+</helix-core-content>
+
+</helix-core-reference>
+
+<style>
+
+</style>"
+References,"
+<helix-core-references id=""idm5a"" data-gjs-type=""helix-core-references"" aria-role=""list"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-reference id=""i3n8i"" data-gjs-type=""helix-core-reference"" symbol=""1."" aria-role=""list-item"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""imytm"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur neque tellus, elementum sit amet lectus id, congue varius elit. Fusce molestie urna id elit fermentum tincidunt. Proin vel nibh sed elit commodo efficitur nec nec ipsum. Aliquam erat volutpat. Suspendisse eu elit et nisi malesuada luctus. Phasellus nec velit dapibus, condimentum purus non, rutrum mi. In eros sem, pellentesque id congue mollis, vehicula sit amet neque. Quisque condimentum feugiat quam non rhoncus. Cras eget vestibulum urna. Nullam sodales ipsum elit, ac commodo odio fringilla at.
+
+</helix-core-content>
+
+</helix-core-reference>
+
+<helix-core-reference id=""i36yn"" data-gjs-type=""helix-core-reference"" symbol=""11."" aria-role=""list-item"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""i0743"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur neque tellus, elementum sit amet lectus id, congue varius elit. Fusce molestie urna id elit fermentum tincidunt. Proin vel nibh sed elit commodo efficitur nec nec ipsum. Aliquam erat volutpat. Suspendisse eu elit et nisi malesuada luctus. Phasellus nec velit dapibus, condimentum purus non, rutrum mi. In eros sem, pellentesque id congue mollis, vehicula sit amet neque. Quisque condimentum feugiat quam non rhoncus. Cras eget vestibulum urna. Nullam sodales ipsum elit, ac commodo odio fringilla at.
+
+</helix-core-content>
+
+</helix-core-reference>
+
+<helix-core-reference id=""i9nse"" data-gjs-type=""helix-core-reference"" symbol=""†"" aria-role=""list-item"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""ikkn5"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">
+
+<!---->Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur neque tellus, elementum sit amet lectus id, congue varius elit. Fusce molestie urna id elit fermentum tincidunt. Proin vel nibh sed elit commodo efficitur nec nec ipsum. Aliquam erat volutpat. Suspendisse eu elit et nisi malesuada luctus. Phasellus nec velit dapibus, condimentum purus non, rutrum mi. In eros sem, pellentesque id congue mollis, vehicula sit amet neque. Quisque condimentum feugiat quam non rhoncus. Cras eget vestibulum urna. Nullam sodales ipsum elit, ac commodo odio fringilla at.
+
+</helix-core-content>
+
+</helix-core-reference>
+
+<helix-core-reference id=""i474d"" data-gjs-type=""helix-core-reference"" symbol=""*"" aria-role=""list-item"" class=""hydrated"" data-hwc-version=""4.0.1198"">
+
+<helix-core-content id=""iw0av"" data-gjs-type=""helix-core-content"" class=""helix-core-content hydrated"" data-hwc-version=""4.0.1198"">"

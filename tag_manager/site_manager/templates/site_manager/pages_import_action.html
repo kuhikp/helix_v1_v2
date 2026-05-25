@@ -244,7 +244,14 @@
                             <button type="submit" class="btn {{ action_config.submit_btn_class }} px-4">
                                 <i class="fas {{ action_config.icon }} me-1"></i>{{ action_config.title }}
                             </button>
-                            <a href="{% url 'pages_import' site.id %}" class="btn btn-outline-secondary">Cancel</a>
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary"
+                                id="cancel-pages-action-btn"
+                                data-back-url="{% url 'pages_import' site.id %}"
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </form>
 
@@ -309,11 +316,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const statusDisplay = document.getElementById('pages-action-status-display');
     const clearBtn = document.getElementById('clear-pages-action-status-btn');
+    const cancelBtn = document.getElementById('cancel-pages-action-btn');
     const statusApiUrl = '{{ status_api_url }}';
     const clearStatusUrl = '{{ status_clear_url }}';
+    const cancelStatusUrl = '{{ status_cancel_url }}';
     const csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
     const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
     let pollHandle = null;
+    let lastKnownStatus = '{{ action_status.status|default:"not_started" }}';
 
     function escapeHtml(text) {
         const temp = document.createElement('div');
@@ -323,6 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderStatus(data) {
         const status = data.status || 'not_started';
+        lastKnownStatus = status;
         const elapsed = data.elapsed_human || '0s';
         const message = escapeHtml(data.message || 'No process started yet.');
         const output = data.output ? `<pre class="bg-light border rounded p-2 small mb-0" style="white-space: pre-wrap; word-break: break-word;">${escapeHtml(data.output)}</pre>` : '';
@@ -405,6 +416,27 @@ document.addEventListener('DOMContentLoaded', function() {
 
     clearBtn.addEventListener('click', function() {
         fetch(clearStatusUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(() => {
+                fetchStatus();
+            });
+    });
+
+    cancelBtn.addEventListener('click', function() {
+        const backUrl = cancelBtn.getAttribute('data-back-url');
+
+        if (lastKnownStatus !== 'running') {
+            window.location.href = backUrl;
+            return;
+        }
+
+        fetch(cancelStatusUrl, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrfToken,

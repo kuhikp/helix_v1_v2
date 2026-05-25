@@ -28,6 +28,8 @@ share/python-wheels/
 *.egg
 MANIFEST
 site_manager/static/*
+!site_manager/static/httrack_export/
+!site_manager/static/httrack_export/helix_components_html_output.csv
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
