@@ -12,6 +12,7 @@ import sys
 import os
 import tempfile
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Django imports
 from django.contrib import messages
@@ -3082,6 +3083,7 @@ def convert_permalinks(request, site_id):
         'pages_dir': os.path.join(base_data_path, 'pages'),
         'files_dir': os.path.join(base_data_path, 'files'),
         'files_v2_dir': os.path.join(base_data_path, 'files_v2'),
+        'instance_id': os.getenv('INSTANCE_ID', ''),
         'v1_site_id': '',  # Will be extracted from URLs or form
         'v2_site_id': os.getenv('V2_SITE_ID', ''),
     }
@@ -3363,4 +3365,681 @@ def clear_convert_permalinks_status(request, site_id):
         return JsonResponse({
             'success': False,
             'message': f'Error clearing status: {str(e)}'
+        })
+
+
+@login_required
+@require_POST
+def fetch_files_v2(request, site_id):
+    """
+    AJAX endpoint to fetch v2 files from webbuilder API.
+    
+    This integrates the fetch_files_v2.py script to populate the files_v2 directory.
+    
+    POST Parameters:
+        - instance_id: V2 site instance ID
+        - v2_site_id: V2 site ID (usually same as instance_id)
+        - output_dir: Optional custom output directory
+    
+    Returns:
+        JSON response with status
+    """
+    from dotenv import load_dotenv
+    
+    load_dotenv()
+    
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    fetch_status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_fetch_files_v2.status")
+    fetch_result_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_fetch_files_v2.result")
+    fetch_failure_log_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_fetch_files_v2_failures.log")
+    
+    # Get form data
+    instance_id = request.POST.get('instance_id', '').strip()
+    v2_site_id = request.POST.get('v2_site_id', instance_id).strip()
+    output_dir = request.POST.get('output_dir', '').strip()
+    interactive_browser = str(request.POST.get('interactive_browser', '')).strip().lower() in {'1', 'true', 'yes', 'on'}
+    manual_login_wait_seconds_raw = request.POST.get('manual_login_wait_seconds', '240').strip()
+    try:
+        manual_login_wait_seconds = max(30, min(900, int(manual_login_wait_seconds_raw)))
+    except Exception:
+        manual_login_wait_seconds = 240
+    
+    # Fallback to environment variables if not provided
+    env_instance_id = os.getenv('INSTANCE_ID', '').strip()
+    if not instance_id:
+        instance_id = env_instance_id
+    # Backward compatibility: older UI sent v2_site_id for instance_id.
+    # If they match but INSTANCE_ID env differs, prefer env INSTANCE_ID.
+    elif env_instance_id and instance_id == v2_site_id and env_instance_id != v2_site_id:
+        logger.warning(
+            "Received instance_id equal to v2_site_id from request. "
+            f"Overriding with INSTANCE_ID from env: {env_instance_id}"
+        )
+        instance_id = env_instance_id
+    if not v2_site_id:
+        v2_site_id = os.getenv('V2_SITE_ID', instance_id).strip()
+    
+    if not output_dir:
+        output_dir = os.path.join(
+            settings.BASE_DIR,
+            'site_manager',
+            'static',
+            'block_import',
+            'data',
+            'files_v2'
+        )
+    
+    # Log the values being used (before validating)
+    logger.info(f"=== FETCH FILES V2 REQUEST ===")
+    logger.info(f"Site ID: {site_id}")
+    logger.info(f"Instance ID (from request): {request.POST.get('instance_id', 'not provided')}")
+    logger.info(f"Instance ID (final value): {instance_id}")
+    logger.info(f"V2 Site ID (final value): {v2_site_id}")
+    logger.info(f"Output directory: {output_dir}")
+    logger.info(f"Interactive browser mode: {interactive_browser}")
+    logger.info(f"Manual login wait seconds: {manual_login_wait_seconds}")
+    
+    # Validate required parameters
+    if not instance_id or not v2_site_id:
+        error_msg = (
+            f"Instance ID and V2 Site ID are required. "
+            f"Received instance_id='{instance_id}' v2_site_id='{v2_site_id}'. "
+            f"Either provide them in the form or set INSTANCE_ID and V2_SITE_ID environment variables."
+        )
+        logger.error(error_msg)
+        return JsonResponse({
+            'success': False,
+            'message': error_msg
+        })
+    
+    # Validate instance_id is numeric (should be a site ID number)
+    if not instance_id.isdigit():
+        error_msg = f"Instance ID must be numeric. Received: '{instance_id}'"
+        logger.error(error_msg)
+        return JsonResponse({
+            'success': False,
+            'message': error_msg
+        })
+    
+    # Check if fetch already in progress (with stale lock recovery)
+    if os.path.exists(fetch_status_file):
+        try:
+            status_mtime = os.path.getmtime(fetch_status_file)
+            status_age_seconds = max(0, time.time() - status_mtime)
+            stale_after_seconds = 30 * 60  # 30 minutes
+
+            result_newer_than_status = (
+                os.path.exists(fetch_result_file)
+                and os.path.getmtime(fetch_result_file) >= status_mtime
+            )
+
+            if result_newer_than_status or status_age_seconds > stale_after_seconds:
+                logger.warning(
+                    "Clearing stale fetch_files_v2 lock for site %s (age=%ss, result_newer=%s)",
+                    site_id,
+                    int(status_age_seconds),
+                    result_newer_than_status,
+                )
+                os.remove(fetch_status_file)
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'Fetch is already in progress for this site'
+                })
+        except Exception as lock_error:
+            logger.warning("Unable to evaluate stale fetch lock: %s", str(lock_error))
+            return JsonResponse({
+                'success': False,
+                'message': 'Fetch is already in progress for this site'
+            })
+    
+    # Create status file
+    try:
+        with open(fetch_status_file, 'w') as f:
+            f.write('starting')
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error creating status file: {str(e)}'
+        })
+    
+    # Start fetch in background thread
+    def run_fetch_background():
+        def write_failure_log(stage, details):
+            """Append structured failure details to a per-site log file."""
+            log_entry = {
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'site_id': site_id,
+                'instance_id': instance_id,
+                'v2_site_id': v2_site_id,
+                'stage': stage,
+                'details': details,
+            }
+            try:
+                with open(fetch_failure_log_file, 'a', encoding='utf-8') as log_file:
+                    log_file.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+            except Exception as log_error:
+                logger.error(f"Failed to write API failure log: {log_error}")
+
+        try:
+            # Create output directory
+            Path(output_dir).mkdir(parents=True, exist_ok=True)
+            
+            # Use Playwright for browser automation (consistent with page/block import)
+            with sync_playwright() as p:
+                logger.info(f"Fetching files_v2 for site {site_id}: Launching browser...")
+                browser = p.chromium.launch(headless=not interactive_browser)
+                page_pw = browser.new_page()
+                
+                # Follow the same login pattern used by other import flows.
+                logger.info("Navigating to WebBuilder dashboard...")
+                page_pw.goto("https://webbuilder.pfizer/webbuilder/dashboard")
+                page_pw.wait_for_load_state("networkidle")
+                
+                try:
+                    def is_authenticated_webbuilder_url(url):
+                        current = (url or '').lower()
+                        if 'webbuilder.pfizer' not in current:
+                            return False
+                        blocked_fragments = ['/login', '/sso/login', 'authorization.ping', 'prodfederate.pfizer.com']
+                        return not any(fragment in current for fragment in blocked_fragments)
+
+                    def wait_for_authenticated_session(timeout_ms=60000):
+                        deadline = time.time() + (timeout_ms / 1000)
+                        while time.time() < deadline:
+                            if is_authenticated_webbuilder_url(page_pw.url):
+                                return True
+                            page_pw.wait_for_timeout(1000)
+                        return False
+
+                    # Click WebBuilder/Pfizer login button if visible.
+                    login_button_xpath = 'xpath=//*[@id="app"]/div[1]/div[1]/div[1]/div/div[2]/a'
+                    if page_pw.locator(login_button_xpath).first.is_visible():
+                        logger.info("Clicking login button...")
+                        page_pw.locator(login_button_xpath).first.click()
+                        page_pw.wait_for_load_state("networkidle")
+                        page_pw.wait_for_timeout(2000)
+                    
+                    # Check if we need to enter credentials
+                    username_selectors = [
+                        "#username",
+                        "input[name='username']",
+                        "input[name='pf.username']",
+                        "input[type='email']",
+                    ]
+                    password_selectors = [
+                        "#password",
+                        "input[name='password']",
+                        "input[type='password']",
+                    ]
+
+                    def first_visible_locator(selectors):
+                        for selector in selectors:
+                            locator = page_pw.locator(selector).first
+                            try:
+                                if locator.is_visible():
+                                    return locator
+                            except Exception:
+                                continue
+                        return None
+
+                    username = os.getenv('USERNAME')
+                    password = os.getenv('PASSWORD')
+
+                    if 'prodfederate.pfizer.com' in (page_pw.url or '').lower():
+                        logger.info("Detected PingFederate login page: %s", page_pw.url)
+
+                    username_locator = None
+                    password_locator = None
+                    for _ in range(20):
+                        username_locator = first_visible_locator(username_selectors)
+                        password_locator = first_visible_locator(password_selectors)
+                        if username_locator and password_locator:
+                            break
+                        page_pw.wait_for_timeout(1000)
+
+                    if username_locator and password_locator:
+                        logger.info("Entering login credentials from environment variables...")
+                        if username and password:
+                            username_locator.fill(username)
+                            password_locator.fill(password)
+
+                            submit_locators = [
+                                page_pw.locator("button[type='submit']").first,
+                                page_pw.locator("input[type='submit']").first,
+                                page_pw.locator("#signOnButton").first,
+                            ]
+                            submitted = False
+                            for submit_locator in submit_locators:
+                                try:
+                                    if submit_locator.is_visible():
+                                        submit_locator.click()
+                                        submitted = True
+                                        break
+                                except Exception:
+                                    continue
+
+                            if not submitted:
+                                password_locator.press("Enter")
+
+                            logger.info("Credentials submitted, waiting for redirect...")
+                            page_pw.wait_for_load_state("networkidle")
+                            page_pw.wait_for_timeout(3000)
+                        else:
+                            logger.warning("USERNAME or PASSWORD not found in environment variables")
+                    else:
+                        logger.info("Login credentials not required - already authenticated via SSO")
+                
+                except Exception as e:
+                    logger.warning(f"Error during login: {str(e)}")
+
+                initial_auth_timeout_ms = 120000 if interactive_browser else 60000
+                if not wait_for_authenticated_session(timeout_ms=initial_auth_timeout_ms):
+                    if interactive_browser:
+                        logger.warning(
+                            "Authentication not complete yet. Waiting up to %s seconds for manual login in opened browser...",
+                            manual_login_wait_seconds,
+                        )
+                        if not wait_for_authenticated_session(timeout_ms=manual_login_wait_seconds * 1000):
+                            auth_url = page_pw.url
+                            logger.error("Authentication did not complete. Current URL: %s", auth_url)
+                            write_failure_log('auth_not_completed', {
+                                'current_page_url': auth_url,
+                                'interactive_browser': interactive_browser,
+                                'manual_login_wait_seconds': manual_login_wait_seconds,
+                                'message': 'Session remained on login/SSO redirect after manual wait window',
+                            })
+                            raise ValueError(
+                                f"Authentication did not complete before API call. Current URL: {auth_url}"
+                            )
+                    else:
+                        auth_url = page_pw.url
+                        logger.error("Authentication did not complete. Current URL: %s", auth_url)
+                        write_failure_log('auth_not_completed', {
+                            'current_page_url': auth_url,
+                            'interactive_browser': interactive_browser,
+                            'message': 'Session remained on login/SSO redirect after waiting for auth completion',
+                        })
+                        raise ValueError(
+                            f"Authentication did not complete before API call. Current URL: {auth_url}"
+                        )
+
+                page_pw.wait_for_load_state("networkidle")
+
+                # Wait for page to stabilize
+                logger.info("Waiting for authenticated page to stabilize...")
+                page_pw.wait_for_timeout(2000)
+                
+                # Use the same authenticated browser context request client
+                api_context = page_pw.context.request
+                csrf_token = None
+                try:
+                    csrf_token = page_pw.locator("meta[name='csrf-token']").first.get_attribute("content")
+                except Exception:
+                    csrf_token = None
+                
+                logger.info("=== STARTING API FETCH ===")
+                logger.info(f"Instance ID: {instance_id}")
+                logger.info(f"V2 Site ID: {v2_site_id}")
+                
+                # Fetch all files from API
+                all_files = []
+                page_num = 1
+                last_error = None
+                last_page = None
+                per_page = None
+                total = None
+                
+                while True:
+                    url = f"https://webbuilder.pfizer/api/builder/dashboard/website/{instance_id}/files"
+                    params = {
+                        'page': page_num,
+                        'deleted': 'false',
+                        'latest': 'true',
+                        'version': v2_site_id,
+                        'website': instance_id
+                    }
+                    
+                    logger.info(f"=== API REQUEST PAGE {page_num} ===")
+                    logger.info(f"URL: {url}")
+                    logger.info(f"Params: {params}")
+                    
+                    try:
+                        request_headers = {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            'Accept': 'application/json, text/plain, */*',
+                            'Origin': 'https://webbuilder.pfizer',
+                            'Referer': 'https://webbuilder.pfizer/webbuilder/dashboard',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        }
+                        if csrf_token:
+                            request_headers['X-CSRF-TOKEN'] = csrf_token
+
+                        response = api_context.get(url, params=params, headers=request_headers, timeout=30000)
+                        response_status = response.status
+                        response_url = response.url
+                        response_text = response.text()
+                        logger.info(f"Response Status Code: {response_status}")
+                        
+                        if response_status != 200:
+                            write_failure_log('api_http_error', {
+                                'status_code': response_status,
+                                'request_url': response_url,
+                                'params': params,
+                                'page_num': page_num,
+                                'current_page_url': page_pw.url,
+                                'csrf_present': bool(csrf_token),
+                                'response_preview': response_text[:1000],
+                            })
+
+                            if response_status == 404:
+                                logger.error(f"=== HTTP 404 ERROR ===")
+                                logger.error(f"URL: {url}")
+                                logger.error(f"Instance ID: {instance_id}")
+                                logger.error(f"This endpoint was not found. Check that:")
+                                logger.error(f"  - Instance ID '{instance_id}' is correct and exists")
+                                logger.error(f"  - User has access to this instance")
+                                logger.error(f"  - API endpoint structure is correct")
+                            else:
+                                logger.error(f"HTTP {response_status}")
+                            
+                            last_error = f"API returned HTTP {response_status}"
+                            break
+
+                        # API can redirect to login page and return HTML with status 200
+                        if '/login' in response_url.lower() or response_text.lstrip().startswith('<!DOCTYPE html'):
+                            last_error = "Authentication required: API response redirected to login page"
+                            logger.error(last_error)
+                            write_failure_log('api_auth_redirect', {
+                                'request_url': response_url,
+                                'page_num': page_num,
+                                'response_preview': response_text[:1000],
+                            })
+                            break
+                        
+                        # Parse response
+                        try:
+                            data = response.json()
+                        except json.JSONDecodeError as e:
+                            last_error = f"Invalid JSON response: {str(e)}"
+                            logger.error(last_error)
+                            write_failure_log('api_invalid_json', {
+                                'request_url': response_url,
+                                'page_num': page_num,
+                                'error': str(e),
+                                'response_preview': response_text[:1000],
+                            })
+                            break
+                        
+                        logger.info(f"API response keys: {list(data.keys()) if isinstance(data, dict) else 'not a dict'}")
+                        
+                        # Check response structure
+                        if not isinstance(data, dict) or 'files' not in data:
+                            logger.error(f"Response missing 'files' key. Keys: {list(data.keys()) if isinstance(data, dict) else 'N/A'}")
+                            last_error = "Response missing 'files' key"
+                            write_failure_log('api_unexpected_structure', {
+                                'request_url': response_url,
+                                'page_num': page_num,
+                                'response_keys': list(data.keys()) if isinstance(data, dict) else 'N/A',
+                            })
+                            break
+                        
+                        files_section = data.get('files', {})
+                        if not isinstance(files_section, dict) or 'data' not in files_section:
+                            if page_num == 1:
+                                logger.error(f"Files section missing 'data' key")
+                                logger.error(f"Files structure: {files_section}")
+                            break
+                        
+                        page_files = files_section.get('data', [])
+                        last_page = files_section.get('last_page', last_page)
+                        per_page = files_section.get('per_page', per_page)
+                        total = files_section.get('total', total)
+
+                        if not page_files:
+                            logger.info(f"No files on page {page_num}, reached end of results")
+                            break
+                        
+                        all_files.extend(page_files)
+                        logger.info(f"Page {page_num}: {len(page_files)} files (total: {len(all_files)})")
+                        
+                        # Check for next page using last_page/next_page_url signals
+                        if (last_page and page_num < int(last_page)) or files_section.get('next_page_url'):
+                            page_num += 1
+                            page_pw.wait_for_timeout(500)  # Rate limiting
+                        else:
+                            logger.info("Reached last page of results")
+                            break
+                    
+                    except Exception as e:
+                        logger.error(f"Request error: {str(e)}")
+                        last_error = f"Request error: {str(e)}"
+                        write_failure_log('api_request_exception', {
+                            'url': url,
+                            'params': params,
+                            'page_num': page_num,
+                            'error': str(e),
+                        })
+                        break
+                
+                browser.close()
+                
+                # Validate we got files
+                if not all_files:
+                    error_msg = last_error or "No files fetched from API"
+                    logger.error(error_msg)
+                    write_failure_log('api_no_files', {
+                        'error': error_msg,
+                        'last_page_attempted': page_num,
+                    })
+                    raise ValueError(error_msg)
+                
+                # Create individual JSON files
+                logger.info(f"Creating {len(all_files)} individual JSON files...")
+                for file_data in all_files:
+                    uuid = file_data.get('uuid')
+                    if not uuid:
+                        continue
+                    
+                    json_content = {
+                        "details": {
+                            "filename": file_data.get('filename', ''),
+                            "filetype": file_data.get('filetype', ''),
+                            "created_at": file_data.get('created_at', ''),
+                            "updated_at": file_data.get('updated_at', ''),
+                            "deleted_at": file_data.get('deleted_at'),
+                            "hash": file_data.get('hash'),
+                            "filepath": file_data.get('filepath', ''),
+                            "url": file_data.get('url'),
+                            "footer_file": file_data.get('footer_file', 0),
+                            "header_file": file_data.get('header_file', 0),
+                            "only_on_deployment": file_data.get('only_on_deployment', 0),
+                            "deploy_on": file_data.get('deploy_on', 'all'),
+                            "private": file_data.get('private', False),
+                            "hidden": file_data.get('hidden', False),
+                            "locked": file_data.get('locked', 0),
+                            "category": file_data.get('category', ''),
+                            "weight": file_data.get('weight', 0),
+                            "attachment_id": file_data.get('attachment_id'),
+                            "async": file_data.get('async', False),
+                            "modular": file_data.get('modular', False),
+                            "non_modular_version": file_data.get('non_modular_version'),
+                            "filesize": file_data.get('filesize', 0),
+                            "uuid": uuid,
+                        },
+                        "hash": file_data.get('hash', '')
+                    }
+                    
+                    output_file = Path(output_dir) / f"{uuid}.json"
+                    with open(output_file, 'w', encoding='utf-8') as f:
+                        json.dump(json_content, f, indent=2, ensure_ascii=False)
+                
+                # Create consolidated JSON files: legacy list and UUID-keyed site output
+                consolidated_file = Path(output_dir).parent / 'files_v2.json'
+                site_consolidated_file = Path(output_dir).parent / f'{v2_site_id}_files.json'
+                consolidated = {
+                    "files": {
+                        "current_page": 1,
+                        "data": all_files,
+                        "total": total if total is not None else len(all_files),
+                        "last_page": last_page,
+                        "per_page": per_page,
+                    }
+                }
+                site_consolidated = {
+                    file_data.get('uuid'): {
+                        'created_at': file_data.get('created_at', ''),
+                        'deleted_at': file_data.get('deleted_at'),
+                        'filename': file_data.get('filename', ''),
+                        'filepath': file_data.get('filepath', ''),
+                        'filesize': file_data.get('filesize', 0),
+                        'filetype': file_data.get('filetype', ''),
+                        'hash': file_data.get('hash'),
+                        'normalized_filename': file_data.get('filename', ''),
+                        'source_json': f"{file_data.get('uuid')}.json",
+                        'updated_at': file_data.get('updated_at', ''),
+                        'url': file_data.get('url'),
+                        'uuid': file_data.get('uuid'),
+                    }
+                    for file_data in all_files
+                    if file_data.get('uuid')
+                }
+                
+                with open(consolidated_file, 'w', encoding='utf-8') as f:
+                    json.dump(consolidated, f, indent=2, ensure_ascii=False)
+                with open(site_consolidated_file, 'w', encoding='utf-8') as f:
+                    json.dump(site_consolidated, f, indent=2, ensure_ascii=False)
+
+                # Prepare permalink metadata cache (file_v2.json)
+                metadata_status = None
+                try:
+                    from .permalink_converter import ensure_metadata_files
+                    files_dir_for_metadata = str(Path(output_dir).parent / 'files')
+                    metadata_status = ensure_metadata_files(
+                        files_dir=files_dir_for_metadata,
+                        files_v2_dir=output_dir,
+                        v1_site_id=str(site_id),
+                        v2_site_id=v2_site_id,
+                    )
+                    logger.info(
+                        "Prepared permalink metadata after fetch for site %s: file_v2=%s (%s)",
+                        site_id,
+                        metadata_status.get('file_v2_path'),
+                        metadata_status.get('file_v2_count'),
+                    )
+                except Exception as metadata_error:
+                    logger.warning(
+                        "Unable to auto-generate metadata cache after files_v2 fetch: %s",
+                        str(metadata_error),
+                    )
+                
+                # Save result
+                result = {
+                    'success': True,
+                    'message': f'Successfully fetched and created {len(all_files)} files',
+                    'files_count': len(all_files),
+                    'output_dir': output_dir,
+                    'consolidated_file': str(consolidated_file),
+                    'site_consolidated_file': str(site_consolidated_file),
+                    'metadata_status': metadata_status,
+                }
+                
+                with open(fetch_result_file, 'w') as f:
+                    json.dump(result, f, indent=2)
+                
+                logger.info(f"Fetch files_v2 completed for site {site_id}: {len(all_files)} files")
+        
+        except Exception as e:
+            logger.error(f"Error fetching files_v2: {str(e)}", exc_info=True)
+            write_failure_log('fetch_background_exception', {
+                'error': str(e),
+            })
+            with open(fetch_result_file, 'w') as f:
+                json.dump({
+                    'success': False,
+                    'message': f'Error: {str(e)}',
+                    'files_count': 0,
+                    'failure_log_file': fetch_failure_log_file,
+                }, f, indent=2)
+        
+        finally:
+            # Remove status file
+            if os.path.exists(fetch_status_file):
+                try:
+                    os.remove(fetch_status_file)
+                except Exception as e:
+                    logger.warning(f"Error removing fetch status file: {str(e)}")
+    
+    # Start background thread
+    fetch_thread = threading.Thread(target=run_fetch_background)
+    fetch_thread.daemon = True
+    fetch_thread.start()
+    
+    logger.info(f"Started fetch_files_v2 for site {site_id}")
+    
+    return JsonResponse({
+        'success': True,
+        'message': 'Fetch started in background'
+    })
+
+
+@login_required
+def check_fetch_files_v2_status(request, site_id):
+    """
+    AJAX endpoint to check the status of files_v2 fetch operation.
+    
+    Returns:
+        JSON response with current status
+    """
+    site = get_object_or_404(SiteListDetails, pk=site_id)
+    fetch_status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_fetch_files_v2.status")
+    fetch_result_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_fetch_files_v2.result")
+    
+    # Check if fetch in progress
+    if os.path.exists(fetch_status_file):
+        return JsonResponse({
+            'status': 'in_progress',
+            'message': 'Fetching files_v2 data from API...'
+        })
+    
+    # Check if result available
+    if os.path.exists(fetch_result_file):
+        try:
+            with open(fetch_result_file, 'r') as f:
+                result = json.load(f)
+            return JsonResponse({
+                'status': 'complete',
+                'result': result
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error reading result: {str(e)}'
+            })
+    
+    # No fetch status
+    return JsonResponse({
+        'status': 'idle',
+        'message': 'No fetch in progress'
+    })
+
+
+@login_required
+@require_POST
+def clear_fetch_files_v2_status(request, site_id):
+    """Clear stale fetch status lock for files_v2 operation."""
+    get_object_or_404(SiteListDetails, pk=site_id)
+    fetch_status_file = os.path.join(settings.BASE_DIR, f"site_{site_id}_fetch_files_v2.status")
+
+    try:
+        if os.path.exists(fetch_status_file):
+            os.remove(fetch_status_file)
+        return JsonResponse({
+            'success': True,
+            'message': 'Fetch status cleared successfully.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error clearing fetch status: {str(e)}'
         })

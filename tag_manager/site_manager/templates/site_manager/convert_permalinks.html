@@ -126,9 +126,27 @@
                                     <label for="files_v2_dir" class="form-label">
                                         <i class="fas fa-folder me-1"></i>Files (v2) Directory
                                     </label>
-                                    <input type="text" class="form-control" id="files_v2_dir" name="files_v2_dir" 
-                                           value="{{ form_data.files_v2_dir }}" required>
-                                    <small class="form-text text-muted">Path to directory containing v2 UUID files (must exist)</small>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="files_v2_dir" name="files_v2_dir" 
+                                               value="{{ form_data.files_v2_dir }}" required>
+                                        <button type="button" class="btn btn-info" id="fetch-files-v2-btn" 
+                                                title="Fetch files_v2 data from webbuilder API">
+                                            <i class="fas fa-download me-1"></i>Fetch from API
+                                        </button>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Path to directory containing v2 UUID files. Click "Fetch from API" to populate automatically.
+                                    </small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="interactive_browser" name="interactive_browser" checked>
+                                    <label class="form-check-label" for="interactive_browser">
+                                        Open browser for manual login (recommended for SSO/MFA)
+                                    </label>
+                                    <small class="form-text text-muted d-block">
+                                        Opens a visible Playwright browser and waits for manual authentication if needed.
+                                    </small>
                                 </div>
 
                                 <hr class="my-4">
@@ -156,6 +174,17 @@
                                     <small class="form-text text-muted">New site ID to use in converted permalinks. Can be loaded from V2_SITE_ID env variable.</small>
                                 </div>
 
+                                <!-- Instance ID (for files API endpoint path) -->
+                                <div class="mb-3">
+                                    <label for="instance_id" class="form-label">
+                                        <i class="fas fa-hashtag me-1"></i>Instance ID
+                                        <span class="badge bg-info ms-2">Required for Fetch</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="instance_id" name="instance_id"
+                                           value="{{ form_data.instance_id }}" placeholder="Website instance ID (e.g., 23016)">
+                                    <small class="form-text text-muted">Used in API path /website/{instance_id}/files. Loaded from INSTANCE_ID env by default.</small>
+                                </div>
+
                                 <hr class="my-4">
 
                                 <!-- Submit Button -->
@@ -179,6 +208,7 @@
                     <ul class="mb-0">
                         <li><strong>Backup:</strong> The script will modify JSON page files. Ensure you have a backup.</li>
                         <li><strong>Custom Paths:</strong> Modify paths above if your data is stored in a non-standard location.</li>
+                        <li><strong>Fetch Files V2:</strong> Use the "Fetch from API" button to automatically populate the files_v2 directory from webbuilder API.</li>
                         <li><strong>UUID Mapping:</strong> Conversion requires proper UUID files in files_v2 directory.</li>
                         <li><strong>Site IDs:</strong> v1 Site ID is optional. v2 Site ID will replace the old siteid in all permalink URLs.</li>
                         <li><strong>Failures:</strong> Pages without matching UUIDs in v2 will be skipped with a warning.</li>
@@ -476,6 +506,182 @@ document.addEventListener('DOMContentLoaded', function() {
             "'": '&#039;'
         };
         return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // ========== Fetch Files V2 Functionality ==========
+    
+    const fetchFilesV2Btn = document.getElementById('fetch-files-v2-btn');
+    let fetchStatusCheckTimer = null;
+
+    if (fetchFilesV2Btn) {
+        fetchFilesV2Btn.addEventListener('click', function() {
+            const v2SiteId = document.getElementById('v2_site_id').value.trim();
+            const instanceInput = document.getElementById('instance_id');
+            const v1Input = document.getElementById('v1_site_id');
+            const instanceId = (instanceInput ? instanceInput.value.trim() : '') || (v1Input ? v1Input.value.trim() : '');
+            
+            if (!v2SiteId) {
+                alert('Please enter a V2 Site ID before fetching files.');
+                return;
+            }
+
+            if (!instanceId) {
+                alert('Please enter an Instance ID before fetching files.');
+                return;
+            }
+
+            const interactiveBrowserCheckbox = document.getElementById('interactive_browser');
+            const interactiveBrowser = !!(interactiveBrowserCheckbox && interactiveBrowserCheckbox.checked);
+
+            const confirmMessage = interactiveBrowser
+                ? 'Fetch files_v2 data from webbuilder API?\n\nThis will:\n1. Open a visible browser window\n2. Allow manual SSO/MFA login\n3. Fetch all v2 files\n4. Create individual JSON files\n5. This may take a few minutes.'
+                : 'Fetch files_v2 data from webbuilder API?\n\nThis will:\n1. Login to webbuilder.pfizer\n2. Fetch all v2 files\n3. Create individual JSON files\n4. This may take a few minutes.';
+
+            if (confirm(confirmMessage)) {
+                startFetchFilesV2(instanceId, v2SiteId, interactiveBrowser);
+            }
+        });
+    }
+
+    function startFetchFilesV2(instanceId, v2SiteId, interactiveBrowser) {
+        const fetchBtn = document.getElementById('fetch-files-v2-btn');
+        if (fetchBtn) {
+            fetchBtn.disabled = true;
+            fetchBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Fetching...';
+        }
+
+        const formData = new FormData();
+        formData.append('instance_id', instanceId);
+        formData.append('v2_site_id', v2SiteId);
+        formData.append('interactive_browser', interactiveBrowser ? '1' : '0');
+        formData.append('manual_login_wait_seconds', interactiveBrowser ? '300' : '60');
+        
+        const outputDir = document.getElementById('files_v2_dir').value.trim();
+        if (outputDir) {
+            formData.append('output_dir', outputDir);
+        }
+
+        fetch(`/sites/${siteId}/meta/convert-permalinks/fetch-files-v2/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showFetchProgressAlert(data.message);
+                startFetchStatusChecking();
+            } else {
+                alert('Error: ' + (data.message || 'Unknown error'));
+                resetFetchButton();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error starting fetch: ' + error.message);
+            resetFetchButton();
+        });
+    }
+
+    function showFetchProgressAlert(message) {
+        // Create or update alert above the form
+        let alertDiv = document.getElementById('fetch-progress-alert');
+        if (!alertDiv) {
+            alertDiv = document.createElement('div');
+            alertDiv.id = 'fetch-progress-alert';
+            alertDiv.className = 'alert alert-info mb-3';
+            
+            const formContainer = document.querySelector('#conversion-form');
+            if (formContainer) {
+                formContainer.parentNode.insertBefore(alertDiv, formContainer);
+            }
+        }
+        
+        alertDiv.innerHTML = `
+            <i class="fas fa-spinner fa-spin me-2"></i>
+            <strong>Fetching Files V2 Data...</strong><br>
+            <small>${escapeHtml(message)}</small>
+        `;
+    }
+
+    function startFetchStatusChecking() {
+        fetchStatusCheckTimer = setInterval(checkFetchStatus, 2000);
+        checkFetchStatus();
+    }
+
+    function checkFetchStatus() {
+        fetch(`/sites/${siteId}/meta/convert-permalinks/fetch-files-v2/status/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'in_progress') {
+                // Still fetching
+            } else if (data.status === 'complete') {
+                clearInterval(fetchStatusCheckTimer);
+                showFetchComplete(data.result);
+            } else if (data.status === 'error') {
+                clearInterval(fetchStatusCheckTimer);
+                showFetchError(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking fetch status:', error);
+        });
+    }
+
+    function showFetchComplete(result) {
+        const alertDiv = document.getElementById('fetch-progress-alert');
+        if (alertDiv) {
+            if (result.success) {
+                alertDiv.className = 'alert alert-success mb-3';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>Files V2 Data Fetched Successfully!</strong><br>
+                    <small>${escapeHtml(result.message)}</small><br>
+                    <small class="mt-1"><strong>Files created:</strong> ${result.files_count}</small>
+                    <button type="button" class="btn btn-sm btn-success mt-2" onclick="document.getElementById('fetch-progress-alert').remove();">
+                        <i class="fas fa-times me-1"></i>Dismiss
+                    </button>
+                `;
+            } else {
+                alertDiv.className = 'alert alert-danger mb-3';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>Fetch Failed</strong><br>
+                    <small>${escapeHtml(result.message)}</small>
+                `;
+            }
+        }
+        
+        resetFetchButton();
+    }
+
+    function showFetchError(message) {
+        const alertDiv = document.getElementById('fetch-progress-alert');
+        if (alertDiv) {
+            alertDiv.className = 'alert alert-danger mb-3';
+            alertDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Error</strong><br>
+                <small>${escapeHtml(message)}</small>
+            `;
+        }
+        
+        resetFetchButton();
+    }
+
+    function resetFetchButton() {
+        const fetchBtn = document.getElementById('fetch-files-v2-btn');
+        if (fetchBtn) {
+            fetchBtn.disabled = false;
+            fetchBtn.innerHTML = '<i class="fas fa-download me-1"></i>Fetch from API';
+        }
     }
 });
 </script>
