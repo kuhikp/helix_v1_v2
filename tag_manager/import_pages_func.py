@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+r"""
 Selenium-based migration script for V1 to V2 page migration.
 This script automates the process of creating pages in V2 from V1 JSON exports.
 """
@@ -115,6 +115,9 @@ Notes
 DEFAULT_V1_PAGES_DIR = os.path.join(settings.BASE_DIR, 'site_manager', 'static', 'block_import', 'data', 'pages')
 # If you want to target a specific page JSON file, set it here; otherwise ALL JSON files will be processed
 TARGET_PAGE_JSON_BASENAME = None  # Set to None to process all pages, or specify a filename for single page
+
+# Persist page import progress so interrupted runs can resume without recreating completed pages.
+PAGE_IMPORT_PROGRESS_FILENAME = None
 
 # Multi-lingual site support: Set to True if your site supports multiple languages
 # When True, pages with the same title but different languages will be created (no duplicate check)
@@ -2352,27 +2355,24 @@ def insert_html_and_css_in_editor(driver: webdriver.Chrome, html_content: str, c
         'Content-Type': 'application/json'
     }
 
-    # if not bearer_token:
-    #     messages.error(request, "Bearer token is missing. Please check your environment configuration.")
-    #     return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
-
-    response = requests.post(api_url, json=payload, headers=headers)
-
-    if response.status_code == 403:
+    if not api_url:
+        print("WARNING: API_URL is not set; using original V1 content")
+    else:
         try:
-            error_detail = response.json()
-            messages.error(request, f"Forbidden: {error_detail}")
-        except:
-            messages.error(request, f"Forbidden: {response.text}")
-        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
-    elif response.status_code == 401:
-        messages.error(request, "Unauthorized: Invalid or expired Bearer token.")
-        return render(request, 'data_migration_utility/data_migration_form.html', {'form': form})
-    elif response.status_code == 200:
-        data = response.json()
-        html_content = data.get('v2_body', '')
-        css_content = data.get('v2_css', '')
-        #b_js = data.get('v2_js', '')
+            response = requests.post(api_url, json=payload, headers=headers, timeout=60)
+            if response.status_code == 200:
+                data = response.json()
+                html_content = data.get('v2_body', '') or html_content
+                css_content = data.get('v2_css', '') or css_content
+                print("Content successfully converted from V1 to V2 format")
+            else:
+                print(f"WARNING: Conversion API returned HTTP {response.status_code}; using original V1 content")
+                print(f"Response: {response.text[:500]}")
+        except requests.exceptions.RequestException as error:
+            print(f"WARNING: Conversion API request failed: {error}; using original V1 content")
+        except Exception as error:
+            print(f"WARNING: Unexpected conversion error: {error}; using original V1 content")
+
     combined_content = html_content + "\n<style>\n" + css_content + "\n</style>"
     print(f"Content length: HTML={len(html_content)}, CSS={len(css_content)}, Combined={len(combined_content)}")
     
@@ -3181,8 +3181,78 @@ def get_all_page_files(pages_dir: str) -> list:
     json_files = glob.glob(os.path.join(pages_dir, "*.json"))
     return sorted(json_files)
 
+
+def get_run_site_id() -> str:
+    """Resolve the site id used for progress tracking."""
+    if len(sys.argv) > 1 and str(sys.argv[1]).strip():
+        return str(sys.argv[1]).strip()
+    return str(os.getenv("INSTANCE_ID") or os.getenv("SITE_ID") or "unknown").strip() or "unknown"
+
+
+def get_progress_file_path(site_id: str) -> Path:
+    """Return the progress file path for this import run."""
+    return Path(settings.BASE_DIR) / f"site_{site_id}_pages_import.progress"
+
+
+def load_page_import_progress(progress_file: Path) -> Dict[str, Any]:
+    """Load progress data from disk."""
+    if not progress_file.exists():
+        return {
+            "processed_files": [],
+            "successful_files": [],
+            "skipped_files": [],
+            "failed_files": [],
+        }
+
+    try:
+        with progress_file.open("r", encoding="utf-8") as handle:
+            data = json.load(handle)
+            if isinstance(data, dict):
+                data.setdefault("processed_files", [])
+                data.setdefault("successful_files", [])
+                data.setdefault("skipped_files", [])
+                data.setdefault("failed_files", [])
+                return data
+    except Exception as error:
+        print(f"WARNING: Could not load progress file {progress_file}: {error}")
+
+    return {
+        "processed_files": [],
+        "successful_files": [],
+        "skipped_files": [],
+        "failed_files": [],
+    }
+
+
+def save_page_import_progress(progress_file: Path, progress: Dict[str, Any]) -> None:
+    """Persist progress atomically so a crash cannot corrupt the checkpoint."""
+    progress_file.parent.mkdir(parents=True, exist_ok=True)
+    temp_file = progress_file.with_suffix(progress_file.suffix + ".tmp")
+    with temp_file.open("w", encoding="utf-8") as handle:
+        json.dump(progress, handle, indent=2, ensure_ascii=False)
+    temp_file.replace(progress_file)
+
+
+def mark_page_as_processed(progress: Dict[str, Any], progress_file: Path, page_file: str, status: str) -> None:
+    """Track a page as processed and update the checkpoint file."""
+    page_name = os.path.basename(page_file)
+    if page_name not in progress["processed_files"]:
+        progress["processed_files"].append(page_name)
+
+    bucket_name = f"{status}_files"
+    if bucket_name in progress and page_name not in progress[bucket_name]:
+        progress[bucket_name].append(page_name)
+
+    progress["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
+    save_page_import_progress(progress_file, progress)
+
 def main():
     env = load_env()
+    site_id = get_run_site_id()
+    progress_file = get_progress_file_path(site_id)
+    progress = load_page_import_progress(progress_file)
+    processed_files = set(progress.get("processed_files", []))
+    print(f"Using progress file: {progress_file}")
 
     # Get all page files or single file
     if TARGET_PAGE_JSON_BASENAME:
@@ -3193,6 +3263,11 @@ def main():
         # All pages mode
         page_files = get_all_page_files(DEFAULT_V1_PAGES_DIR)
         print(f"Found {len(page_files)} page JSON files to process")
+
+    if processed_files:
+        before_count = len(page_files)
+        page_files = [page_file for page_file in page_files if os.path.basename(page_file) not in processed_files]
+        print(f"Resuming from progress: skipping {before_count - len(page_files)} already processed page(s)")
 
     if not page_files:
         print("ERROR: No page files found!")
@@ -3303,6 +3378,7 @@ def main():
                     if check_if_page_exists(driver, page_title):
                         print(f"\nWARNING: Page '{page_title}' already exists. Skipping...")
                         skipped_pages.append((page_file, page_title))
+                        mark_page_as_processed(progress, progress_file, page_file, "skipped")
                         continue
                 elif not is_home and IS_MULTILINGUAL_SITE:
                     print(f"\nINFO: Multi-lingual site mode enabled - allowing duplicate page titles with different languages")
@@ -3394,10 +3470,12 @@ def main():
                 if seo_updated:
                     print("SEO settings successfully updated!")
                     successful_pages.append((page_file, page_title))
+                    mark_page_as_processed(progress, progress_file, page_file, "successful")
                 else:
                     print("WARNING: Could not update all SEO settings")
                     # Still consider it successful if content was inserted
                     successful_pages.append((page_file, page_title))
+                    mark_page_as_processed(progress, progress_file, page_file, "successful")
 
                 print(f"\nPage {idx}/{len(pages_to_process)} completed!")
 
