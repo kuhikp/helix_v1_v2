@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-r"""
+"""
 Selenium-based migration script for V1 to V2 page migration.
 This script automates the process of creating pages in V2 from V1 JSON exports.
 """
@@ -258,7 +258,20 @@ def parse_page_json(file_path) -> Dict[str, Any]:
         except Exception:
             pass
 
-    # Fall back to top-level settings if present
+    # Fall back to nested settings under settings/settings (and typo variant settings/sittings),
+    # then top-level settings if present
+    if not slug and isinstance(inner_settings, dict):
+        slug = inner_settings.get("slug")
+    if not path and isinstance(inner_settings, dict):
+        path = inner_settings.get("path")
+    if not slug and isinstance(settings, dict):
+        typo_inner_settings = settings.get("sittings", {})
+        if isinstance(typo_inner_settings, dict):
+            slug = typo_inner_settings.get("slug")
+    if not path and isinstance(settings, dict):
+        typo_inner_settings = settings.get("sittings", {})
+        if isinstance(typo_inner_settings, dict):
+            path = typo_inner_settings.get("path")
     if not slug:
         slug = settings.get("slug")
     if not path:
@@ -1466,6 +1479,7 @@ def open_menu_and_click_add_page(driver: webdriver.Chrome) -> bool:
 def fill_create_page_modal(driver: webdriver.Chrome, parsed: Dict[str, Any]) -> bool:
     """Fill the Create Page modal with Title and Language from parsed JSON. Do not submit yet."""
     title = parsed.get("title")
+    slug = (parsed.get("slug") or "").strip()
     language = parsed.get("language")
 
     if not title:
@@ -1487,122 +1501,177 @@ def fill_create_page_modal(driver: webdriver.Chrome, parsed: Dict[str, Any]) -> 
         dump_debug(driver, "debug_modal_title")
         return False
 
-    # 2) Select Brand from multiselect (find by label "Brand")
-    brand = parsed.get("brand")
-    if brand:
-        print(f"DEBUG: Attempting to select brand: '{brand}'")
+    # 2) If slug is available, enable custom slug and set page slug
+    if slug:
         try:
-            # Find Brand multiselect by its label
-            brand_container = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//label[contains(text(),'Brand')]/following-sibling::section//div[contains(@class,'multiselect__tags')] | //label[@for='brands']/following-sibling::section//div[contains(@class,'multiselect__tags')]")))
-            print(f"DEBUG: Found Brand multiselect by label")
-            if brand_container:
-                scroll_into_view(driver, brand_container)
-                
-                # FIRST: Clear any existing selections (like default "UNBRANDED")
-                print("DEBUG: Clearing existing Brand selections in Create Page Modal...")
-                time.sleep(1.0)  # Wait longer for multiselect to be ready
-                
-                # Try multiple strategies to clear existing selections
-                cleared = False
-                
-                # Strategy 1: Find and click remove icons
-                try:
-                    remove_buttons = brand_container.find_elements(By.XPATH, ".//i[contains(@class,'multiselect__tag-icon')]")
-                    print(f"DEBUG: Strategy 1 - Found {len(remove_buttons)} remove icon buttons")
-                    if len(remove_buttons) > 0:
-                        for idx, btn in enumerate(remove_buttons):
-                            try:
-                                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
-                                time.sleep(0.2)
-                                # Try both click methods
-                                try:
-                                    btn.click()
-                                except:
-                                    driver.execute_script("arguments[0].click();", btn)
-                                time.sleep(0.3)
-                                print(f"DEBUG: Removed Brand selection {idx+1}/{len(remove_buttons)}")
-                                cleared = True
-                            except Exception as e:
-                                print(f"DEBUG: Could not click remove button {idx+1}: {str(e)[:50]}")
-                except Exception as e:
-                    print(f"DEBUG: Strategy 1 failed: {str(e)[:50]}")
-                
-                # Strategy 2: Find tags and click their close icons
-                if not cleared:
-                    try:
-                        tags = brand_container.find_elements(By.XPATH, ".//span[contains(@class,'multiselect__tag')]")
-                        print(f"DEBUG: Strategy 2 - Found {len(tags)} tag elements")
-                        for idx, tag in enumerate(tags):
-                            try:
-                                # Find the close icon within the tag
-                                close_icon = tag.find_element(By.XPATH, ".//i")
-                                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", close_icon)
-                                time.sleep(0.2)
-                                driver.execute_script("arguments[0].click();", close_icon)
-                                time.sleep(0.3)
-                                print(f"DEBUG: Removed tag {idx+1}/{len(tags)}")
-                                cleared = True
-                            except Exception as e:
-                                print(f"DEBUG: Could not remove tag {idx+1}: {str(e)[:50]}")
-                    except Exception as e:
-                        print(f"DEBUG: Strategy 2 failed: {str(e)[:50]}")
-                
-                if cleared:
-                    time.sleep(0.5)
-                    print("SUCCESS: Cleared existing Brand selections")
-                else:
-                    print("WARNING: Could not find any existing Brand selections to clear")
-                
-                # NOW: Add the new brand value
-                # Use JavaScript to click and activate the multiselect
-                driver.execute_script("arguments[0].scrollIntoView(true);", brand_container)
-                time.sleep(0.3)
-                driver.execute_script("arguments[0].click();", brand_container)
-                time.sleep(0.8)
-                # Now find the input inside and send keys using JavaScript
-                brand_input = brand_container.find_element(By.XPATH, ".//input[contains(@class,'multiselect__input')]")
-                # Use JavaScript to focus and set value
-                driver.execute_script("arguments[0].focus();", brand_input)
-                driver.execute_script("arguments[0].value = '';", brand_input)  # Clear input field
-                time.sleep(0.2)
-                # For Brand: Always use first word in UPPERCASE (e.g., "UNBRANDED")
-                brand_search = brand.split('/')[0].split()[0].strip().upper()  # "UNBRANDED"
-                
-                # Clear and type the search term
-                driver.execute_script("arguments[0].value = '';", brand_input)
-                time.sleep(0.2)
-                for char in brand_search:
-                    brand_input.send_keys(char)
-                    time.sleep(0.05)
-                time.sleep(1)  # Wait for dropdown to populate
-                
-                # Try to find matching option
-                try:
-                    option = WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, f"//span[contains(@class,'multiselect__option')]//span[text()='{brand_search}']")))
-                    driver.execute_script("arguments[0].click();", option)
-                    print(f"SUCCESS: Selected Brand: {brand_search}")
-                    time.sleep(0.5)
-                except TimeoutException:
-                    # Try contains instead of exact match
-                    try:
-                        option = WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, f"//span[contains(@class,'multiselect__option')]//span[contains(text(),'{brand_search}')]")))
-                        driver.execute_script("arguments[0].click();", option)
-                        print(f"SUCCESS: Selected Brand: {brand_search} (partial match)")
-                        time.sleep(0.5)
-                    except TimeoutException:
-                        # Last resort: press Enter
-                        from selenium.webdriver.common.keys import Keys
-                        brand_input.send_keys(Keys.ENTER)
-                        time.sleep(0.5)
-                        print(f"INFO: Pressed Enter for Brand: {brand_search}")
-            else:
-                print("WARNING: No multiselect containers found for Brand")
-        except Exception as e:
-            print(f"WARNING: Could not select Brand: {e}")
-    else:
-        print("DEBUG: No brand value found in JSON")
+            custom_slug_checkbox = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        "//input[@id='customize-slug' or @name='customize-slug' or @id='customise-slug']"
+                    )
+                )
+            )
+            scroll_into_view(driver, custom_slug_checkbox)
 
-    # 3) Set Hidden toggle (NOTE: Hidden is often disabled in Create Page modal, will be set in Page Settings)
+            if not custom_slug_checkbox.is_selected():
+                try:
+                    custom_slug_checkbox.click()
+                except Exception:
+                    driver.execute_script("arguments[0].click();", custom_slug_checkbox)
+                time.sleep(0.4)
+
+            slug_input = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located(
+                    (
+                        By.XPATH,
+                        "//input[@id='page-slug' or @name='page-slug']"
+                    )
+                )
+            )
+            scroll_into_view(driver, slug_input)
+
+            # Ensure readonly is removed if UI has not toggled yet, then set value.
+            driver.execute_script("arguments[0].removeAttribute('readonly');", slug_input)
+            driver.execute_script(
+                "arguments[0].value = arguments[1];"
+                "arguments[0].dispatchEvent(new Event('input', {bubbles:true}));"
+                "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+                slug_input,
+                slug,
+            )
+
+            # Extra fallback in case framework ignores JS event updates.
+            try:
+                slug_input.click()
+                slug_input.send_keys(MODIFIER_KEY, 'a')
+                slug_input.send_keys(Keys.DELETE)
+                slug_input.send_keys(slug)
+            except Exception:
+                pass
+
+            print(f"Filled Slug: {slug}")
+        except TimeoutException:
+            print("WARNING: Slug provided but customize/page-slug fields were not found.")
+        except Exception as e:
+            print(f"WARNING: Could not set slug '{slug}': {e}")
+
+    # 3) Select Brand from multiselect (find by label "Brand")
+    # brand = parsed.get("brand")
+    # if brand:
+    #     print(f"DEBUG: Attempting to select brand: '{brand}'")
+    #     try:
+    #         # Find Brand multiselect by its label
+    #         brand_container = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//label[contains(text(),'Brand')]/following-sibling::section//div[contains(@class,'multiselect__tags')] | //label[@for='brands']/following-sibling::section//div[contains(@class,'multiselect__tags')]")))
+    #         print(f"DEBUG: Found Brand multiselect by label")
+    #         if brand_container:
+    #             scroll_into_view(driver, brand_container)
+                
+    #             # FIRST: Clear any existing selections (like default "UNBRANDED")
+    #             print("DEBUG: Clearing existing Brand selections in Create Page Modal...")
+    #             time.sleep(1.0)  # Wait longer for multiselect to be ready
+                
+    #             # Try multiple strategies to clear existing selections
+    #             cleared = False
+                
+    #             # Strategy 1: Find and click remove icons
+    #             try:
+    #                 remove_buttons = brand_container.find_elements(By.XPATH, ".//i[contains(@class,'multiselect__tag-icon')]")
+    #                 print(f"DEBUG: Strategy 1 - Found {len(remove_buttons)} remove icon buttons")
+    #                 if len(remove_buttons) > 0:
+    #                     for idx, btn in enumerate(remove_buttons):
+    #                         try:
+    #                             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn)
+    #                             time.sleep(0.2)
+    #                             # Try both click methods
+    #                             try:
+    #                                 btn.click()
+    #                             except:
+    #                                 driver.execute_script("arguments[0].click();", btn)
+    #                             time.sleep(0.3)
+    #                             print(f"DEBUG: Removed Brand selection {idx+1}/{len(remove_buttons)}")
+    #                             cleared = True
+    #                         except Exception as e:
+    #                             print(f"DEBUG: Could not click remove button {idx+1}: {str(e)[:50]}")
+    #             except Exception as e:
+    #                 print(f"DEBUG: Strategy 1 failed: {str(e)[:50]}")
+                
+    #             # Strategy 2: Find tags and click their close icons
+    #             if not cleared:
+    #                 try:
+    #                     tags = brand_container.find_elements(By.XPATH, ".//span[contains(@class,'multiselect__tag')]")
+    #                     print(f"DEBUG: Strategy 2 - Found {len(tags)} tag elements")
+    #                     for idx, tag in enumerate(tags):
+    #                         try:
+    #                             # Find the close icon within the tag
+    #                             close_icon = tag.find_element(By.XPATH, ".//i")
+    #                             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", close_icon)
+    #                             time.sleep(0.2)
+    #                             driver.execute_script("arguments[0].click();", close_icon)
+    #                             time.sleep(0.3)
+    #                             print(f"DEBUG: Removed tag {idx+1}/{len(tags)}")
+    #                             cleared = True
+    #                         except Exception as e:
+    #                             print(f"DEBUG: Could not remove tag {idx+1}: {str(e)[:50]}")
+    #                 except Exception as e:
+    #                     print(f"DEBUG: Strategy 2 failed: {str(e)[:50]}")
+                
+    #             if cleared:
+    #                 time.sleep(0.5)
+    #                 print("SUCCESS: Cleared existing Brand selections")
+    #             else:
+    #                 print("WARNING: Could not find any existing Brand selections to clear")
+                
+    #             # NOW: Add the new brand value
+    #             # Use JavaScript to click and activate the multiselect
+    #             driver.execute_script("arguments[0].scrollIntoView(true);", brand_container)
+    #             time.sleep(0.3)
+    #             driver.execute_script("arguments[0].click();", brand_container)
+    #             time.sleep(0.8)
+    #             # Now find the input inside and send keys using JavaScript
+    #             brand_input = brand_container.find_element(By.XPATH, ".//input[contains(@class,'multiselect__input')]")
+    #             # Use JavaScript to focus and set value
+    #             driver.execute_script("arguments[0].focus();", brand_input)
+    #             driver.execute_script("arguments[0].value = '';", brand_input)  # Clear input field
+    #             time.sleep(0.2)
+    #             # For Brand: Always use first word in UPPERCASE (e.g., "UNBRANDED")
+    #             brand_search = brand.split('/')[0].split()[0].strip().upper()  # "UNBRANDED"
+                
+    #             # Clear and type the search term
+    #             driver.execute_script("arguments[0].value = '';", brand_input)
+    #             time.sleep(0.2)
+    #             for char in brand_search:
+    #                 brand_input.send_keys(char)
+    #                 time.sleep(0.05)
+    #             time.sleep(1)  # Wait for dropdown to populate
+                
+    #             # Try to find matching option
+    #             try:
+    #                 option = WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, f"//span[contains(@class,'multiselect__option')]//span[text()='{brand_search}']")))
+    #                 driver.execute_script("arguments[0].click();", option)
+    #                 print(f"SUCCESS: Selected Brand: {brand_search}")
+    #                 time.sleep(0.5)
+    #             except TimeoutException:
+    #                 # Try contains instead of exact match
+    #                 try:
+    #                     option = WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, f"//span[contains(@class,'multiselect__option')]//span[contains(text(),'{brand_search}')]")))
+    #                     driver.execute_script("arguments[0].click();", option)
+    #                     print(f"SUCCESS: Selected Brand: {brand_search} (partial match)")
+    #                     time.sleep(0.5)
+    #                 except TimeoutException:
+    #                     # Last resort: press Enter
+    #                     from selenium.webdriver.common.keys import Keys
+    #                     brand_input.send_keys(Keys.ENTER)
+    #                     time.sleep(0.5)
+    #                     print(f"INFO: Pressed Enter for Brand: {brand_search}")
+    #         else:
+    #             print("WARNING: No multiselect containers found for Brand")
+    #     except Exception as e:
+    #         print(f"WARNING: Could not select Brand: {e}")
+    # else:
+    #     print("DEBUG: No brand value found in JSON")
+
+    # 4) Set Hidden toggle (NOTE: Hidden is often disabled in Create Page modal, will be set in Page Settings)
     hidden = parsed.get("hidden")
     print(f"DEBUG: Hidden value from JSON: {hidden}")
     print(f"INFO: Hidden toggle is typically disabled in Create Page modal. Will be set in Page Settings after creation.")
@@ -1675,7 +1744,7 @@ def fill_create_page_modal(driver: webdriver.Chrome, parsed: Dict[str, Any]) -> 
         except TimeoutException:
             print("WARNING: Could not find Hidden toggle.")
 
-    # 4) Select Indication from multiselect (find by label "Indication")
+    # 5) Select Indication from multiselect (find by label "Indication")
     indication = parsed.get("indication")
     if indication:
         print(f"DEBUG: Attempting to select indication: '{indication}'")
@@ -1738,7 +1807,7 @@ def fill_create_page_modal(driver: webdriver.Chrome, parsed: Dict[str, Any]) -> 
     else:
         print("DEBUG: No indication value found in JSON")
 
-    # 5) Select Therapeutic Area from multiselect (find by label "Therapeutic")
+    # 6) Select Therapeutic Area from multiselect (find by label "Therapeutic")
     therapeutic_area = parsed.get("therapeutic_area")
     if therapeutic_area:
         print(f"DEBUG: Attempting to select therapeutic area: '{therapeutic_area}'")
@@ -1801,7 +1870,7 @@ def fill_create_page_modal(driver: webdriver.Chrome, parsed: Dict[str, Any]) -> 
     else:
         print("DEBUG: No therapeutic area value found in JSON")
 
-    # 6) Select Primary Message Category dropdown
+    # 7) Select Primary Message Category dropdown
     primary_msg = parsed.get("primary_message_category")
     if primary_msg:
         print(f"DEBUG: Attempting to select Primary Message Category: '{primary_msg}'")
@@ -1823,7 +1892,7 @@ def fill_create_page_modal(driver: webdriver.Chrome, parsed: Dict[str, Any]) -> 
     else:
         print("DEBUG: No Primary Message Category value found in JSON, keeping default")
 
-    # 6) Select Language dropdown by value attribute
+    # 8) Select Language dropdown by value attribute
     print(f"DEBUG fill_create_page_modal: received language = '{language}'")
     if language:
         print(f"DEBUG: Attempting to select language: '{language}'")
@@ -1910,7 +1979,7 @@ def fill_create_page_modal(driver: webdriver.Chrome, parsed: Dict[str, Any]) -> 
     else:
         print(f"DEBUG: No language value found in JSON (language={language})")
 
-    # 7) Wait for SAVE button to become enabled, then click it
+    # 9) Wait for SAVE button to become enabled, then click it
     print("\nWaiting for SAVE button to become enabled...")
     
     # First, close any drawer that might have opened
@@ -2563,6 +2632,103 @@ def set_toggle_by_label(driver: webdriver.Chrome, label_text: str, desired_state
         traceback.print_exc()
         return False
 
+
+def set_slug_in_page_settings(driver: webdriver.Chrome, slug_value: str) -> bool:
+    """Open/enable custom slug controls in Page Settings and set page-slug value."""
+    if not slug_value:
+        return False
+
+    try:
+        # Step 1: Enable custom slug checkbox
+        checkbox = WebDriverWait(driver, 6).until(
+            EC.presence_of_element_located(
+                (
+                    By.XPATH,
+                    "//input[@id='customize-slug' or @name='customize-slug' or @id='customise-slug']"
+                )
+            )
+        )
+        scroll_into_view(driver, checkbox)
+
+        if not checkbox.is_selected():
+            try:
+                checkbox.click()
+            except Exception:
+                # Some UIs only allow clicking the label wrapper.
+                try:
+                    label = driver.find_element(
+                        By.XPATH,
+                        "//label[@for='customize-slug' or @for='customise-slug' or contains(., 'customize')]"
+                    )
+                    driver.execute_script("arguments[0].click();", label)
+                except Exception:
+                    driver.execute_script("arguments[0].click();", checkbox)
+            time.sleep(0.4)
+
+        # Step 2: Set page slug field
+        slug_input = WebDriverWait(driver, 6).until(
+            EC.presence_of_element_located((By.XPATH, "//input[@id='page-slug' or @name='page-slug']"))
+        )
+        scroll_into_view(driver, slug_input)
+
+        # Ensure the field is writable if UI state lags behind checkbox state
+        driver.execute_script("arguments[0].removeAttribute('readonly');", slug_input)
+
+        try:
+            slug_input.click()
+            slug_input.send_keys(MODIFIER_KEY, 'a')
+            slug_input.send_keys(Keys.DELETE)
+            slug_input.send_keys(slug_value)
+        except Exception:
+            driver.execute_script(
+                "arguments[0].value = arguments[1];"
+                "arguments[0].dispatchEvent(new Event('input', {bubbles:true}));"
+                "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+                slug_input,
+                slug_value,
+            )
+
+        # Fire events in all cases to satisfy reactive forms
+        driver.execute_script(
+            "arguments[0].dispatchEvent(new Event('input', {bubbles:true}));"
+            "arguments[0].dispatchEvent(new Event('change', {bubbles:true}));",
+            slug_input,
+        )
+
+        final_value = (slug_input.get_attribute('value') or '').strip()
+        if final_value != slug_value:
+            print(f"WARNING: Slug field value mismatch after set. expected='{slug_value}' actual='{final_value}'")
+        else:
+            print(f"SUCCESS: Page slug set to '{slug_value}'")
+        return True
+    except Exception as e:
+        print(f"WARNING: Could not set page slug '{slug_value}' in Page Settings: {e}")
+        return False
+
+
+def verify_slug_in_page_settings(driver: webdriver.Chrome, expected_slug: str, phase: str = "verify") -> bool:
+    """Read page-slug and log PASS/FAIL based on expected slug."""
+    if not expected_slug:
+        return False
+
+    try:
+        slug_input = WebDriverWait(driver, 4).until(
+            EC.presence_of_element_located((By.XPATH, "//input[@id='page-slug' or @name='page-slug']"))
+        )
+        current_slug = (slug_input.get_attribute('value') or '').strip()
+        if current_slug == expected_slug:
+            print(f"PASS: Slug verified at {phase}. value='{current_slug}'")
+            return True
+
+        print(
+            f"FAIL: Slug drift detected at {phase}. "
+            f"expected='{expected_slug}' actual='{current_slug}'"
+        )
+        return False
+    except Exception as e:
+        print(f"WARNING: Could not verify slug at {phase}: {e}")
+        return False
+
 def set_additional_page_settings(driver: webdriver.Chrome, parsed: Dict[str, Any], page_title: str) -> bool:
     """Set additional page settings: Hidden, Public, Dynamic, Promotional, Brand Kit.
     This function should be called after HTML/CSS insertion.
@@ -2689,6 +2855,7 @@ def set_additional_page_settings(driver: webdriver.Chrome, parsed: Dict[str, Any
 
     # Now we should be in the Page Settings panel
     # Extract values from JSON
+    slug = (parsed.get('slug') or '').strip()
     hidden = parsed.get('hidden')  # Line 589 in JSON
     public = parsed.get('public')  # Line 1042 in JSON
     dynamic = parsed.get('dynamic')  # Line 1044 in JSON (may not be present)
@@ -2696,6 +2863,7 @@ def set_additional_page_settings(driver: webdriver.Chrome, parsed: Dict[str, Any
     brand_kit = parsed.get('brand_kit')  # Line 1065 in JSON (may not be present)
 
     print(f"\nSettings from JSON:")
+    print(f"  Slug: {slug}")
     print(f"  Hidden: {hidden}")
     print(f"  Public: {public}")
     print(f"  Dynamic: {dynamic}")
@@ -2703,6 +2871,15 @@ def set_additional_page_settings(driver: webdriver.Chrome, parsed: Dict[str, Any
     print(f"  Brand Kit: {brand_kit}")
 
     updated_any = False
+
+    # Step 2.5: Set slug in Page Settings via customize-slug + page-slug
+    if slug:
+        print(f"\nStep 2.5: Setting slug to '{slug}' in Page Settings...")
+        if set_slug_in_page_settings(driver, slug):
+            updated_any = True
+            verify_slug_in_page_settings(driver, slug, phase="pre-save")
+    else:
+        print("\nStep 2.5: Skipping slug update (slug not present in JSON)")
 
     # Step 3: Set Hidden toggle
     if hidden is not None:
@@ -2838,6 +3015,10 @@ def set_additional_page_settings(driver: webdriver.Chrome, parsed: Dict[str, Any
 
     if not save_clicked:
         print("WARNING: Could not find Save button, but settings may have been updated")
+
+    # Post-save slug verification requested: detect and log drift explicitly.
+    if slug:
+        verify_slug_in_page_settings(driver, slug, phase="post-save")
 
     print("="*60)
     print("ADDITIONAL PAGE SETTINGS COMPLETED")
@@ -3246,6 +3427,99 @@ def mark_page_as_processed(progress: Dict[str, Any], progress_file: Path, page_f
     progress["last_updated"] = time.strftime("%Y-%m-%d %H:%M:%S")
     save_page_import_progress(progress_file, progress)
 
+
+def extract_page_weight(page_file: str) -> tuple:
+    """
+    Extract the weight value from a page JSON file.
+    
+    Returns:
+        tuple: (page_file, weight) where weight is int or float, defaults to 999999 if not found
+    """
+    try:
+        with open(page_file, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            
+        # Navigate through nested settings structure to find weight
+        settings = data.get('settings', {})
+        
+        # Try multiple possible locations for weight value
+        weight = None
+        
+        # Location 1: settings.settings.weight
+        if isinstance(settings, dict):
+            inner_settings = settings.get('settings', {})
+            if isinstance(inner_settings, dict):
+                weight = inner_settings.get('weight')
+        
+        # Location 2: settings.weight
+        if weight is None:
+            weight = settings.get('weight')
+        
+        # Location 3: storage.data.weight
+        if weight is None:
+            storage = data.get('storage', {})
+            storage_data = storage.get('data', {})
+            weight = storage_data.get('weight')
+        
+        # Convert to float/int, default to 999999 if not found or invalid
+        if weight is not None:
+            try:
+                weight = float(weight) if isinstance(weight, (int, float, str)) else 999999
+                return (page_file, weight)
+            except (ValueError, TypeError):
+                return (page_file, 999999)
+        else:
+            return (page_file, 999999)
+            
+    except Exception as e:
+        print(f"WARNING: Could not extract weight from {os.path.basename(page_file)}: {e}")
+        return (page_file, 999999)
+
+
+def sort_pages_by_weight(page_files: list) -> list:
+    """
+    Sort page files by their weight value (from settings.settings.weight).
+    
+    Pages with lower weight values are processed first.
+    Pages without weight default to 999999 (processed last).
+    
+    Args:
+        page_files: List of page file paths
+        
+    Returns:
+        list: Page files sorted by weight (ascending)
+    """
+    print("\nExtracting page weights...")
+    print("-" * 60)
+    
+    # Extract weights for all pages
+    pages_with_weights = []
+    for page_file in page_files:
+        page_file, weight = extract_page_weight(page_file)
+        pages_with_weights.append((page_file, weight))
+        page_name = os.path.basename(page_file)
+        if weight == 999999:
+            print(f"  {page_name}: [NO WEIGHT FOUND]")
+        else:
+            print(f"  {page_name}: weight={weight}")
+    
+    # Sort by weight (ascending - lighter pages first)
+    pages_with_weights.sort(key=lambda x: x[1])
+    
+    print("-" * 60)
+    print(f"Import order (by weight):\n")
+    for idx, (page_file, weight) in enumerate(pages_with_weights, 1):
+        page_name = os.path.basename(page_file)
+        if weight == 999999:
+            print(f"  {idx:2d}. {page_name} [NO WEIGHT]")
+        else:
+            print(f"  {idx:2d}. {page_name} (weight={weight})")
+    
+    print("-" * 60 + "\n")
+    
+    # Return just the sorted page file paths
+    return [page_file for page_file, weight in pages_with_weights]
+
 def main():
     env = load_env()
     site_id = get_run_site_id()
@@ -3272,6 +3546,13 @@ def main():
     if not page_files:
         print("ERROR: No page files found!")
         return
+
+    # Sort pages by weight before processing (for smooth transaction order)
+    print("\n" + "="*80)
+    print("SORTING PAGES BY WEIGHT")
+    print("="*80)
+    page_files = sort_pages_by_weight(page_files)
+    print("="*80)
 
     # Separate homepage from other pages
     homepage_file = None
