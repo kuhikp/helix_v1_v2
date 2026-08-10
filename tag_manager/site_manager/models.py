@@ -30,9 +30,27 @@ class SiteListDetails(models.Model):
     is_imported = models.BooleanField(default=False)
     last_analyzed = models.DateTimeField(blank=True, null=True, help_text='Date and time when the site was last analyzed')
     webbuilder_site_id = models.IntegerField(null=True, blank=True)
+    webbuilder_site_url = models.URLField(max_length=512, null=True, blank=True)
 
     def __str__(self):
         return self.website_url
+
+    @staticmethod
+    def get_scratch_site_id():
+        # Assuming 'scratch' is identified by a specific complexity or other marker
+        # Adjust the filter as needed for your definition of 'scratch'
+        scratch_site = SiteListDetails.objects.filter(complexity='simple').first()
+        if scratch_site:
+            return scratch_site.id  # or scratch_site.webbuilder_site_id if needed
+        return None
+
+    @staticmethod
+    def get_webbuilder_site_id_by_id(site_id):
+        try:
+            site = SiteListDetails.objects.get(pk=site_id)
+            return site.webbuilder_site_id
+        except SiteListDetails.DoesNotExist:
+            return None
 
 class SiteMetaDetails(models.Model):
     site_list_details = models.ForeignKey(SiteListDetails, on_delete=models.CASCADE, related_name='meta_details')

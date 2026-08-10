@@ -46,4 +46,3 @@ handler404 = 'tag_manager.views.custom_404_view'
 handler500 = 'tag_manager.views.custom_500_view'
 handler403 = 'tag_manager.views.custom_error_view'
 handler400 = 'tag_manager.views.custom_error_view'
-    

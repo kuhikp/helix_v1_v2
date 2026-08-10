@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Import Files for Site {{ site_id }}</h2>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Start File Import</button>
+</form>
+<p id="import-status"></p>
+<script>
+// Optionally, add AJAX polling for status updates here
+</script>
+{% endblock %}
+

@@ -1,0 +1,446 @@
+{% extends 'authentication/base.html' %}
+{% load static %}
+
+{% block title %}File Upload - Site {{ site_id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">File Upload to WebBuilder</h1>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-globe me-1"></i>
+                        Site: <strong>{{ site.website_url }}</strong>
+                    </p>
+                </div>
+                <a href="{% url 'site_meta_list' site.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Meta List
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cloud-upload-alt me-2"></i>Upload Files to WebBuilder
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="upload-status" class="mb-3" style="display: none;"></div>
+                    
+                    <form id="file-upload-form" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Configuration Info -->
+                        {% if instance_id == "Not configured" or file_folder == "Not configured" %}
+                        <div class="alert alert-danger mb-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Configuration Error:</strong> Required environment variables are not configured.
+                            <hr class="mb-2">
+                            <small>
+                                {% if instance_id == "Not configured" %}• WebBuilder Instance ID is not configured<br>{% endif %}
+                                {% if file_folder == "Not configured" %}• File folder path (FILEFOLDER) is not configured<br>{% endif %}
+                            </small>
+                        </div>
+                        {% elif not directory_exists %}
+                        <div class="alert alert-warning mb-4">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Directory Warning:</strong> The configured file directory does not exist.
+                            <hr class="mb-2">
+                            <small>Directory: <code>{{ file_folder }}</code></small>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Configuration:</strong> Using environment settings for WebBuilder connection
+                            <hr class="mb-2">
+                            <small>
+                                <strong>Instance ID:</strong> {{ instance_id }}<br>
+                                <strong>Username:</strong> {{ username }}<br>
+                                <strong>Password:</strong> {% if credentials_configured %}Configured{% else %}Not configured{% endif %}<br>
+                                <strong>File Directory:</strong> {{ file_folder }}
+                            </small>
+                        </div>
+                        {% endif %}
+
+                        <!-- File Directory Information -->
+                        <div class="mb-4">
+                            <h6>File Directory Information</h6>
+                            <div class="border rounded p-3 bg-light">
+                                <div class="row">
+                                    <div class="col-sm-3"><strong>Directory:</strong></div>
+                                    <div class="col-sm-9">
+                                        <code>{{ file_folder }}</code>
+                                        {% if not directory_exists and file_folder != "Not configured" %}
+                                            <span class="badge bg-danger ms-2">Directory not found</span>
+                                        {% elif directory_exists %}
+                                            <span class="badge bg-success ms-2">Directory exists</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-sm-3"><strong>Files Found:</strong></div>
+                                    <div class="col-sm-9">
+                                        <span class="badge bg-info">{{ available_files|length }} files</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Available Files Preview -->
+                        {% if available_files %}
+                        <div class="mb-4">
+                            <h6>Files to be Uploaded:</h6>
+                            <div class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                                <div class="row">
+                                    {% for file in available_files %}
+                                    <div class="col-md-6 col-lg-4 mb-1">
+                                        <small><i class="fas fa-file me-1"></i>{{ file }}</small>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% elif directory_exists %}
+                        <div class="mb-4">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                No files found in the directory: <code>{{ file_folder }}</code>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" id="upload-btn" 
+                                    {% if instance_id == "Not configured" or file_folder == "Not configured" or not directory_exists or not available_files %}disabled{% endif %}
+                                    data-original-disabled="{% if instance_id == 'Not configured' or file_folder == 'Not configured' or not directory_exists or not available_files %}true{% else %}false{% endif %}">
+                                <i class="fas fa-cloud-upload-alt me-1"></i>Start Upload ({{ available_files|length }} files)
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="location.reload();">
+                                <i class="fas fa-sync-alt me-1"></i>Refresh Files
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="cancel-btn" style="display: none;">
+                                <i class="fas fa-times me-1"></i>Cancel Upload
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Upload Instructions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <h6>How It Works:</h6>
+                        <ul class="mb-3">
+                            <li>Files are automatically read from the configured directory</li>
+                            <li>WebBuilder configuration is loaded from environment</li>
+                            <li>All files in the directory will be uploaded</li>
+                            <li>The system handles authentication automatically</li>
+                        </ul>
+
+                        <h6>Upload Process:</h6>
+                        <ol class="mb-3">
+                            <li>System scans the configured file directory</li>
+                            <li>Click "Start Upload" to begin</li>
+                            <li>Monitor the status below</li>
+                            <li>Upload completes automatically</li>
+                        </ol>
+
+                        <div class="alert alert-info small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            All configuration including file directory path is managed via environment variables.
+                        </div>
+                        
+                        <div class="alert alert-success small">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            <strong>SSO Support:</strong> The system automatically detects if you're logged in via Single Sign-On (SSO) and will use existing authentication when possible.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="card mt-3">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Upload Status
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="clear-status-btn" 
+                            title="Clear status if stuck">
+                        <i class="fas fa-broom me-1"></i>Clear
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="status-display">
+                        <div class="text-muted text-center">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p>No upload in progress</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('file-upload-form');
+    const uploadBtn = document.getElementById('upload-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const statusDisplay = document.getElementById('status-display');
+    const uploadStatus = document.getElementById('upload-status');
+    const clearStatusBtn = document.getElementById('clear-status-btn');
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        
+        // Show uploading status
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Starting Upload...';
+        cancelBtn.style.display = 'inline-block';
+        
+        uploadStatus.innerHTML = '<div class="alert alert-info"><i class="fas fa-info-circle me-1"></i>Upload started. Please wait...</div>';
+        uploadStatus.style.display = 'block';
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                uploadStatus.innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle me-1"></i>' + data.message + '</div>';
+                startStatusPolling();
+            } else {
+                uploadStatus.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-1"></i>' + data.message + '</div>';
+                resetForm();
+            }
+        })
+        .catch(error => {
+            uploadStatus.innerHTML = '<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-1"></i>Error: ' + error.message + '</div>';
+            resetForm();
+        });
+    });
+
+    // Status polling
+    function startStatusPolling() {
+        const pollInterval = setInterval(function() {
+            fetch(`/sites/{{ site_id }}/meta/file-upload/status/`)
+                .then(response => response.json())
+                .then(data => {
+                    updateStatusDisplay(data);
+                    
+                    if (data.status === 'completed' || data.status === 'failed') {
+                        clearInterval(pollInterval);
+                        resetForm();
+                    }
+                })
+                .catch(error => {
+                    console.error('Status check error:', error);
+                });
+        }, 3000); // Check every 3 seconds
+    }
+
+    function updateStatusDisplay(data) {
+        let statusHTML = '';
+        let iconClass = '';
+        let colorClass = '';
+
+        switch (data.status) {
+            case 'running':
+                iconClass = 'fas fa-spinner fa-spin';
+                colorClass = 'text-info';
+                
+                // Check if upload has been running for a while
+                let timeNote = '';
+                if (data.message && data.message.includes('minutes elapsed')) {
+                    const match = data.message.match(/\((\d+) minutes elapsed\)/);
+                    if (match) {
+                        const minutes = parseInt(match[1]);
+                        if (minutes >= 5) {
+                            timeNote = `<div class="alert alert-info small mt-2 mb-0">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Upload is taking longer than usual. This is normal for larger files or multiple files.
+                            </div>`;
+                        }
+                    }
+                }
+                
+                statusHTML = `
+                    <div class="${colorClass} text-center">
+                        <i class="${iconClass} fa-2x mb-2"></i>
+                        <p><strong>Upload in Progress</strong></p>
+                        <p class="small">${data.message}</p>
+                        ${timeNote}
+                    </div>
+                `;
+                break;
+            case 'completed':
+                iconClass = 'fas fa-check-circle';
+                colorClass = 'text-success';
+                
+                // Build statistics display if available
+                let statsHTML = '';
+                if (data.stats) {
+                    const stats = data.stats;
+                    statsHTML = `
+                        <div class="row mt-3">
+                            <div class="col-6 col-md-3">
+                                <div class="text-center">
+                                    <div class="h4 mb-0 text-primary">${stats.total_files}</div>
+                                    <small class="text-muted">Total Files</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="text-center">
+                                    <div class="h4 mb-0 text-success">${stats.successful_uploads}</div>
+                                    <small class="text-muted">Uploaded</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="text-center">
+                                    <div class="h4 mb-0 text-warning">${stats.skipped_files}</div>
+                                    <small class="text-muted">Skipped</small>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <div class="text-center">
+                                    <div class="h4 mb-0 text-danger">${stats.failed_uploads || 0}</div>
+                                    <small class="text-muted">Failed</small>
+                                </div>
+                            </div>
+                        </div>
+                        ${stats.skipped_files > 0 ? `<div class="alert alert-info small mt-3 mb-2"><i class="fas fa-clock me-1"></i>Time saved by skipping existing files: ~${stats.skipped_files * 2} minutes</div>` : ''}
+                    `;
+                }
+                
+                statusHTML = `
+                    <div class="${colorClass} text-center">
+                        <i class="${iconClass} fa-2x mb-2"></i>
+                        <p><strong>Upload Completed</strong></p>
+                        <p class="small">${data.message}</p>
+                        ${statsHTML}
+                        ${data.output ? `<details class="mt-2"><summary>View Details</summary><pre class="small mt-2">${data.output}</pre></details>` : ''}
+                    </div>
+                `;
+                break;
+            case 'failed':
+                iconClass = 'fas fa-exclamation-circle';
+                colorClass = 'text-danger';
+                statusHTML = `
+                    <div class="${colorClass} text-center">
+                        <i class="${iconClass} fa-2x mb-2"></i>
+                        <p><strong>Upload Failed</strong></p>
+                        <p class="small">${data.message}</p>
+                        ${data.output ? `<details class="mt-2"><summary>View Details</summary><pre class="small mt-2">${data.output}</pre></details>` : ''}
+                    </div>
+                `;
+                break;
+            default:
+                statusHTML = `
+                    <div class="text-muted text-center">
+                        <i class="fas fa-clock fa-2x mb-2"></i>
+                        <p>No upload in progress</p>
+                    </div>
+                `;
+        }
+
+        statusDisplay.innerHTML = statusHTML;
+    }
+
+    function resetForm() {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-1"></i>Start Upload';
+        cancelBtn.style.display = 'none';
+    }
+
+    // Clear status button handler
+    clearStatusBtn.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear the upload status? This should only be done if the upload is truly stuck.')) {
+            clearStatusBtn.disabled = true;
+            clearStatusBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Clearing...';
+            
+            fetch(`/sites/{{ site_id }}/meta/file-upload/clear-status/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reset the status display
+                    statusDisplay.innerHTML = `
+                        <div class="text-muted text-center">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p>No upload in progress</p>
+                        </div>
+                    `;
+                    // Reset upload button to original state
+                    const originalDisabled = uploadBtn.hasAttribute('data-original-disabled') ? 
+                        uploadBtn.getAttribute('data-original-disabled') === 'true' : false;
+                    uploadBtn.disabled = originalDisabled;
+                    uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt me-1"></i>Start Upload ({{ available_files|length }} files)';
+                    cancelBtn.style.display = 'none';
+                    
+                    // Show success message
+                    if (uploadStatus) {
+                        uploadStatus.innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle me-1"></i>' + data.message + '</div>';
+                        uploadStatus.style.display = 'block';
+                        setTimeout(() => {
+                            uploadStatus.style.display = 'none';
+                        }, 3000);
+                    }
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Clear status error:', error);
+                alert('Error clearing status. Please try again.');
+            })
+            .finally(() => {
+                clearStatusBtn.disabled = false;
+                clearStatusBtn.innerHTML = '<i class="fas fa-broom me-1"></i>Clear';
+            });
+        }
+    });
+
+    // Initialize status check on page load
+    fetch(`/sites/{{ site_id }}/meta/file-upload/status/`)
+        .then(response => response.json())
+        .then(data => {
+            updateStatusDisplay(data);
+            if (data.status === 'running') {
+                startStatusPolling();
+                uploadBtn.disabled = true;
+                uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Upload in Progress...';
+                cancelBtn.style.display = 'inline-block';
+            }
+        })
+        .catch(error => {
+            console.error('Initial status check error:', error);
+        });
+});
+</script>
+{% endblock %}
